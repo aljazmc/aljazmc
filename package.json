@@ -1,0 +1,58 @@
+{
+    "name": "aljazmc",
+    "version": "0.0.0",
+    "author": "aljazmc",
+    "license": "MIT",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aljazmc/aljazmc.git"
+    },
+    "packageManager": "yarn@4.12.0",
+    "workspaces": [
+        "packages/**"
+    ],
+    "dependencies": {
+        "@aljazmc/formatero": "workspace:*",
+        "@aljazmc/lintero": "workspace:*",
+        "@aljazmc/monorepo": "workspace:*",
+        "@aljazmc/read-it": "workspace:*",
+        "@aljazmc/ship-it": "workspace:*",
+        "@aljazmc/tag-it": "workspace:*",
+        "@aljazmc/testero": "workspace:*",
+        "@aljazmc/zip-it": "workspace:*"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.3",
+        "@types/jest": "^30.0.0",
+        "esbuild": "0.27.3",
+        "esbuild-register": "^3.6.0",
+        "jest": "^30.2.0",
+        "jest-esbuild": "^0.4.0",
+        "typescript": "^5.9.3"
+    },
+    "resolutions": {
+        "esbuild": "0.27.3"
+    },
+    "engines": {
+        "node": ">=25.3.0",
+        "npm": "Please use yarn instead of NPM to install dependencies",
+        "pnpm": "Please use yarn instead of PNPM to install dependencies",
+        "yarn": ">=4.12.0"
+    },
+    "scripts": {
+        "b:formatero": "yarn tsc -b packages/formatero",
+        "b:lintero": "yarn tsc -b packages/lintero",
+        "b:monorepo": "yarn tsc -b packages/monorepo",
+        "b:read-it": "yarn tsc -b packages/read-it",
+        "b:ship-it": "yarn tsc -b packages/ship-it",
+        "b:tag-it": "yarn tsc -b packages/tag-it",
+        "b:testero": "yarn tsc -b packages/testero",
+        "b:zip-it": "yarn tsc -b packages/zip-it",
+        "build:all": "tsc -b",
+        "lint": "biome check",
+        "lint:w": "biome check --write",
+        "test": "jest",
+        "test:w": "jest --watchAll"
+    }
+}

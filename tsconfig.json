@@ -1,0 +1,11 @@
+{
+    "files": [],
+    "references": [
+        { "path": "./shared/config" },
+        { "path": "./shared/syntax" },
+        { "path": "./packages/formatero" },
+        { "path": "./packages/lintero" },
+        { "path": "./packages/monorepo" },
+        { "path": "./packages/testero" }
+    ]
+}

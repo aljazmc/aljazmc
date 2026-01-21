@@ -1,0 +1,55 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "exactOptionalPropertyTypes": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "module": "nodenext",
+        "moduleDetection": "force",
+        "moduleResolution": "nodenext",
+        "noUncheckedIndexedAccess": true,
+        "noUncheckedSideEffectImports": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "ESNext",
+        "verbatimModuleSyntax": true,
+        "paths": {
+            "@aljazmc/formatero": ["./packages/formatero"],
+            "@aljazmc/lintero": ["./packages/lintero"],
+            "@aljazmc/monorepo": ["./packages/monorepo"],
+            "@aljazmc/read-it": ["./packages/read-it"],
+            "@aljazmc/ship-it": ["./packages/ship-it"],
+            "@aljazmc/tag-it": ["./packages/tag-it"],
+            "@aljazmc/testero": ["./packages/testero"],
+            "@aljazmc/zip-it": ["./packages/tag-it"]
+        }
+    },
+    "exclude": ["jest.config.ts", "**/bin", "**/tests"],
+    "references": [
+        {
+            "path": "./packages/formatero"
+        },
+        {
+            "path": "./packages/lintero"
+        },
+        {
+            "path": "./packages/monorepo"
+        },
+        {
+            "path": "./packages/read-it"
+        },
+        {
+            "path": "./packages/ship-it"
+        },
+        {
+            "path": "./packages/tag-it"
+        },
+        {
+            "path": "./packages/testero"
+        },
+        {
+            "path": "./packages/zip-it"
+        }
+    ]
+}

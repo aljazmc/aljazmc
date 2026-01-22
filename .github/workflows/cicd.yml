@@ -1,0 +1,99 @@
+name: CI/CD
+run-name: CI/CD quickie by @${{ github.actor }}
+
+on:
+    push:
+        branches: [main]
+        paths: [".github/workflows/**", "packages/**"]
+    pull_request:
+        branches: [main]
+        paths: [".github/workflows/**", "packages/**"]
+
+permissions:
+    id-token: write
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    cicd:
+        runs-on: ubuntu-latest
+        env:
+            NODE_ENV: development
+            NODE_NO_WARNINGS: "1"
+            NODE_OPTIONS: "--experimental-vm-modules"
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+
+            - name: Prepare '/opt/hostedtoolcache'
+              run: |
+                  sudo mkdir -p /opt/hostedtoolcache
+                  sudo chown -R "$(whoami)" /opt/hostedtoolcache
+
+            - name: Install package manager
+              run: |
+                  corepack enable
+                  corepack install
+                  yarn install --mode update-lockfile
+
+            - name: Setup NodeJS
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "latest"
+                  cache: "yarn"
+
+            - name: Install dependencies
+              run: yarn install --immutable
+
+            - name: Detect changed packages
+              id: changes
+              env:
+                  BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+              run: |
+                  all=$(for d in packages/*/; do basename "$d"; done | xargs)
+                  if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+                      changed=$(git diff --name-only "$BASE" HEAD)
+                      publish=$(echo "$changed" | sed -nE 's#^packages/([^/]+)/.*#\1#p' | sort -u | xargs)
+                      if echo "$changed" | grep -q '^\.github/workflows/'; then
+                          echo "Workflow changed, checking all packages."
+                          check=$all
+                      else
+                          check=$publish
+                      fi
+                  else
+                      echo "Base commit not found, selecting all packages."
+                      check=$all
+                      publish=$all
+                  fi
+                  {
+                      echo "check=$check"
+                      echo "publish=$publish"
+                  } | tee -a "$GITHUB_OUTPUT"
+
+            - name: Check changed packages
+              if: steps.changes.outputs.check != ''
+              env:
+                  PACKAGES: ${{ steps.changes.outputs.check }}
+              run: |
+                  for p in $PACKAGES; do
+                      echo "::group::$p"
+                      yarn "c:$p"
+                      node "packages/$p/bin/main.js"
+                      echo "::endgroup::"
+                  done
+
+            - name: Publish changed packages
+              if: github.event_name == 'push' && steps.changes.outputs.publish != ''
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  PACKAGES: ${{ steps.changes.outputs.publish }}
+              run: |
+                  for p in $PACKAGES; do
+                      yarn "p:$p"
+                  done

@@ -1,0 +1,29 @@
+{
+    "name": "@aljazmc/syntax",
+    "version": "0.2.0",
+    "description": "Shared, dependency free JavaScript, TypeScript, JSX and JSON parser for @aljazmc packages.",
+    "author": "aljazmc",
+    "license": "MIT",
+    "private": true,
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aljazmc/aljazmc.git",
+        "directory": "shared/syntax"
+    },
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || ^24 || ^25 || ^26"
+    },
+    "types": "./bin/types/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./bin/types/index.d.ts",
+            "default": "./src/index.ts"
+        },
+        "./package.json": "./package.json"
+    },
+    "devDependencies": {
+        "@jest/globals": "^30.5.2",
+        "@types/node": "^26.6.5"
+    }
+}

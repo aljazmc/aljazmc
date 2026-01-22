@@ -1,0 +1,62 @@
+name: CI/CD
+run-name: CI/CD quickie by @${{ github.actor }}
+
+on:
+    push:
+        branches: [main]
+
+permissions:
+    id-token: write
+    contents: write
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        env:
+                NODE_AUTH_TOKEN:    ${{ secrets.NPM_TOKEN }}
+                NODE_ENV:           development
+                NODE_NO_WARNINGS:   "1"
+                NODE_OPTIONS:       "--experimental-vm-modules"
+
+        steps:
+              - name: Checkout code
+                uses: actions/checkout@v6
+
+              - name: Install package manager
+                run: |
+                    corepack enable
+                    corepack install
+                    yarn install --mode update-lockfile
+
+              - name: Setup NodeJS 25.6.1
+                uses: actions/setup-node@v6
+                with:
+                    node-version: "25.6.1"
+                    registry-url: "https://registry.npmjs.org"
+                    cache: "yarn"
+
+              - name: Install dependencies
+                run: yarn install --immutable
+
+              - name: Check formatting
+                run: yarn lint
+
+              - name: Build packages
+                run: yarn c:all
+
+              - name: Run tests
+                run: yarn t:all
+
+              - name: Verify that CLI is executable
+                run: |
+                    node packages/formatero/bin/main.js
+                    node packages/lintero/bin/main.js
+                    node packages/monorepo/bin/main.js
+                    node packages/testero/bin/main.js
+
+              - name: Set yarn config
+                run: yarn config set 'npmRegistries["https://registry.npmjs.org"].npmAuthToken' ${NODE_AUTH_TOKEN}
+
+              - name: Publish all packages
+                run: yarn p:all
+

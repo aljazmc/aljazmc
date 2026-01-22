@@ -1,0 +1,13 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "rootDir": "./src",
+        "outDir": "./bin",
+        "declarationDir": "./bin/types"
+    },
+    "include": ["./src"],
+    "references": [
+        { "path": "../../shared/config" },
+        { "path": "../../shared/syntax" }
+    ]
+}

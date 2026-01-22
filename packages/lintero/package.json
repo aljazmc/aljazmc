@@ -1,0 +1,43 @@
+{
+    "name": "@aljazmc/lintero",
+    "version": "0.1.0",
+    "description": "A simple linter. Easy to understand, easy to customize and easy to extend.",
+    "author": "aljazmc",
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aljazmc/aljazmc.git",
+        "directory": "packages/lintero"
+    },
+    "devDependencies": {
+        "@types/node": "^25.5.0"
+    },
+    "keywords": [
+        "customizable",
+        "linter",
+        "typescript",
+        "modern",
+        "modular"
+    ],
+    "packageManager": "yarn@4.13.0",
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || >=24"
+    },
+    "main": "./bin/index.js",
+    "types": "./bin/types/index.d.js",
+    "bin": "./bin/main.js",
+    "exports": {
+        ".": {
+            "types": "./bin/types/index.d.ts",
+            "default": "./bin/index.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "scripts": {
+        "build": "yarn b:lintero",
+        "checktypes": "yarn ct:lintero",
+        "complete": "yarn build && yarn exporttypes",
+        "exporttypes": "yarn et:lintero"
+    }
+}

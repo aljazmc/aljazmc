@@ -1,0 +1,58 @@
+name: CI
+run-name: Testing quickie by @${{ github.actor }}
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-version: [20.x,22.x,24.x,25.x]
+
+        steps:
+              - name: Checkout code
+                uses: actions/checkout@v6
+
+              - name: Install package manager
+                run: |
+                    corepack enable
+                    corepack install
+                    yarn install --mode update-lockfile
+
+              - name: Setup NodeJS ${{ matrix.node-version }}
+                uses: actions/setup-node@v6
+                with:
+                    node-version: ${{ matrix.node-version }}
+                    cache: "yarn"
+
+              - name: Install dependencies
+                run: yarn install --immutable
+
+              - name: Check formatting
+                run: yarn lint
+
+              - name: Build packages
+                run: yarn build:all
+
+              - name: Run tests
+                run: yarn test
+
+              - name: Verify that CLI is executable
+                run: |
+                    node packages/formatero/bin/main.js
+                    node packages/lintero/bin/main.js
+                    node packages/monorepo/bin/main.js
+                    node packages/read-it/bin/main.js
+                    node packages/ship-it/bin/main.js
+                    node packages/tag-it/bin/main.js
+                    node packages/testero/bin/main.js
+                    node packages/zip-it/bin/main.js

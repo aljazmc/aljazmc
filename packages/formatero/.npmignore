@@ -1,0 +1,5 @@
+README.md
+bin/types/main.d.ts
+src/**
+tests/**
+tsconfig*

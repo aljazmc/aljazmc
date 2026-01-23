@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/lintero",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "description": "Easily customisable linter",
     "author": "aljazmc",
     "license": "MIT",
@@ -11,6 +11,9 @@
         "type": "git",
         "url": "https://github.com/aljazmc/aljazmc.git",
         "directory": "packages/lintero"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "keywords": [
         "customisable",

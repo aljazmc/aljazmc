@@ -1,0 +1,38 @@
+{
+    "name": "@aljazmc/formatero",
+    "version": "0.2.0",
+    "description": "A simple formater. Easy to understand, easy to customize and easy to extend.",
+    "author": "aljazmc",
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aljazmc/aljazmc.git",
+        "directory": "packages/formatero"
+    },
+    "keywords": [
+        "customizable",
+        "formatter",
+        "typescript",
+        "modern",
+        "modular"
+    ],
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || ^24 || ^25 || ^26"
+    },
+    "types": "./bin/types/formatero.d.ts",
+    "bin": "./bin/main.js",
+    "exports": {
+        ".": {
+            "types": "./bin/types/formatero.d.ts",
+            "default": "./bin/main.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "devDependencies": {
+        "@aljazmc/config": "workspace:*",
+        "@aljazmc/syntax": "workspace:*",
+        "@jest/globals": "^30.5.2",
+        "@types/node": "^26.6.5"
+    }
+}

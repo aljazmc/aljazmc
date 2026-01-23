@@ -1,0 +1,42 @@
+{
+    "name": "@aljazmc/testero",
+    "version": "0.2.0",
+    "description": "A simple, Jest like test runner. Easy to understand, easy to customize and easy to extend.",
+    "author": "aljazmc",
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aljazmc/aljazmc.git",
+        "directory": "packages/testero"
+    },
+    "keywords": [
+        "customizable",
+        "jest",
+        "test runner",
+        "tester",
+        "typescript",
+        "modern",
+        "modular"
+    ],
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || ^24 || ^25 || ^26"
+    },
+    "types": "./bin/types/testero.d.ts",
+    "bin": "./bin/main.js",
+    "exports": {
+        ".": {
+            "types": "./bin/types/testero.d.ts",
+            "default": "./bin/main.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "devDependencies": {
+        "@aljazmc/config": "workspace:*",
+        "@jest/globals": "^30.5.2",
+        "@types/node": "^26.6.5"
+    },
+    "dependencies": {
+        "esbuild": "0.28.2"
+    }
+}

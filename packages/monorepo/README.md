@@ -9,4 +9,4 @@
 
 ## Intro
 
-@aljazmc/monorepo is carefully crafted to be modern, modular and customisable formatter with the main focus on easily understandable code.
+@aljazmc/monorepo is a reusable collection of monorepo maintenance scripts. Work in progress.

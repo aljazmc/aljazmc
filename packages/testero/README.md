@@ -9,4 +9,4 @@
 
 ## Intro
 
-@aljazmc/testero is carefully crafted to be modern, modular and customisable test runner with the main focus on easily understandable code.
+@aljazmc/testero is carefully crafted to be modern, modular and customisable test runner with the main focus on easily understandable code. Work in progress.

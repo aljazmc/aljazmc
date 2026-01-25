@@ -9,4 +9,4 @@
 
 ## Intro
 
-@aljazmc/lintero is carefully crafted to be modern, modular and customisable linter with the main focus on easily understandable code.
+@aljazmc/lintero is carefully crafted to be modern, modular and customisable linter with the main focus on easily understandable code. Work in progress.

@@ -67,7 +67,6 @@ services:
         image: node:25.6-alpine
         working_dir: $PWD
         volumes:
-            - /home/$USER/.yarnrc.yml:/home/$USER/.yarnrc.yml
             - .:$PWD
         environment:
             HOME:               $PWD

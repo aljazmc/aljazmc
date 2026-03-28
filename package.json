@@ -22,7 +22,7 @@
         "esbuild-register": "^3.6.0",
         "jest": "^30.3.0",
         "jest-esbuild": "^0.4.0",
-        "typescript": "^5.9.3",
+        "typescript": "^6.0.2",
         "unrs-resolver": "^1.11.1"
     },
     "resolutions": {

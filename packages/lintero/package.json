@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/lintero",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "A simple linter. Easy to understand, easy to customize and easy to extend.",
     "author": "aljazmc",
     "license": "MIT",

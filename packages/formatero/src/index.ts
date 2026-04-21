@@ -1,5 +1,10 @@
-import cli from "./cli.js";
+class Formatero {
+    greeting: string;
 
-const message: string = "Hello, formatter!";
-console.log(message);
-cli();
+    constructor() {
+        this.greeting = "Hello, formatter!";
+    }
+}
+
+const formatero = new Formatero();
+console.log(formatero.greeting);

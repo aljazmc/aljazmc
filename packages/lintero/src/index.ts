@@ -1,2 +1,10 @@
-const message: string = "Hello, linter!";
-console.log(message);
+class Lintero {
+    greeting: string;
+
+    constructor() {
+        this.greeting = "Hello, linter!";
+    }
+}
+
+const lintero = new Lintero();
+console.log(lintero.greeting);

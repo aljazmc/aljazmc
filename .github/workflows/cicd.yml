@@ -39,7 +39,7 @@ jobs:
                 run: yarn install --immutable
 
               - name: Check formatting
-                run: yarn lint
+                run: yarn l:all
 
               - name: Build packages
                 run: yarn b:all

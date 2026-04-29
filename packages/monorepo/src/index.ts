@@ -1,4 +1,4 @@
-class Monorepo {
+export class Monorepo {
     greeting: string;
 
     constructor() {

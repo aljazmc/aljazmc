@@ -1,4 +1,4 @@
-class Lintero {
+export class Lintero {
     greeting: string;
 
     constructor() {

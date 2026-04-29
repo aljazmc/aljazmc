@@ -1,4 +1,4 @@
-class Testero {
+export class Testero {
     greeting: string;
 
     constructor() {

@@ -1,4 +1,4 @@
-class Formatero {
+export class Formatero {
     greeting: string;
 
     constructor() {

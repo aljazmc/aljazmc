@@ -34,7 +34,7 @@
         "packages/**"
     ],
     "engines": {
-        "node": ">=25.3.0",
+        "node": "^20.19.0 || ^22.13.0 || ^24 || <=25.6",
         "npm": "Please use yarn instead of NPM to install dependencies",
         "pnpm": "Please use yarn instead of PNPM to install dependencies",
         "yarn": ">=4.12.0"

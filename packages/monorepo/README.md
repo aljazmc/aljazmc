@@ -7,8 +7,8 @@ A simple monorepo management tool. Easy to understand, easy to customize and eas
 ## > achieved milestones
 
 - setup toolchain
-  - continous integration
-  - continous delivery
+  - continuous integration
+  - continuous delivery
   - recent tools
 
 ## > planned milestones

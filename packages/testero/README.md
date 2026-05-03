@@ -7,8 +7,8 @@ A simple test runner. Easy to understand, easy to customize and easy to extend.
 ## > achieved milestones
 
 - setup toolchain
-  - continous integration
-  - continous delivery
+  - continuous integration
+  - continuous delivery
   - recent tools
 
 ## > planned milestones

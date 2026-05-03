@@ -3,3 +3,16 @@
 # lintero
 
 A simple linter. Easy to understand, easy to customize and easy to extend.
+
+## > achieved milestones
+
+- setup toolchain
+  - continous integration
+  - continous delivery
+  - recent tools
+
+## > planned milestones
+
+- robust main loop in OO TypeScript
+- standard rules
+

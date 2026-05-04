@@ -30,3 +30,6 @@ Lightweight NPM packages, written in modern typescript.
 - p: publish
 - t: test
 
+##### notes:
+
+- compatible node versions for development are limited upwards with 25.6 because of yarn berry

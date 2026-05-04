@@ -1,10 +1,3 @@
-export class Testero {
-    greeting: string;
+import Testero from "./testero.js";
 
-    constructor() {
-        this.greeting = "Hello, test runner!";
-    }
-}
-
-const testero = new Testero();
-console.log(testero.greeting);
+console.log(Testero.greeting);

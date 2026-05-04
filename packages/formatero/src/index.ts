@@ -1,10 +1,3 @@
-export class Formatero {
-    greeting: string;
+import Formatero from "./formatero.js";
 
-    constructor() {
-        this.greeting = "Hello, formatter!";
-    }
-}
-
-const formatero = new Formatero();
-console.log(formatero.greeting);
+console.log(Formatero.greeting);

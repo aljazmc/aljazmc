@@ -24,11 +24,11 @@
     "engines": {
         "node": "^20.19.0 || ^22.13.0 || >=24"
     },
-    "types": "./bin/types/index.d.js",
+    "types": "./bin/types/formatero.d.ts",
     "bin": "./bin/main.js",
     "exports": {
         ".": {
-            "types": "./bin/types/index.d.ts",
+            "types": "./bin/types/formatero.d.ts",
             "default": "./bin/main.js"
         },
         "./package.json": "./package.json"

@@ -1,4 +1,5 @@
 README.md
+bin/types/index.d.ts
 bin/types/main.d.ts
 src/**
 tests/**

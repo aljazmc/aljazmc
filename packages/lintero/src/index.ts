@@ -1,10 +1,3 @@
-export class Lintero {
-    greeting: string;
+import Lintero from "./lintero.js";
 
-    constructor() {
-        this.greeting = "Hello, linter!";
-    }
-}
-
-const lintero = new Lintero();
-console.log(lintero.greeting);
+console.log(Lintero.greeting);

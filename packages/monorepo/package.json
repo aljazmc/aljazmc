@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/monorepo",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "A simple monorepo management tool. Easy to understand, easy to customize and easy to extend.",
     "author": "aljazmc",
     "license": "MIT",

@@ -1,10 +1,3 @@
-export class Monorepo {
-    greeting: string;
+import Monorepo from "./monorepo.js";
 
-    constructor() {
-        this.greeting = "Hello, monorepo!";
-    }
-}
-
-const monorepo = new Monorepo();
-console.log(monorepo.greeting);
+console.log(Monorepo.greeting);

@@ -10,9 +10,6 @@
         "url": "https://github.com/aljazmc/aljazmc.git",
         "directory": "packages/monorepo"
     },
-    "devDependencies": {
-        "@types/node": "^25.6.0"
-    },
     "keywords": [
         "customizable",
         "monorepo",
@@ -32,5 +29,9 @@
             "default": "./bin/main.js"
         },
         "./package.json": "./package.json"
+    },
+    "devDependencies": {
+        "@jest/globals": "^30.4.1",
+        "@types/node": "^25.8.0"
     }
 }

@@ -18,7 +18,7 @@
         "modular"
     ],
     "engines": {
-        "node": "^20.19.0 || ^22.13.0 || >=24"
+        "node": "^20.19.0 || ^22.13.0 || ^24 || ^25 || ^26"
     },
     "types": "./bin/types/formatero.d.ts",
     "bin": "./bin/main.js",

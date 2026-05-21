@@ -18,13 +18,13 @@
     "devDependencies": {
         "@biomejs/biome": "^2.4.15",
         "@jest/globals": "^30.4.1",
-        "@types/node": "^25.8.0",
+        "@types/node": "^25.9.1",
         "esbuild": "0.28.0",
         "esbuild-register": "^3.6.0",
         "jest": "^30.4.2",
         "jest-esbuild": "^0.4.0",
         "typescript": "^6.0.3",
-        "unrs-resolver": "^1.11.1"
+        "unrs-resolver": "^1.12.2"
     },
     "resolutions": {
         "esbuild": "0.28.0"

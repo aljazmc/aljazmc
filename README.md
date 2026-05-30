@@ -29,4 +29,3 @@ Lightweight NPM packages, written in modern typescript.
 - lwu: lint && write unsafe
 - p: publish
 - t: test
-

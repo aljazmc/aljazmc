@@ -1,6 +1,6 @@
 {
     "name": "aljazmc",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Lightweight NPM packages, written in modern typescript.",
     "author": "aljazmc",
     "license": "MIT",

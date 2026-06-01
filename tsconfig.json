@@ -16,7 +16,7 @@
         "resolveJsonModule": true,
         "skipLibCheck": true,
         "strict": true,
-        "target": "es2022",
+        "target": "esnext",
         "types": ["node", "@jest/globals"],
         "verbatimModuleSyntax": true,
         "paths": {

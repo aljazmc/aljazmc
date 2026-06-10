@@ -175,11 +175,18 @@ start() {
 
     node
 
-    docker compose run --rm node yarn c:all
+#    docker compose run --rm node yarn c:all
 
-    docker compose run --rm node yarn formatero
-    docker compose run --rm node yarn lintero
-    docker compose run --rm node yarn monorepo
+#    docker compose run --rm node yarn c:formatero
+#    docker compose run --rm node yarn formatero
+
+#    docker compose run --rm node yarn c:lintero
+#    docker compose run --rm node yarn lintero
+
+#    docker compose run --rm node yarn c:monorepo
+#    docker compose run --rm node yarn monorepo
+
+    docker compose run --rm node yarn c:testero
     docker compose run --rm node yarn testero
 
 }

@@ -5,7 +5,7 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/aljazmc/aljazmc)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/aljazmc/aljazmc)
 
-# > aljazmc's Glorious Monorepo
+# > aljazmc's NPMJS Packages Monorepo
 
 Lightweight NPM packages, written in modern typescript.
 

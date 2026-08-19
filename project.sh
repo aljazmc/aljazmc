@@ -8,29 +8,10 @@ PROJECT_GID=$(id -g)
 
 ## Functions
 
-biome() {
-
-if [[ ! -f ale/biome ]]; then
-
-    mkdir -p ale
-    touch ale/biome
-
-    cat << EOF > ale/biome
-#!/bin/sh
-
-docker compose run --rm node yarn biome lsp-proxy
-EOF
-
-    chmod +x ale/biome
-fi
-
-}
-
 clean() {
 
     docker compose down -v --rmi all --remove-orphans
     rm -rf \
-        ale \
         coverage \
         dist \
         docker-compose.yml \
@@ -56,7 +37,6 @@ clean() {
                    -o -name "*.tsbuildinfo" \) -delete
 
 }
-
 
 compose() {
 
@@ -149,9 +129,6 @@ autocmd Filetype yml
     \ setlocal shiftwidth=4 |
     \ setlocal softtabstop=0 |
     \ setlocal expandtab
-
-let g:ale_biome_executable = '$PWD/ale/biome'
-let g:ale_biome_use_global = 1
 EOF
 fi
 
@@ -168,7 +145,6 @@ start() {
         if [[ "$USER" == "aljazmc" ]]; then
 
             vimrc
-            biome
 
         fi
     fi

@@ -22,6 +22,11 @@ jobs:
               - name: Checkout code
                 uses: actions/checkout@v6
 
+              - name: Prepare '/opt/hostedtoolcache'
+                run: |
+                    sudo mkdir -p /opt/hostedtoolcache
+                    sudo chown -R $(whoami) /opt/hostedtoolcache
+
               - name: Install package manager
                 run: |
                     corepack enable

@@ -20,12 +20,14 @@ Lightweight NPM packages, written in modern typescript.
 
 ###### package.json's "scripts" field naming conventions:
 
-- b: build
-- c: complete
-- ct: check types
-- et: export types
-- l: lint
-- lw: lint && write
-- lwu: lint && write unsafe
-- p: publish
-- t: test
+- b:        - build
+- c:        - complete
+- ct:       - check types
+- et:       - export types
+- l:        - lint
+- lw:       - lint && write
+- lwu:      - lint && write unsafe
+- p:        - publish
+- t:        - test
+- t:e2e:    - test end-to-end
+- t:unit:   - test unit

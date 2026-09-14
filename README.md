@@ -29,5 +29,5 @@ Lightweight NPM packages, written in modern typescript.
 - lwu:      - lint && write unsafe
 - p:        - publish
 - t:        - test
-- t:e2e:    - test end-to-end
-- t:unit:   - test unit
+- te2e:     - test end-to-end
+- tunit:    - test unit

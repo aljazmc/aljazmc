@@ -12,29 +12,28 @@ clean() {
 
     docker compose down -v --rmi all --remove-orphans
     rm -rf \
-        coverage \
-        dist \
-        docker-compose.yml \
-        node_modules \
-        packages/*/bin \
-        tsconfig.tsbuildinfo \
         .cache \
-        .pnp.cjs \
-        .pnp.loader.mjs \
-        .vim \
-        .vimrc \
         .yarn/berry \
         .yarn/bin \
         .yarn/cache \
         .yarn/sdks \
         .yarn/unplugged \
-        .yarn/install-state.gz \
-        .yarnrc
+        coverage \
+        dist \
+        node_modules \
+        packages/*/bin
 
-    find . \( -type f -name "*.d.ts" \
-                   -o -name "*.js" \
-                   -o -name "*.jsx" \
-                   -o -name "*.tsbuildinfo" \) -delete
+    ## keep single cjs extension file (yarn-4.18.0.cjs)
+
+    find . \( -type f \
+        -name "*.d.ts" \
+        -o -name "*.[m,]js" \
+        -o -name "*.jsx" \
+        -o -name "*.tsbuildinfo" \
+        -o -name ".pnp.cjs " \
+        -o -name "docker-compose.yml" \
+        -o -name "install-state.gz" \
+        \) -delete
 
 }
 

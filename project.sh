@@ -85,54 +85,6 @@ docker compose run --rm node sh -c "printenv"
 
 }
 
-vimrc() {
-	
-if [[ ! -f .vimrc ]]; then
-    cat << EOF > .vimrc
-set shell=/bin/sh
-
-" html
-autocmd Filetype html
-    \ setlocal tabstop=4 |
-    \ setlocal shiftwidth=4 |
-    \ setlocal softtabstop=0 |
-    \ setlocal noexpandtab
-
-" js,jsx,ts,tsx,json
-autocmd Filetype js,jsx,ts,tsx,json
-    \ setlocal tabstop=4 |
-    \ setlocal shiftwidth=4 |
-    \ setlocal softtabstop=0 |
-    \ setlocal expandtab |
-    \ setlocal autoindent |
-    \ setlocal smartindent
-
-" md
-autocmd Filetype md
-    \ setlocal tabstop=4 |
-    \ setlocal shiftwidth=4 |
-    \ setlocal softtabstop=0 |
-    \ setlocal noexpandtab |
-    \ setlocal nosmarttab
-
-" sh
-autocmd Filetype sh
-    \ setlocal tabstop=4 |
-    \ setlocal shiftwidth=4 |
-    \ setlocal softtabstop=0 |
-    \ setlocal expandtab
-
-" yml
-autocmd Filetype yml
-    \ setlocal tabstop=4 |
-    \ setlocal shiftwidth=4 |
-    \ setlocal softtabstop=0 |
-    \ setlocal expandtab
-EOF
-fi
-
-}
-
 start() {
 
     compose
@@ -141,11 +93,6 @@ start() {
 
         composehack
 
-        if [[ "$USER" == "aljazmc" ]]; then
-
-            vimrc
-
-        fi
     fi
 
     node

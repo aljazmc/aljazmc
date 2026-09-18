@@ -16,9 +16,9 @@
         "@aljazmc/testero": "workspace:*"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.5.13",
+        "@biomejs/biome": "^2.5.14",
         "@jest/globals": "^30.5.1",
-        "@types/node": "^26.5.1",
+        "@types/node": "^26.6.1",
         "esbuild": "0.28.2",
         "esbuild-register": "^3.6.0",
         "jest": "^30.5.1",

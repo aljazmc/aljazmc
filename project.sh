@@ -23,7 +23,7 @@ clean() {
         node_modules \
         packages/*/bin
 
-    ## keep single cjs extension file (yarn-4.18.0.cjs)
+    ## keep yarn-4.18.0.cjs
 
     find . \( -type f \
         -name "*.d.ts" \

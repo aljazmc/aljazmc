@@ -30,7 +30,7 @@
         "./package.json": "./package.json"
     },
     "devDependencies": {
-        "@jest/globals": "^30.5.1",
-        "@types/node": "^26.6.1"
+        "@jest/globals": "^30.5.2",
+        "@types/node": "^26.6.2"
     }
 }

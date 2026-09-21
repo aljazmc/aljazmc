@@ -17,11 +17,11 @@
     },
     "devDependencies": {
         "@biomejs/biome": "^2.5.14",
-        "@jest/globals": "^30.5.1",
-        "@types/node": "^26.6.1",
+        "@jest/globals": "^30.5.2",
+        "@types/node": "^26.6.2",
         "esbuild": "0.28.2",
         "esbuild-register": "^3.6.0",
-        "jest": "^30.5.1",
+        "jest": "^30.5.2",
         "jest-esbuild": "^0.4.0",
         "typescript": "^7.0.2",
         "unrs-resolver": "^1.12.2"

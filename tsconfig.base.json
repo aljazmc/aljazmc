@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "emitDeclarationOnly": true,
+        "exactOptionalPropertyTypes": true,
+        "isolatedModules": true,
+        "listEmittedFiles": true,
+        "module": "esnext",
+        "moduleDetection": "force",
+        "moduleResolution": "bundler",
+        "noUncheckedIndexedAccess": true,
+        "noUncheckedSideEffectImports": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "esnext",
+        "verbatimModuleSyntax": true
+    }
+}

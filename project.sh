@@ -13,24 +13,26 @@ clean() {
     docker compose down -v --rmi all --remove-orphans
     rm -rf \
         .cache \
+        .node_repl_history \
+        .npm \
         .yarn/berry \
         .yarn/bin \
         .yarn/cache \
         .yarn/sdks \
         .yarn/unplugged \
         coverage \
-        dist \
         node_modules \
         packages/*/bin
 
-    ## keep yarn-4.18.0.cjs
+    ## keep .yarn/releases/yarn-*.cjs
 
-    find . \( -type f \
+    find . -type f -not -path "./.git/*" \( \
         -name "*.d.ts" \
-        -o -name "*.[m,]js" \
+        -o -name "*.js" \
         -o -name "*.jsx" \
+        -o -name "*.mjs" \
         -o -name "*.tsbuildinfo" \
-        -o -name ".pnp.cjs " \
+        -o -name ".pnp.cjs" \
         -o -name "docker-compose.yml" \
         -o -name "install-state.gz" \
         \) -delete
@@ -49,11 +51,10 @@ services:
             - .:$PWD
         environment:
             HOME:               $PWD
-            NODE_AUTH_TOKEN:    npm_000000000000000000000000000000000000
+            NODE_AUTH_TOKEN:    \${NODE_AUTH_TOKEN:-}
             NODE_ENV:           development
             NODE_OPTIONS:       "--experimental-vm-modules --no-webstorage"
             NODE_NO_WARNINGS:   "1"
-            PATH:               "$PATH:$HOME/.yarn/releases/"
         network_mode: host
 EOF
 fi
@@ -80,8 +81,6 @@ else
     docker compose run --rm node yarn install
 
 fi
-
-docker compose run --rm node sh -c "printenv"
 
 }
 
@@ -113,4 +112,9 @@ start() {
 
 }
 
-"$1"
+if declare -F "$1" > /dev/null; then
+    "$1"
+else
+    echo "Usage: $0 {start|clean|compose|composehack|node}"
+    exit 1
+fi

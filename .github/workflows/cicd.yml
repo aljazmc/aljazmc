@@ -4,8 +4,10 @@ run-name: CI/CD quickie by @${{ github.actor }}
 on:
     push:
         branches: [main]
+        paths: ["packages/**"]
     pull_request:
         branches: [main]
+        paths: ["packages/**"]
 
 permissions:
     id-token: write
@@ -49,35 +51,38 @@ jobs:
             - name: Install dependencies
               run: yarn install --immutable
 
-            - name: Lint and check formatting
-              run: yarn l:all
-
-            - name: Build packages
-              run: yarn b:all
-
-            - name: Export types
-              run: yarn et:all
-
-            - name: Run tests
-              run: yarn t:all
-
-            - name: Verify that CLI is executable
+            - name: Detect changed packages
+              id: changes
+              env:
+                  BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
               run: |
-                  node packages/formatero/bin/main.js
-                  node packages/lintero/bin/main.js
-                  node packages/monorepo/bin/main.js
-                  node packages/testero/bin/main.js
+                  if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+                      packages=$(git diff --name-only "$BASE" HEAD -- packages/ \
+                          | sed -nE 's#^packages/([^/]+)/.*#\1#p' | sort -u | xargs)
+                  else
+                      echo "Base commit not found, selecting all packages."
+                      packages=$(for d in packages/*/; do basename "$d"; done | xargs)
+                  fi
+                  echo "packages=$packages" | tee -a "$GITHUB_OUTPUT"
+
+            - name: Check changed packages
+              if: steps.changes.outputs.packages != ''
+              env:
+                  PACKAGES: ${{ steps.changes.outputs.packages }}
+              run: |
+                  for p in $PACKAGES; do
+                      echo "::group::$p"
+                      yarn "c:$p"
+                      node "packages/$p/bin/main.js"
+                      echo "::endgroup::"
+                  done
 
             - name: Publish changed packages
-              if: github.event_name == 'push'
+              if: github.event_name == 'push' && steps.changes.outputs.packages != ''
               env:
-                  BEFORE: ${{ github.event.before }}
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  PACKAGES: ${{ steps.changes.outputs.packages }}
               run: |
-                  if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-                      yarn workspaces foreach --no-private --include 'packages/*' \
-                          --since="$BEFORE" \
-                          npm publish --access public --tolerate-republish
-                  else
-                      yarn p:all
-                  fi
+                  for p in $PACKAGES; do
+                      yarn "p:$p"
+                  done

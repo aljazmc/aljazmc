@@ -55,7 +55,7 @@
         "lwu:lintero": "biome check packages/lintero --write --unsafe",
         "lwu:monorepo": "biome check packages/monorepo --write --unsafe",
         "lwu:testero": "biome check packages/testero --write --unsafe",
-        "p:all": "yarn workspaces foreach -A --no-private npm publish --access public --tolerate-republish",
+        "p:all": "yarn workspaces foreach -A --no-private --include 'packages/*' npm publish --access public --tolerate-republish",
         "p:formatero": "yarn workspace @aljazmc/formatero npm publish --access public --tolerate-republish",
         "p:lintero": "yarn workspace @aljazmc/lintero npm publish --access public --tolerate-republish",
         "p:monorepo": "yarn workspace @aljazmc/monorepo npm publish --access public --tolerate-republish",

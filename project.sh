@@ -10,20 +10,27 @@ PROJECT_GID=$(id -g)
 
 clean() {
 
-    if [[ -f docker-compose.yml ]]; then
+    ## always in the project, wherever the script is run from
+    cd "$(dirname "$(realpath "$0")")" || exit 1
+
+    if [[ -f docker-compose.yml ]] && command -v docker > /dev/null; then
         docker compose down -v --rmi all --remove-orphans
     fi
 
-    ## generated files only, sources and .yarn/releases/yarn-*.cjs stay
+    ## generated files only, sources, secrets and .yarn/{patches,plugins,releases,versions} stay
 
     rm -rf \
         .cache \
+        .env.yarn \
         .node_repl_history \
         .npm \
         .pnp.cjs \
         .pnp.loader.mjs \
+        .yarn/.cache \
+        .yarn/__virtual__ \
         .yarn/berry \
         .yarn/bin \
+        .yarn/build-state.yml \
         .yarn/cache \
         .yarn/install-state.gz \
         .yarn/sdks \
@@ -32,15 +39,13 @@ clean() {
         coverage \
         docker-compose.yml \
         node_modules \
-        packages/*/*.tgz \
-        packages/*/bin \
-        packages/*/node_modules \
-        packages/*/tsconfig.tsbuildinfo \
-        shared/*/*.tgz \
-        shared/*/bin \
-        shared/*/node_modules \
-        shared/*/tsconfig.tsbuildinfo \
+        tsconfig.tsbuildinfo \
         yarn.lock
+
+    ## build output of the workspaces, packages/** and shared/**, at any depth
+    find packages shared \
+        -name node_modules -prune -exec rm -rf {} + -o \
+        \( -type d -name bin -o -name '*.tgz' -o -name tsconfig.tsbuildinfo \) -prune -exec rm -rf {} +
 
 }
 

@@ -1,6 +1,9 @@
+import Config from "@aljazmc/config";
+import defaults from "./config.js";
 import Git from "./git.js";
 import type { Rules } from "./rules.js";
 import Tags, { type Move } from "./tags.js";
+import Versions, { type Release, type Step } from "./versions.js";
 
 /** What the tags command did, for each tag that was off the branch. */
 export interface Report {
@@ -13,10 +16,32 @@ export interface Report {
 export default class Monorepo {
     readonly #git: Git;
     readonly #rules: Rules;
+    readonly #config: Config<Rules>;
 
-    constructor(directory: string, rules: Rules) {
+    /** With the files to ignore when looking for packages, like `node_modules`. */
+    constructor(directory: string, rules: Rules, ignore = defaults.ignore) {
         this.#git = new Git(directory);
         this.#rules = rules;
+        this.#config = new Config({ ignore, rules }, directory);
+    }
+
+    /**
+     * Finds the packages whose files changed since their last version, by
+     * conventional commits: `feat` bumps the minor version, `fix` the patch
+     * one, a breaking change the major one. Versions in package.json without
+     * a tag are released as they are. With write, each version is committed
+     * and tagged on its own, with push the branch and the tags are pushed.
+     * With dry run, nothing changes, the steps are only returned.
+     */
+    version({ write = false, push = false, dryRun = false } = {}): {
+        releases: Release[];
+        steps: Step[];
+    } {
+        const versions = new Versions(this.#git, this.#config);
+        const releases = versions.plan();
+        const steps = write || push ? versions.steps(releases, { push }) : [];
+        if (!dryRun) versions.run(steps);
+        return { releases, steps };
     }
 
     /**

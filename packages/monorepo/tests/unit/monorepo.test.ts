@@ -288,7 +288,7 @@ describe("monorepo version", () => {
 
     test("the root package has the changes outside of the packages, with a plain tag", () => {
         commit(".github/workflows/cicd.yml", "fix: workflow");
-        commit("packages/b/README.md", "docs: b");
+        commit("packages/b/README.md", "style: b");
         expect(plan()).toEqual([
             {
                 name: "root",
@@ -441,16 +441,19 @@ describe("monorepo version", () => {
         expect(version("packages/a/package.json")).toBe("0.1.0");
     });
 
-    test("chores, documentation and other commits do not bump", () => {
+    test("chores and documentation bump the patch version, other commits do not bump", () => {
         commit("packages/a/src.ts", "chore: a");
         commit("packages/a/README.md", "docs: a");
-        commit("packages/a/x.ts", "not conventional");
-        expect(plan()).toEqual([]);
+        commit("packages/b/src.ts", "test: b");
+        commit("packages/b/x.ts", "not conventional");
+        expect(plan().map(({ name, to }) => ({ name, to }))).toEqual([
+            { name: "@x/a", to: "0.1.1" },
+        ]);
         expect(
-            plan({ bump: { ...defaults.rules.bump, docs: "patch" } }).map(
-                ({ to }) => to,
-            ),
-        ).toEqual(["0.1.1"]);
+            plan({
+                bump: { ...defaults.rules.bump, chore: false, docs: false },
+            }),
+        ).toEqual([]);
     });
 
     test("ignored folders hold no packages", () => {

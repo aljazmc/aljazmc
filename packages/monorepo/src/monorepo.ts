@@ -27,8 +27,9 @@ export default class Monorepo {
 
     /**
      * Finds the packages whose files changed since their last version, by
-     * conventional commits: `feat` bumps the minor version, `fix` the patch
-     * one, a breaking change the major one. Versions in package.json without
+     * conventional commits: `feat` bumps the minor version, `fix`, `chore`
+     * and `docs` the patch one, a breaking change the major one, by the bump
+     * setting. Versions in package.json without
      * a tag count from the commit that set them, and are tagged as they are
      * when nothing since calls for a bump. With write, each version is committed
      * and tagged on its own, with push the branch and the tags are pushed.

@@ -12,8 +12,11 @@ export interface Rules {
      * for the package.json at the root of the repository.
      */
     packages: string[];
-    /** The level each type of conventional commit bumps, others do not bump. */
-    bump: Record<string, Level>;
+    /**
+     * The level each type of conventional commit bumps, others do not bump.
+     * `false` turns off a type the defaults bump, as settings are merged.
+     */
+    bump: Record<string, Level | false>;
     /** The commit message of a version, `{name}` and `{version}` are replaced. */
     message: string;
     /** The tag of a version of a package, a git tag name has no spaces. */

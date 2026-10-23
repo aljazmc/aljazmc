@@ -32,7 +32,7 @@ would run: git push -q --atomic origin HEAD refs/tags/@aljazmc/lintero@0.3.0
 
 ### versions
 
-Each package is versioned on its own. `monorepo version` looks at the commits since the last version of each package, those that change its folder or the folders of the packages it depends on through `workspace:` (like bundled shared code), and bumps its version by [conventional commits](https://www.conventionalcommits.org): `feat` the minor version, `fix`, `perf` and `revert` the patch version, a breaking change (`feat!:` or a `BREAKING CHANGE:` footer) the major one, or the minor one before 1.0.0. Other commits, like `docs` or `chore`, bump nothing.
+Each package is versioned on its own. `monorepo version` looks at the commits since the last version of each package, those that change its folder or the folders of the packages it depends on through `workspace:` (like bundled shared code), and bumps its version by [conventional commits](https://www.conventionalcommits.org): `feat` the minor version, `fix`, `perf`, `revert`, `chore` and `docs` the patch version, a breaking change (`feat!:` or a `BREAKING CHANGE:` footer) the major one, or the minor one before 1.0.0. Other commits, like `test` or `style`, bump nothing.
 
 ```text
 released: @aljazmc/lintero 0.2.0 -> 0.3.0 (minor, @aljazmc/lintero@0.3.0)
@@ -67,7 +67,15 @@ export default {
         remote: "origin", // the remote tags and versions are pushed to
         branch: "HEAD", // the branch tags must be in the history of, and versions are pushed to
         packages: [".", "packages/*"], // roots of packages versioned on their own, "." for the root package.json
-        bump: { feat: "minor", fix: "patch", perf: "patch", revert: "patch" }, // commit types that bump
+        bump: {
+            // commit types that bump, merged with these, false turns one off
+            feat: "minor",
+            chore: "patch",
+            docs: "patch",
+            fix: "patch",
+            perf: "patch",
+            revert: "patch",
+        },
         message: "version: update {name} to v{version}", // the commit message of a version
         tag: "{name}@{version}", // the tag of a version of a package
         rootTag: "v{version}", // the tag of a version of the root package.json

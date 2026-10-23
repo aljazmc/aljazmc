@@ -132,6 +132,19 @@ export default class Parser extends ExpressionParser {
             case "using":
                 if (followedByName) return this.#variables(start, false);
                 return;
+            case "await": {
+                // await using resource = ...
+                if (!this.is("using", next) || next.newline) return;
+                const snapshot = this.snapshot();
+                this.next();
+                const after = this.peek();
+                this.restore(snapshot);
+                if (!this.isName(after) || after.newline) return;
+                this.next();
+                const declaration = this.#variables(start, false);
+                declaration.kind = "await using";
+                return declaration;
+            }
             case "function":
                 return this.parseFunction(start, false, false);
             case "async":

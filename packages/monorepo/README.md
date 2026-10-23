@@ -39,7 +39,7 @@ released: @aljazmc/lintero 0.2.0 -> 0.3.0 (minor, @aljazmc/lintero@0.3.0)
 tagged: @aljazmc/testero 0.2.0 (@aljazmc/testero@0.2.0)
 ```
 
-With `--write`, the new version is written to the package.json, committed on its own with `version: update @aljazmc/lintero to v0.3.0`, and tagged. A version in package.json without a tag, like a first one or one bumped by hand, is tagged as it is. With `--push`, the branch and the new tags are pushed together, all or nothing.
+With `--write`, the new version is written to the package.json, committed on its own with `version: update @aljazmc/lintero to v0.3.0`, and tagged. A version in package.json without a tag, like when monorepo is first used, or one bumped by hand, counts the commits since the commit that last changed the version: it is bumped when they call for it, else tagged as it is. With `--push`, the branch and the new tags are pushed together, all or nothing.
 
 Git tags are names in one namespace, a tag points to one commit, so packages cannot share `v0.3.0`. Packages are tagged with their name, `@aljazmc/lintero@0.3.0` like npm, lerna and changesets do (tags cannot have spaces), only the package.json at the root gets plain `v0.3.0`. The root package has the changes outside of the other packages.
 

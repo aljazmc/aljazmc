@@ -315,6 +315,29 @@ describe("monorepo version", () => {
         ]);
     });
 
+    test("versions without a tag count from the commit that set them", () => {
+        // like the first run on a repository with versions released before
+        for (const tag of ["@x/a@0.1.0", "@x/b@1.2.3"])
+            git.run(["tag", "-d", tag]);
+        commit("packages/a/src.ts", "feat: a");
+        expect(plan()).toEqual([
+            {
+                name: "@x/a",
+                from: "0.1.0",
+                to: "0.2.0",
+                level: "minor",
+                tag: "@x/a@0.2.0",
+            },
+            {
+                name: "@x/b",
+                from: "1.2.3",
+                to: "1.2.3",
+                level: undefined,
+                tag: "@x/b@1.2.3",
+            },
+        ]);
+    });
+
     test("write commits and tags each version on its own", () => {
         commit("packages/a/src.ts", "fix: a");
         commit("packages/b/src.ts", "feat: b");

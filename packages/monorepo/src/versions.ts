@@ -132,21 +132,27 @@ export default class Versions {
 
         for (const pack of versioned) {
             const tag = this.tag(pack, pack.version);
-            if (!this.#git.commit(`refs/tags/${tag}`)) {
-                releases.push({
-                    name: pack.name,
-                    root: pack.root,
-                    from: pack.version,
-                    to: pack.version,
-                    level: undefined,
-                    tag,
-                    commits: [],
-                });
+            // without a tag, the version counts from the commit that set it,
+            // released already or not, like when monorepo is first used
+            const tagged = this.#git.commit(`refs/tags/${tag}`) !== undefined;
+            const base = tagged ? tag : this.#versioned(pack);
+            const commits = base
+                ? this.#commits(base, this.#paths(pack, byName, all))
+                : [];
+            const level = this.#level(commits);
+            if (!level) {
+                if (!tagged)
+                    releases.push({
+                        name: pack.name,
+                        root: pack.root,
+                        from: pack.version,
+                        to: pack.version,
+                        level: undefined,
+                        tag,
+                        commits: [],
+                    });
                 continue;
             }
-            const commits = this.#commits(tag, this.#paths(pack, byName, all));
-            const level = this.#level(commits);
-            if (!level) continue;
             const to = bump(pack.version, level);
             releases.push({
                 name: pack.name,
@@ -261,7 +267,23 @@ export default class Versions {
         return [...roots];
     }
 
-    /** Commits since a tag that change some paths, without the version commits themselves. */
+    /** The last commit that changed the version in the package.json of a package. */
+    #versioned(pack: Package): string | undefined {
+        const file =
+            pack.root === "." ? "package.json" : `${pack.root}/package.json`;
+        const hash = this.#git.run([
+            "log",
+            "-1",
+            "--format=%H",
+            "-G",
+            '"version"[[:space:]]*:',
+            "--",
+            file,
+        ]);
+        return hash === "" ? undefined : hash;
+    }
+
+    /** Commits since a tag or commit that change some paths, without the version commits themselves. */
     #commits(
         tag: string,
         paths: string[],

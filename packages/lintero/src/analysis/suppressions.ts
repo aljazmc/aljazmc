@@ -6,6 +6,8 @@ export interface Suppression {
     comment: Comment;
     /** Categories like `lint`, `lint/style` or `lint/style/useConst`. */
     categories: string[];
+    /** Per category, the instance it is limited to, like the dependency in `useExhaustiveDependencies(a)`. */
+    instances: (string | undefined)[];
     /** First and last suppressed lines, 1-based. */
     from: number;
     to: number;
@@ -51,17 +53,19 @@ export default class Suppressions {
             if (!match) continue;
 
             const offset = comment.start + 2 + match[0].length;
-            const categories = this.#categories(
+            const parsed = this.#categories(
                 body.slice(match[0].length),
                 offset,
             );
-            if (!categories) continue;
+            if (!parsed) continue;
+            const { categories, instances } = parsed;
 
             const line = lines.line(comment.start);
             const kind = match[1];
             const suppression: Suppression = {
                 comment,
                 categories,
+                instances,
                 from: line,
                 to: line,
                 used: false,
@@ -95,7 +99,7 @@ export default class Suppressions {
     }
 
     /** Whether a diagnostic of a category on a line is suppressed, marking the suppression used. */
-    suppresses(category: string, line: number): boolean {
+    suppresses(category: string, line: number, instance?: string): boolean {
         let suppressed = false;
 
         for (const suppression of this.suppressions)
@@ -103,9 +107,12 @@ export default class Suppressions {
                 line >= suppression.from &&
                 line <= suppression.to &&
                 suppression.categories.some(
-                    (prefix) =>
-                        category === prefix ||
-                        category.startsWith(`${prefix}/`),
+                    (prefix, index) =>
+                        (category === prefix ||
+                            category.startsWith(`${prefix}/`)) &&
+                        [undefined, instance].includes(
+                            suppression.instances[index],
+                        ),
                 )
             ) {
                 suppression.used = true;
@@ -116,14 +123,19 @@ export default class Suppressions {
     }
 
     /** Parses `lint/group/rule lint/other: reason`, reporting malformed ones. */
-    #categories(text: string, offset: number): string[] | undefined {
+    #categories(
+        text: string,
+        offset: number,
+    ): { categories: string[]; instances: (string | undefined)[] } | undefined {
         const categories: string[] = [];
-        const pattern = /(\s*)([\w/]+)(?:\([^)]*\))?/y;
+        const instances: (string | undefined)[] = [];
+        const pattern = /(\s*)([\w/]+)(?:\(([^)]*)\))?/y;
         let index = 0;
         let last = offset;
 
         while (index < text.length) {
-            if (/^\s*:/.test(text.slice(index))) return categories;
+            if (/^\s*:/.test(text.slice(index)))
+                return { categories, instances };
             pattern.lastIndex = index;
             const match = pattern.exec(text);
             if (!match?.[2]) break;
@@ -143,7 +155,10 @@ export default class Suppressions {
                 );
                 return;
             }
-            if (kind === "lint") categories.push(category);
+            if (kind === "lint") {
+                categories.push(category);
+                instances.push(match[3]?.trim());
+            }
             index = pattern.lastIndex;
         }
 

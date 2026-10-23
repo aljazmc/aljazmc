@@ -3,12 +3,35 @@ import { dirname, join } from "node:path";
 import Config from "@aljazmc/config";
 import defaults from "./config.js";
 import Lintero from "./lintero.js";
+import all from "./rules/index.js";
 
 const config = await Config.load("lintero", defaults);
-const linteros = new Map<string, Lintero>();
-const lintero = new Lintero(config.rules);
 
-/** Like Biome, domains come from the dependencies of the closest package.json. */
+/** Reads a JSON file of the project, also with comments and trailing commas like `turbo.jsonc`. */
+const readJson = (...names: string[]): unknown => {
+    for (const name of names) {
+        const path = join(config.root, name);
+        if (!existsSync(path)) continue;
+        const text = readFileSync(path, "utf8")
+            .replace(
+                /("(?:[^"\\]|\\.)*")|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+                (_, string) => string ?? "",
+            )
+            .replace(/,(\s*[}\]])/g, "$1");
+        return JSON.parse(text);
+    }
+};
+const project = {
+    turbo: readJson("turbo.json", "turbo.jsonc"),
+    read: (file: string) => {
+        const path = join(config.root, file);
+        return existsSync(path) ? readFileSync(path, "utf8") : undefined;
+    },
+};
+const linteros = new Map<string, Lintero>();
+const lintero = new Lintero(config.rules, {}, all, project);
+
+/** Like Biome, domains and the module type come from the closest package.json. */
 const linteroFor = (file: string): Lintero => {
     let directory = dirname(join(config.root, file));
     while (!existsSync(join(directory, "package.json"))) {
@@ -23,6 +46,8 @@ const linteroFor = (file: string): Lintero => {
         found = new Lintero(
             config.rules,
             JSON.parse(readFileSync(manifest, "utf8")),
+            all,
+            project,
         );
         linteros.set(manifest, found);
     }

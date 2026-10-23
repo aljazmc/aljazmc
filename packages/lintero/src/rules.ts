@@ -88,6 +88,8 @@ export interface Report {
     end: number;
     message: string;
     fix?: Fix;
+    /** What the diagnostic is about, for suppressions like `useExhaustiveDependencies(a)`. */
+    instance?: string;
 }
 
 type Enter = { [T in NodeType]?: (node: NodeOf<T>) => void };

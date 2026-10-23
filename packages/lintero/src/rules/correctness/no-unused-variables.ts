@@ -78,16 +78,28 @@ export const bare = (declaration: Declaration, text: string): boolean => {
     return !/\(\s*$/.test(text.slice(fn.start, param.start));
 };
 
-export default rule<{ ignoreRestSiblings?: boolean; ignore?: Ignored }>({
+export default rule<{
+    ignoreRestSiblings?: boolean;
+    ignoreUsingDeclarations?: boolean;
+    ignore?: Ignored;
+}>({
     name: "noUnusedVariables",
     group: "correctness",
     severity: "warn",
     recommended: true,
     fix: "unsafe",
     languages: ["js"],
-    options: { ignoreRestSiblings: true, ignore: {} },
+    options: {
+        ignoreRestSiblings: true,
+        ignoreUsingDeclarations: false,
+        ignore: {},
+    },
     create: (context) => {
-        const { ignoreRestSiblings, ignore = {} } = context.options;
+        const {
+            ignoreRestSiblings,
+            ignoreUsingDeclarations,
+            ignore = {},
+        } = context.options;
         const ignored = (name: string, kind: BindingKind) => {
             const lists = [ignore["*"], ignore[option[kind] ?? "variable"]];
             return lists.some(
@@ -98,6 +110,7 @@ export default rule<{ ignoreRestSiblings?: boolean; ignore?: Ignored }>({
             !declaration.ambient &&
             !declaration.local &&
             !(ignoreRestSiblings && declaration.restSibling) &&
+            !(ignoreUsingDeclarations && declaration.kind === "using") &&
             !["import", "enumMember", "infer"].includes(declaration.kind) &&
             (declaration.kind !== "parameter" ||
                 bare(declaration, context.text)) &&

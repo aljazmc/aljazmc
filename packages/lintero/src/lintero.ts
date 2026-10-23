@@ -12,7 +12,11 @@ import {
 } from "@aljazmc/syntax";
 import Context, { type Source } from "./analysis/context.js";
 import Semantic from "./analysis/semantic.js";
-import Settings, { type Active, type Manifest } from "./analysis/settings.js";
+import Settings, {
+    type Active,
+    type Manifest,
+    type Project,
+} from "./analysis/settings.js";
 import Suppressions from "./analysis/suppressions.js";
 import all from "./rules/index.js";
 import type { Edit, Fix, Rule, Rules, Severity } from "./rules.js";
@@ -35,10 +39,19 @@ type Handler = (node: Node) => void;
 export default class Lintero {
     readonly active: Active[];
     readonly #settings: Rules;
+    readonly #manifest: Manifest;
+    readonly #project: Project;
     readonly #includes: Includes;
 
-    constructor(settings: Rules, manifest: Manifest = {}, rules: Rule[] = all) {
+    constructor(
+        settings: Rules,
+        manifest: Manifest = {},
+        rules: Rule[] = all,
+        project: Project = {},
+    ) {
         this.#settings = settings;
+        this.#manifest = manifest;
+        this.#project = project;
         this.active = Settings.resolve(
             settings,
             rules,
@@ -106,6 +119,8 @@ export default class Lintero {
             program: parsed.program,
             comments: parsed.comments,
             settings: this.#settings,
+            manifest: this.#manifest,
+            project: this.#project,
             parents: new Map(),
         };
         const suppressions = new Suppressions(parsed.comments, lines, text);
@@ -117,7 +132,8 @@ export default class Lintero {
 
             for (const report of context.reports) {
                 const line = lines.line(report.start);
-                if (suppressions.suppresses(category, line)) continue;
+                if (suppressions.suppresses(category, line, report.instance))
+                    continue;
 
                 const result = diagnostic(
                     report.start,

@@ -17,8 +17,16 @@ export interface Active {
     fix: FixKind;
 }
 
-/** Fields of package.json listing dependencies. */
+/** Project files besides package.json that rules read, like `turbo.json`. */
+export interface Project {
+    turbo?: unknown;
+    /** Reads another file of the project by its path from the root, for rules that follow imports. */
+    read?: (file: string) => string | undefined;
+}
+
+/** Fields of package.json listing dependencies, and the module type. */
 export interface Manifest {
+    type?: string;
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
     peerDependencies?: Record<string, string>;
@@ -40,7 +48,7 @@ export default class Settings {
         reactNative: { "react-native": "0.60.0" },
         solid: { solid: "1.0.0" },
         svelte: { svelte: "3.0.0" },
-        tailwind: { tailwindcss: "3.0.0" },
+        tailwind: { tailwindcss: "4.0.0" },
         test: { ava: "2.0.0", jest: "26.0.0", mocha: "8.0.0", vitest: "1.0.0" },
         turborepo: { turbo: "1.0.0" },
         vue: { vue: "3.0.0" },

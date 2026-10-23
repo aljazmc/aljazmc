@@ -18,7 +18,7 @@ export default rule({
     group: "complexity",
     severity: "info",
     recommended: true,
-    fix: "none",
+    fix: "unsafe",
     languages: ["jsx"],
     create: (context) => ({
         JSXElement(node) {
@@ -35,7 +35,28 @@ export default rule({
                 parent?.type === "JSXElement" ||
                 children.length === 0 ||
                 (children.length === 1 && only?.type === "JSXElement");
-            if (useless) context.report(node, "This fragment is unnecessary.");
+            if (!useless) return;
+            const first = children[0];
+            const last = children.at(-1);
+            // the children in place of the fragment, nothing in other children
+            const text =
+                first && last
+                    ? context.slice({ start: first.start, end: last.end })
+                    : parent?.type === "JSXElement"
+                      ? ""
+                      : undefined;
+            context.report(
+                node,
+                "This fragment is unnecessary.",
+                text === undefined ||
+                    (parent?.type !== "JSXElement" &&
+                        first?.type !== "JSXElement")
+                    ? undefined
+                    : {
+                          message: "Remove the Fragment",
+                          edits: [{ start: node.start, end: node.end, text }],
+                      },
+            );
         },
     }),
 });

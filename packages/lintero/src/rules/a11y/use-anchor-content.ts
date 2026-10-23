@@ -7,7 +7,7 @@ export default rule({
     group: "a11y",
     severity: "error",
     recommended: true,
-    fix: "none",
+    fix: "unsafe",
     languages: ["jsx"],
     create: (context) => ({
         JSXElement(node) {
@@ -24,11 +24,31 @@ export default rule({
                 (accessible(node.children) ||
                     contentProps(node) ||
                     Jsx.spreads(node));
-            if (!visible)
-                context.report(
-                    node,
-                    "Provide screen reader accessible content when using `a` elements.",
-                );
+            if (visible) return;
+            // the content is there when it is not hidden
+            const hidden = Jsx.attribute(node, "aria-hidden");
+            const shown =
+                hidden &&
+                (accessible(node.children) ||
+                    contentProps(node) ||
+                    Jsx.spreads(node));
+            context.report(
+                node,
+                "Provide screen reader accessible content when using `a` elements.",
+                shown
+                    ? {
+                          message:
+                              "Remove the aria-hidden attribute to allow the anchor element and its content visible to assistive technologies.",
+                          edits: [
+                              {
+                                  start: hidden.start,
+                                  end: hidden.end,
+                                  text: "",
+                              },
+                          ],
+                      }
+                    : undefined,
+            );
         },
     }),
 });

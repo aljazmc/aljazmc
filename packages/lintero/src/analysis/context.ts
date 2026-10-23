@@ -1,6 +1,7 @@
 import type { Comment, Language, Node } from "@aljazmc/syntax";
 import type { Fix, Report, Rules } from "../rules.js";
 import type Semantic from "./semantic.js";
+import type { Manifest, Project } from "./settings.js";
 
 /** What every rule sees of the file being linted. */
 export interface Source {
@@ -10,6 +11,9 @@ export interface Source {
     program: Node;
     comments: Comment[];
     settings: Rules;
+    /** The closest package.json. */
+    manifest: Manifest;
+    project: Project;
     parents: Map<Node, Node>;
 }
 
@@ -55,6 +59,14 @@ export default class Context<Options extends object = object> {
         return this.#source.settings;
     }
 
+    get manifest(): Manifest {
+        return this.#source.manifest;
+    }
+
+    get project(): Project {
+        return this.#source.project;
+    }
+
     /** Scopes, bindings and references, computed on first use. */
     get semantic(): Semantic {
         return this.#semantic();
@@ -74,12 +86,13 @@ export default class Context<Options extends object = object> {
             yield current;
     }
 
-    report(range: Range, message: string, fix?: Fix): void {
+    report(range: Range, message: string, fix?: Fix, instance?: string): void {
         this.reports.push({
             start: range.start,
             end: range.end,
             message,
             ...(fix && { fix }),
+            ...(instance !== undefined && { instance }),
         });
     }
 

@@ -59,7 +59,7 @@ export default rule({
     group: "correctness",
     severity: "warn",
     recommended: true,
-    fix: "none",
+    fix: "unsafe",
     languages: ["js"],
     create: (context) => ({
         ClassBody(node) {
@@ -96,11 +96,22 @@ export default rule({
                     : member.accessibility === "private" &&
                       !names.dynamic &&
                       !names.public.has(name);
-                if (unused)
-                    context.report(
-                        member.key,
-                        "This private class member is defined but never used.",
-                    );
+                if (!unused) continue;
+                // the member with the line break and indentation before it
+                const before = context.text.lastIndexOf("\n", member.start - 1);
+                const start =
+                    before >= node.start &&
+                    context.text.slice(before, member.start).trim() === ""
+                        ? before
+                        : member.start;
+                context.report(
+                    member.key,
+                    "This private class member is defined but never used.",
+                    {
+                        message: "Remove unused declaration.",
+                        edits: [{ start, end: member.end, text: "" }],
+                    },
+                );
             }
         },
     }),

@@ -12,8 +12,8 @@ Lightweight NPM packages, written in modern TypeScript.
 ## > Package List
 
 - [@aljazmc/formatero](packages/formatero) - a [Biome](https://biomejs.dev)-like formatter for JavaScript, TypeScript, JSX and JSON
-- [@aljazmc/lintero](packages/lintero) - a Biome-like linter, with 153 lint rules and Biome-like settings and suppressions
-- [@aljazmc/monorepo](packages/monorepo) - a monorepo management tool that moves tags to the commits a rebase made, locally and on the remote
+- [@aljazmc/lintero](packages/lintero) - a Biome-like linter, with 226 lint rules and Biome-like settings and suppressions
+- [@aljazmc/monorepo](packages/monorepo) - a monorepo management tool that versions packages on their own by conventional commits, and moves tags to the commits a rebase made
 - [@aljazmc/testero](packages/testero) - a Jest-like test runner, compiling tests with [esbuild](https://esbuild.github.io)
 
 Shared code is bundled into the packages that use it, so they have no dependencies of their own, except esbuild for testero:

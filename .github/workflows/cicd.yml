@@ -2,9 +2,9 @@ name: CI/CD
 run-name: CI/CD quickie by @${{ github.actor }}
 
 on:
+    # every push, changes outside of the packages version the root package.json
     push:
         branches: [main]
-        paths: [".github/workflows/**", "packages/**", "shared/**"]
     pull_request:
         branches: [main]
         paths: [".github/workflows/**", "packages/**", "shared/**"]
@@ -12,13 +12,14 @@ on:
     workflow_dispatch:
         inputs:
             publish:
-                description: Publish package versions that are not on npm yet
+                description: Version changed packages and publish the versions that are not on npm yet
                 type: boolean
                 default: false
 
 permissions:
     id-token: write
-    contents: read
+    # pushing the version commits and tags
+    contents: write
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -106,9 +107,28 @@ jobs:
                       echo "::endgroup::"
                   done
 
+            # monorepo moves tags a rebase left behind, then bumps the versions of the
+            # packages changed since their last version by conventional commits, see
+            # monorepo.config.ts, each committed and tagged, and pushes it all;
+            # pushes of the workflow token start no runs, so this does not loop
+            - name: Version changed packages
+              id: version
+              if: github.event_name == 'push' || inputs.publish
+              run: |
+                  # only the latest commit is released, an older run leaves it to the newer one
+                  if [ "$(git ls-remote origin "refs/heads/$GITHUB_REF_NAME" | cut -f1)" != "$(git rev-parse HEAD)" ]; then
+                      echo "::notice::$GITHUB_REF_NAME moved on, the run of its latest commit releases it."
+                      echo "skip=true" | tee -a "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  yarn b:monorepo
+                  node packages/monorepo/bin/main.js --push
+
             # a package is published when its package.json version is not on npm yet
             - name: Publish new versions
-              if: github.event_name == 'push' || inputs.publish
+              if: (github.event_name == 'push' || inputs.publish) && steps.version.outputs.skip != 'true'
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
                   CHECKED: ${{ steps.changes.outputs.check }}

@@ -2,7 +2,7 @@
 
 # > testero
 
-A simple, Jest like test runner. Easy to understand, easy to customize and easy to extend.
+A simple, Jest-like test runner. Easy to understand, easy to customize and easy to extend.
 
 ## > usage
 
@@ -84,14 +84,3 @@ export default {
 - `@aljazmc/config` (`shared/config`): loads `testero.config.ts`, finds the files and matches `testMatch`, shared with every package
 
 Each test file is bundled on its own, so it gets fresh copies of the files it imports, and spies are restored after it. Test files run one after another in one process, without workers, module mocking, fake timers, snapshots or coverage.
-
-## > achieved milestones
-
-- setup toolchain (with continuous integration and continuous delivery, using recent tools)
-- Jest like globals, matchers, mocks, hooks, configuration and reports, running this repository's tests
-
-## > planned milestones
-
-- formidable test coverage
-- module mocking, fake timers and snapshots
-- parallel test files

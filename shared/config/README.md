@@ -1,6 +1,6 @@
 # config
 
-Shared, dependency free configuration loader, bundled into every `@aljazmc` package.
+Shared, dependency-free configuration loader, bundled into every `@aljazmc` package.
 
 Each package ships its defaults in `src/config.ts`. On run, `<package>.config.ts`
 (or `.js`) in the current directory, if present, overrides them key by key.
@@ -19,6 +19,6 @@ export default {
 ```
 
 `config.files()` lists the files that are not ignored, and `config.sources()`
-reads the text ones. `Includes` matches Biome style `includes` globs, where
-the last matching glob decides and `!` excludes, and `config.custom` holds what
-the config file set, before the defaults were merged in.
+reads the text ones. `Includes` matches Biome-like `includes` globs, where
+the last matching glob decides and `!` excludes. `config.custom` holds what the
+config file set, before the defaults were merged in.

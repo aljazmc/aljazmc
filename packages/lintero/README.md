@@ -2,7 +2,7 @@
 
 # > lintero
 
-A simple linter. Easy to understand, easy to customize and easy to extend.
+A simple, Biome-like linter. Easy to understand, easy to customize and easy to extend.
 
 ## > usage
 
@@ -12,13 +12,13 @@ lintero --write           # apply safe fixes, then report what is left
 lintero --write --unsafe  # apply unsafe fixes too
 ```
 
-JavaScript, TypeScript, JSX and JSON files are checked with a subset of [Biome's](https://biomejs.dev/linter/) lint rules, aiming for the same diagnostics, positions and messages:
+JavaScript, TypeScript, JSX and JSON files are checked with Biome-like lint rules, aiming for the same diagnostics, positions and messages as [Biome](https://biomejs.dev/linter/):
 
 ```text
 warn: src/a.ts:3:8 lint/suspicious/noExplicitAny: Unexpected any. Specify a different type.
 ```
 
-Settings follow Biome's linter settings and defaults, with the recommended rules. Override them with `lintero.config.ts` or `lintero.config.js` in the current directory; objects are merged deeply, anything else (like `ignore`) replaces the default:
+Settings are Biome-like, with the same names and defaults as Biome's linter settings, and the recommended rules enabled. Override them with `lintero.config.ts` or `lintero.config.js` in the current directory; objects are merged deeply, anything else (like `ignore`) replaces the default:
 
 ```js
 export default {
@@ -53,7 +53,7 @@ export default {
 
 Domains are also enabled, with their recommended rules, when the `package.json` closest to a file depends on their packages, like `jest` or `vitest` for `test`.
 
-Diagnostics are suppressed with comments, by `biome-ignore` or `lintero-ignore`, followed by categories and a reason:
+Diagnostics are suppressed with Biome-like comments, `biome-ignore` or `lintero-ignore`, followed by categories and a reason:
 
 ```js
 // biome-ignore lint/suspicious/noDebugger: the line of the next token
@@ -73,7 +73,7 @@ Suppressions that suppress nothing are reported when they name rules lintero imp
 - style (10): `noNonNullAssertion`, `useArrayLiterals`, `useConst`, `useExponentiationOperator`, `useExportType`, `useImportType`, `useLiteralEnumMembers`, `useNodejsImportProtocol`, `useShorthandFunctionType`, `useTemplate`
 - suspicious (58): `noApproximativeNumericConstant`, `noAssignInExpressions`, `noAsyncPromiseExecutor`, `noCatchAssign`, `noClassAssign`, `noCommentText`, `noCompareNegZero`, `noConfusingLabels`, `noConfusingVoidType`, `noConstEnum`, `noControlCharactersInRegex`, `noDebugger`, `noDocumentCookie`, `noDoubleEquals`, `noDuplicateCase`, `noDuplicateClassMembers`, `noDuplicateElseIf`, `noDuplicateEnumValues`, `noDuplicateJsxProps`, `noDuplicateObjectKeys`, `noDuplicateParameters`, `noEmptyInterface`, `noExplicitAny`, `noExtraNonNullAssertion`, `noFallthroughSwitchClause`, `noFocusedTests`, `noFunctionAssign`, `noGlobalAssign`, `noGlobalIsFinite`, `noGlobalIsNan`, `noImplicitAnyLet`, `noImportAssign`, `noIrregularWhitespace`, `noLabelVar`, `noMisleadingInstantiator`, `noMisrefactoredShorthandAssign`, `noNonNullAssertedOptionalChain`, `noOctalEscape`, `noProto`, `noPrototypeBuiltins`, `noRedeclare`, `noSelfCompare`, `noShadowRestrictedNames`, `noSparseArray`, `noSuspiciousSemicolonInJsx`, `noTemplateCurlyInString`, `noThenProperty`, `noTsIgnore`, `noUnsafeDeclarationMerging`, `noUnsafeNegation`, `noUselessEscapeInString`, `noWith`, `useAdjacentOverloadSignatures`, `useDefaultSwitchClauseLast`, `useGetterReturn`, `useIsArray`, `useIterableCallbackReturn`, `useNamespaceKeyword`
 
-Rules have Biome's groups, severities, options and fix kinds. Fixes are implemented for most rules that have them in Biome.
+Rules have Biome-like groups, severities, options and fix kinds, and most of the fixes are implemented.
 
 ## > how it works
 
@@ -85,13 +85,3 @@ Rules have Biome's groups, severities, options and fix kinds. Fixes are implemen
 - `src/analysis/globals.ts`, `src/analysis/jsx.ts`, `src/analysis/nodes.ts`: global names and JSX and node helpers the rules share
 - `src/rules`: one file per rule, visiting the nodes it checks in a single traversal
 - `src/analysis/suppressions.ts`: suppression comments, reporting unused and malformed ones
-
-## > achieved milestones
-
-- setup toolchain (with continuous integration and continuous delivery, using recent tools)
-- Biome compatible settings, suppressions and 153 rules, matching Biome 2.6 on its documentation examples and edge cases
-
-## > planned milestones
-
-- formidable test coverage
-- more of Biome's rules, like the ones that need a regular expression parser or ARIA roles

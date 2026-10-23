@@ -7,16 +7,16 @@
 
 # > aljazmc's NPMJS Packages Monorepo
 
-Lightweight NPM packages, written in modern typescript.
+Lightweight NPM packages, written in modern TypeScript.
 
 ## > Package List
 
-- [@aljazmc/formatero](packages/formatero) - formatter, formats JavaScript, TypeScript, JSX and JSON like [Biome](https://biomejs.dev)
-- [@aljazmc/lintero](packages/lintero) - linter, with 153 of Biome's lint rules and its settings and suppressions
-- [@aljazmc/monorepo](packages/monorepo) - monorepo management tool, moves tags to the commits a rebase made, locally and on the remote
-- [@aljazmc/testero](packages/testero) - test runner, runs Jest like tests, compiled with [esbuild](https://esbuild.github.io)
+- [@aljazmc/formatero](packages/formatero) - a [Biome](https://biomejs.dev)-like formatter for JavaScript, TypeScript, JSX and JSON
+- [@aljazmc/lintero](packages/lintero) - a Biome-like linter, with 153 lint rules and Biome-like settings and suppressions
+- [@aljazmc/monorepo](packages/monorepo) - a monorepo management tool that moves tags to the commits a rebase made, locally and on the remote
+- [@aljazmc/testero](packages/testero) - a Jest-like test runner, compiling tests with [esbuild](https://esbuild.github.io)
 
-Shared code, bundled into the packages that use it, so they have no dependencies of their own besides esbuild for testero:
+Shared code is bundled into the packages that use it, so they have no dependencies of their own, except esbuild for testero:
 - [@aljazmc/config](shared/config) - loads `<package>.config.ts` files, finds files and matches globs
 - [@aljazmc/syntax](shared/syntax) - parses JavaScript, TypeScript, JSX and JSON into syntax trees
 

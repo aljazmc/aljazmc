@@ -2,7 +2,7 @@
 
 # > formatero
 
-A simple formatter. Easy to understand, easy to customize and easy to extend.
+A simple, Biome-like formatter. Easy to understand, easy to customize and easy to extend.
 
 ## > usage
 
@@ -11,9 +11,9 @@ formatero          # list unformatted files, exit 1 if any
 formatero --write  # format them in place
 ```
 
-JavaScript, TypeScript, JSX and JSON are parsed and printed again with [Biome's](https://biomejs.dev/formatter/) formatting rules and line breaking, aiming for the same output. Other text files are reindented line by line, counting a tab as one level.
+JavaScript, TypeScript, JSX and JSON are parsed and printed again with Biome-like formatting rules and line breaking, aiming for the same output as [Biome](https://biomejs.dev/formatter/). Other text files are reindented line by line, counting a tab as one level.
 
-Rules follow Biome's formatter options and defaults. Override them with `formatero.config.ts` or `formatero.config.js` in the current directory; objects are merged deeply, anything else (like `ignore`) replaces the default:
+Rules are Biome-like, with the same names and defaults as Biome's formatter options. Override them with `formatero.config.ts` or `formatero.config.js` in the current directory; objects are merged deeply, anything else (like `ignore`) replaces the default:
 
 ```js
 export default {
@@ -51,26 +51,13 @@ export default {
 };
 ```
 
-Like in Biome, `.editorconfig` in the current directory comes between the defaults and the config file: its `indent_style`, `indent_size`, `end_of_line` and `insert_final_newline` apply unless `formatero.config.ts` sets them.
+`.editorconfig` is handled in a Biome-like way: in the current directory, it applies between the defaults and the config file, so its `indent_style`, `indent_size`, `end_of_line` and `insert_final_newline` apply unless `formatero.config.ts` sets them.
 
 ## > how it works
 
 - `@aljazmc/syntax` (`shared/syntax`): parses sources into syntax trees and walks them, shared with lintero
 - `@aljazmc/config` (`shared/config`): loads `formatero.config.ts`, finds the files and matches `includes`, shared with every package
-- `src/editorconfig.ts`: reads the rules Biome takes from `.editorconfig`
+- `src/editorconfig.ts`: reads the Biome-like rules from `.editorconfig`
 - `src/printer/doc.ts`, `src/printer/layout.ts`: documents with groups, indentation and line breaks, laid out within the line width, after Wadler's "A prettier printer"
-- `src/printer/javascript`: turns syntax trees into documents, one section per kind of syntax, attaching comments and choosing layouts like Biome
+- `src/printer/javascript`: turns syntax trees into documents, one section per kind of syntax, attaching comments and choosing Biome-like layouts
 - `src/tokens`, `src/rules`: a token stream and the token based rules applied to it, used for files that do not parse when `formatWithErrors` is on
-
-## > achieved milestones
-
-- setup toolchain (with continuous integration and continuous delivery, using recent tools)
-- Biome compatible formatting with a full parser and printer, including line wrapping
-- all of Biome's JavaScript and JSON formatter options, with `includes` and `.editorconfig`
-- the same output as Biome for about 98% of the files in `node_modules`, and for this repository
-
-## > planned milestones
-
-- formidable test coverage
-- the remaining differences to Biome's output
-- CSS, GraphQL and HTML

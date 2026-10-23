@@ -4,7 +4,7 @@ const rules: Rules = {
     remote: "origin",
     branch: "HEAD",
     packages: [],
-    bump: { feat: "minor", fix: "patch", perf: "patch", revert: "patch" },
+    bump: { feat: "minor", chore: "patch", docs: "patch", fix: "patch", perf: "patch", revert: "patch" },
     message: "version: update {name} to v{version}",
     tag: "{name}@{version}",
     rootTag: "v{version}",

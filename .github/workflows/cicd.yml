@@ -4,10 +4,17 @@ run-name: CI/CD quickie by @${{ github.actor }}
 on:
     push:
         branches: [main]
-        paths: [".github/workflows/**", "packages/**"]
+        paths: [".github/workflows/**", "packages/**", "shared/**"]
     pull_request:
         branches: [main]
-        paths: [".github/workflows/**", "packages/**"]
+        paths: [".github/workflows/**", "packages/**", "shared/**"]
+    # run by hand from the Actions tab: checks everything
+    workflow_dispatch:
+        inputs:
+            publish:
+                description: Publish package versions that are not on npm yet
+                type: boolean
+                default: false
 
 permissions:
     id-token: write
@@ -57,24 +64,35 @@ jobs:
                   BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
               run: |
                   all=$(for d in packages/*/; do basename "$d"; done | xargs)
+                  shared=false
                   if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
                       changed=$(git diff --name-only "$BASE" HEAD)
-                      publish=$(echo "$changed" | sed -nE 's#^packages/([^/]+)/.*#\1#p' | sort -u | xargs)
-                      if echo "$changed" | grep -q '^\.github/workflows/'; then
-                          echo "Workflow changed, checking all packages."
+                      check=$(echo "$changed" | sed -nE 's#^packages/([^/]+)/.*#\1#p' | sort -u | xargs)
+                      if echo "$changed" | grep -q '^shared/'; then
+                          echo "Shared code changed, it is bundled into every package."
+                          shared=true
                           check=$all
-                      else
-                          check=$publish
+                      fi
+                      if echo "$changed" | grep -q '^\.github/workflows/'; then
+                          echo "Workflow changed, checking everything."
+                          shared=true
+                          check=$all
                       fi
                   else
-                      echo "Base commit not found, selecting all packages."
+                      echo "Base commit not found, checking everything."
+                      shared=true
                       check=$all
-                      publish=$all
                   fi
                   {
+                      echo "shared=$shared"
                       echo "check=$check"
-                      echo "publish=$publish"
                   } | tee -a "$GITHUB_OUTPUT"
+
+            - name: Check shared code
+              if: steps.changes.outputs.shared == 'true'
+              run: |
+                  yarn c:config
+                  yarn c:syntax
 
             - name: Check changed packages
               if: steps.changes.outputs.check != ''
@@ -88,12 +106,31 @@ jobs:
                       echo "::endgroup::"
                   done
 
-            - name: Publish changed packages
-              if: github.event_name == 'push' && steps.changes.outputs.publish != ''
+            # a package is published when its package.json version is not on npm yet
+            - name: Publish new versions
+              if: github.event_name == 'push' || inputs.publish
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-                  PACKAGES: ${{ steps.changes.outputs.publish }}
+                  CHECKED: ${{ steps.changes.outputs.check }}
               run: |
-                  for p in $PACKAGES; do
+                  if [ -z "$NODE_AUTH_TOKEN" ]; then
+                      echo "::error::The NPM_TOKEN secret is not set."
+                      exit 1
+                  fi
+                  for dir in packages/*/; do
+                      p=$(basename "$dir")
+                      name=$(node -p "require('./${dir}package.json').name")
+                      version=$(node -p "require('./${dir}package.json').version")
+                      if [ -n "$(npm view "$name@$version" version 2>/dev/null)" ]; then
+                          echo "$name@$version is already on npm."
+                          continue
+                      fi
+                      echo "::group::publish $name@$version"
+                      # packages left out of the checks are built and tested first
+                      case " $CHECKED " in
+                          *" $p "*) ;;
+                          *) yarn "c:$p" ;;
+                      esac
                       yarn "p:$p"
+                      echo "::endgroup::"
                   done

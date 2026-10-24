@@ -1,10 +1,16 @@
-![Custom](https://img.shields.io/badge/project_status-barely_working-yellow) ![Custom](https://img.shields.io/badge/breaking_changes-common-red) ![NPM Downloads](https://img.shields.io/npm/dm/%40aljazmc%2Fmonorepo) ![GitHub package.json version](https://img.shields.io/github/package-json/v/aljazmc/aljazmc?filename=packages%2Fmonorepo%2Fpackage.json&color=green) ![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)
+![Custom](https://img.shields.io/badge/project_status-mostly_working-green) ![Custom](https://img.shields.io/badge/breaking_changes-common-red) ![NPM Downloads](https://img.shields.io/npm/dm/%40aljazmc%2Fmonorepo) ![GitHub package.json version](https://img.shields.io/github/package-json/v/aljazmc/aljazmc?filename=packages%2Fmonorepo%2Fpackage.json&color=green) ![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)
 
 # > monorepo
 
-A simple monorepo management tool. Easy to understand, easy to customize and easy to extend.
+A simple monorepo management tool: it versions packages on their own by conventional commits, and moves tags to the commits a rebase made. Easy to understand, easy to customize and easy to extend.
 
-## > usage
+## > Install
+
+```sh
+npm install --save-dev @aljazmc/monorepo
+```
+
+## > Usage
 
 ```sh
 monorepo                       # tags, then version: what both would do
@@ -31,7 +37,7 @@ would run: git tag -a @aljazmc/lintero@0.3.0 -m 'version: update @aljazmc/linter
 would run: git push -q --atomic origin HEAD refs/tags/@aljazmc/lintero@0.3.0
 ```
 
-### versions
+## > Versions
 
 Each package is versioned on its own. `monorepo version` looks at the commits since the last version of each package, those that change its folder or the folders of the packages it depends on through `workspace:` (like bundled shared code), and bumps its version by [conventional commits](https://www.conventionalcommits.org): `feat` the minor version, `fix`, `perf`, `revert`, `chore` and `docs` the patch version, a breaking change (`feat!:` or a `BREAKING CHANGE:` footer) the major one, or the minor one before 1.0.0. Other commits, like `test` or `style`, bump nothing.
 
@@ -44,9 +50,11 @@ With `--write`, the new version is written to the package.json, committed on its
 
 Git tags are names in one namespace, a tag points to one commit, so packages cannot share `v0.3.0`. Packages are tagged with their name, `@aljazmc/lintero@0.3.0` like npm, lerna and changesets do (tags cannot have spaces), only the package.json at the root gets plain `v0.3.0`. The root package has the changes outside of the other packages.
 
-Without a command, `monorepo` runs `tags` then `version` with the same options, the usual workflow: tags left on commits a rebase replaced are moved first, as versions count the commits since the tag of each package.
+Without a command, monorepo runs `tags` then `version` with the same options, the usual workflow: tags left on commits a rebase replaced are moved first, as versions count the commits since the tag of each package.
 
 In this repository, `.github/workflows/cicd.yml` runs `monorepo --push` after the checks of every push to main, then publishes the versions not on npm yet. The version commits are pushed with the workflow token, which starts no new runs, and are not counted as changes.
+
+## > Tags
 
 A rebase rewrites commits, but tags keep pointing to the old ones, locally and on the remote. `monorepo tags` checks every tag, local and on the remote (`git ls-remote --tags`), and when its commit is no longer in the history of the branch, finds the rebased commit it belongs to:
 
@@ -59,7 +67,9 @@ A rebased commit keeps the author, author date and subject of the one it replace
 
 Annotated tags are moved with their message, tagger and date. Signed tags lose their signature, and are reported. Tags only on the remote are fetched before they are moved. Pushing uses `git push --force`, so pull other changes to the tags first.
 
-Settings can be overridden with `monorepo.config.ts` or `monorepo.config.js` in the current directory, or on the command line with `--remote` and `--branch`; objects are merged deeply, anything else (like `ignore`) replaces the default:
+## > Configuration
+
+monorepo reads `monorepo.config.ts` or `monorepo.config.js` from the current directory, and `--remote` and `--branch` from the command line. Objects are merged deeply into the defaults, anything else (like `ignore`) replaces them:
 
 ```js
 export default {
@@ -84,7 +94,7 @@ export default {
 };
 ```
 
-## > how it works
+## > How it works
 
 - `src/git.ts`: runs git, lists tags with their annotations, locally and on a remote
 - `src/history.ts`: the commits a rebase made, findable by author, date and subject, or by patch id

@@ -1,10 +1,16 @@
-![Custom](https://img.shields.io/badge/project_status-barely_working-yellow) ![Custom](https://img.shields.io/badge/breaking_changes-common-red) ![NPM Downloads](https://img.shields.io/npm/dm/%40aljazmc%2Ftestero) ![GitHub package.json version](https://img.shields.io/github/package-json/v/aljazmc/aljazmc?filename=packages%2Ftestero%2Fpackage.json&color=green) ![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)
+![Custom](https://img.shields.io/badge/project_status-mostly_working-green) ![Custom](https://img.shields.io/badge/breaking_changes-common-red) ![NPM Downloads](https://img.shields.io/npm/dm/%40aljazmc%2Ftestero) ![GitHub package.json version](https://img.shields.io/github/package-json/v/aljazmc/aljazmc?filename=packages%2Ftestero%2Fpackage.json&color=green) ![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)
 
 # > testero
 
 A simple, Jest-like test runner. Easy to understand, easy to customize and easy to extend.
 
-## > usage
+## > Install
+
+```sh
+npm install --save-dev @aljazmc/testero
+```
+
+## > Usage
 
 ```sh
 testero                    # run every test file
@@ -16,7 +22,9 @@ testero --config           # write the defaults to testero.config.ts, --config j
 testero --help
 ```
 
-Test files are written like for [Jest](https://jestjs.io), in JavaScript, TypeScript or JSX, with the same globals:
+## > Writing tests
+
+testero runs test files written in JavaScript, TypeScript or JSX, with the same globals as [Jest](https://jestjs.io):
 
 ```ts
 import { add } from "../src/math.ts";
@@ -49,9 +57,11 @@ describe("add", () => {
 - asymmetric matchers: `expect.any`, `expect.anything`, `expect.objectContaining`, `expect.arrayContaining`, `expect.stringContaining`, `expect.stringMatching`, `expect.closeTo` and their `expect.not` variants
 - `testero.fn`, `testero.spyOn`, `testero.clearAllMocks`, `testero.resetAllMocks`, `testero.restoreAllMocks` and `testero.setTimeout`, also as `jest`; imports from `@jest/globals` get the same functions
 
-Failures show the message, a diff of expected and received values, and the code where they happened.
+testero reports each failure with its message, a diff of the expected and received values, and the code where it happened.
 
-Settings follow Jest's names and defaults. Override them with `testero.config.ts` or `testero.config.js` in the current directory; objects are merged deeply, anything else (like `ignore`) replaces the default:
+## > Configuration
+
+testero reads `testero.config.ts` or `testero.config.js` from the current directory, with Jest's names and defaults. Objects are merged deeply into the defaults, anything else (like `ignore`) replaces them:
 
 ```js
 export default {
@@ -73,7 +83,7 @@ export default {
 };
 ```
 
-## > how it works
+## > How it works
 
 - `src/transformer.ts`: bundles each test file and the local files it imports with [esbuild](https://esbuild.github.io), the only dependency, into one module; installed packages stay external and the globals are injected where the file uses them
 - `src/collector.ts`: the `describe`, `test` and hook functions, collecting what a test file declares into a tree of suites (`src/suite.ts`)
@@ -84,4 +94,4 @@ export default {
 - `src/testero.ts`: finds the test files and runs them one after another
 - `@aljazmc/config` (`shared/config`): loads `testero.config.ts`, finds the files and matches `testMatch`, shared with every package
 
-Each test file is bundled on its own, so it gets fresh copies of the files it imports, and spies are restored after it. Test files run one after another in one process, without workers, module mocking, fake timers, snapshots or coverage.
+testero bundles each test file on its own, so it gets fresh copies of the files it imports, and spies are restored after it. Test files run one after another in one process, without workers, module mocking, fake timers, snapshots or coverage.

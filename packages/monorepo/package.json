@@ -1,7 +1,7 @@
 {
     "name": "@aljazmc/monorepo",
     "version": "0.4.1",
-    "description": "A simple monorepo management tool. Easy to understand, easy to customize and easy to extend.",
+    "description": "A simple monorepo management tool that versions packages by conventional commits and moves tags after a rebase. Easy to understand, easy to customize and easy to extend.",
     "author": "aljazmc",
     "license": "MIT",
     "type": "module",

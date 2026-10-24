@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import Config from "@aljazmc/config";
 import defaults from "../../src/config.ts";
 import Reporter from "../../src/reporter.ts";
@@ -87,6 +88,35 @@ describe("testero", () => {
         expect(output).toContain("> 5 |     expect(sum).toBe(3);");
         expect(output).toContain("at tests/failing.test.ts:5:17");
         expect(output).toMatch(/Test Suites: +1 failed, 1 total/);
+    });
+
+    test("import.meta describes the source file, keeping lines and columns", async () => {
+        write("src/meta.mjs", "export const url = import.meta.url;\n");
+        write(
+            "tests/meta.test.mjs",
+            [
+                'import { url } from "../src/meta.mjs";',
+                "const dirname = import.meta.dirname;",
+                "",
+                'test("describes", () => {',
+                "    expect(url).toMatch(/\\/src\\/meta\\.mjs$/);",
+                '    expect(dirname).toBe(import.meta.filename.replace(/\\/[^/]*$/, ""));',
+                "});",
+                'test("fails", () => {',
+                '    expect(import.meta.url).toBe("x");',
+                "});",
+                "",
+            ].join("\n"),
+        );
+        const { output } = await testero();
+        expect(output).toContain("✓ describes");
+        expect(output).toContain(
+            `Received: "${pathToFileURL(join(root, "tests/meta.test.mjs")).href}"`,
+        );
+        expect(output).toContain(
+            '>  9 |     expect(import.meta.url).toBe("x");',
+        );
+        expect(output).toContain("at tests/meta.test.mjs:9:29");
     });
 
     test("globals can be imported like from @jest/globals, mocks included", async () => {

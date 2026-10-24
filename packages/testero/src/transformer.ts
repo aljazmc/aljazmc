@@ -98,18 +98,25 @@ export default class Transformer {
                     };
                 });
 
-                // the bundle lives elsewhere, so import.meta describes each source file
+                // the bundle lives elsewhere, so import.meta describes each source file;
+                // `__testero()` is as long as `import.meta`, keeping columns, and the
+                // hoisted function after the last line keeps lines
                 build.onLoad({ filter: /\.[cm]?[jt]sx?$/ }, (args) => {
                     if (Transformer.#installed(args.path)) return undefined;
-                    const values: Record<string, string> = {
+                    const source = readFileSync(args.path, "utf8");
+                    const replaced = source.replace(
+                        /\bimport\.meta(?=\.(?:url|filename|dirname)\b)/g,
+                        "__testero()",
+                    );
+                    const values = JSON.stringify({
                         url: pathToFileURL(args.path).href,
                         filename: args.path,
                         dirname: dirname(args.path),
-                    };
-                    const contents = readFileSync(args.path, "utf8").replace(
-                        /\bimport\.meta\.(url|filename|dirname)\b/g,
-                        (_, name: string) => JSON.stringify(values[name]),
-                    );
+                    });
+                    const contents =
+                        replaced === source
+                            ? source
+                            : `${replaced}\nfunction __testero() { return ${values}; }\n`;
                     return {
                         contents,
                         loader:

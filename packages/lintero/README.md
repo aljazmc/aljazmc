@@ -2,7 +2,7 @@
 
 # > lintero
 
-A simple linter for JavaScript, TypeScript, JSX and JSON. Easy to understand, easy to customize and easy to extend.
+A simple linter for JavaScript, TypeScript, JSX and JSON, with 226 rules and automatic fixes. Easy to understand, easy to customize and easy to extend.
 
 ## > Install
 

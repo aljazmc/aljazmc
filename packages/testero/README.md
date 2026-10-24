@@ -2,7 +2,7 @@
 
 # > testero
 
-A simple, Jest-like test runner. Easy to understand, easy to customize and easy to extend.
+A simple, Jest-like test runner for JavaScript, TypeScript and JSX, compiling tests with esbuild. Easy to understand, easy to customize and easy to extend.
 
 ## > Install
 

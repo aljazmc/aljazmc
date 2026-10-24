@@ -2,7 +2,7 @@
 
 # > monorepo
 
-A simple monorepo management tool: it versions packages on their own by conventional commits, and moves tags to the commits a rebase made. Easy to understand, easy to customize and easy to extend.
+A simple monorepo management tool that versions packages by conventional commits and moves tags after a rebase. Easy to understand, easy to customize and easy to extend.
 
 ## > Install
 

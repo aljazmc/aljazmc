@@ -24,6 +24,8 @@ export default class Transformer {
         ".mts": "ts",
         ".tsx": "tsx",
     };
+    /** The import.meta properties that describe the source file. */
+    static readonly #meta = ["url", "filename", "dirname"];
     /** Marks the resolutions the plugin asks esbuild for itself. */
     static readonly #own = Symbol("testero");
 
@@ -52,6 +54,12 @@ export default class Transformer {
             sourcemap: "inline",
             sourcesContent: false,
             inject: [this.#globals],
+            define: Object.fromEntries(
+                Transformer.#meta.map((name) => [
+                    `import.meta.${name}`,
+                    `__testero.${name}`,
+                ]),
+            ),
             // CommonJS code in the bundle may require installed packages
             banner: {
                 js: 'import { createRequire as __testeroRequire } from "node:module";\nconst require = __testeroRequire(import.meta.url);',
@@ -72,6 +80,27 @@ export default class Transformer {
         return {
             name: "testero",
             setup: (build) => {
+                // the bundle lives elsewhere, so import.meta describes each source file:
+                // the defines turn it into `__testero`, which esbuild binds to the
+                // hoisted import after the last line, keeping lines and columns,
+                // while import.meta in strings and comments stays as it is;
+                // resolved ahead of the bare specifiers, it is one too
+                build.onResolve({ filter: /^testero-meta:/ }, (args) => ({
+                    path: args.path.slice("testero-meta:".length),
+                    namespace: "testero-meta",
+                }));
+                build.onLoad(
+                    { filter: /.*/, namespace: "testero-meta" },
+                    (args) => ({
+                        contents: `export default ${JSON.stringify({
+                            url: pathToFileURL(args.path).href,
+                            filename: args.path,
+                            dirname: dirname(args.path),
+                        })};`,
+                        loader: "js",
+                    }),
+                );
+
                 // bare specifiers: the globals, installed packages and workspace sources
                 build.onResolve({ filter: /^[^./]/ }, async (args) => {
                     if (args.pluginData === Transformer.#own) return undefined;
@@ -98,25 +127,12 @@ export default class Transformer {
                     };
                 });
 
-                // the bundle lives elsewhere, so import.meta describes each source file;
-                // `__testero()` is as long as `import.meta`, keeping columns, and the
-                // hoisted function after the last line keeps lines
                 build.onLoad({ filter: /\.[cm]?[jt]sx?$/ }, (args) => {
                     if (Transformer.#installed(args.path)) return undefined;
                     const source = readFileSync(args.path, "utf8");
-                    const replaced = source.replace(
-                        /\bimport\.meta(?=\.(?:url|filename|dirname)\b)/g,
-                        "__testero()",
-                    );
-                    const values = JSON.stringify({
-                        url: pathToFileURL(args.path).href,
-                        filename: args.path,
-                        dirname: dirname(args.path),
-                    });
-                    const contents =
-                        replaced === source
-                            ? source
-                            : `${replaced}\nfunction __testero() { return ${values}; }\n`;
+                    const contents = /\bimport\.meta\b/.test(source)
+                        ? `${source}\nimport __testero from ${JSON.stringify(`testero-meta:${args.path}`)};\n`
+                        : source;
                     return {
                         contents,
                         loader:

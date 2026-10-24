@@ -1,4 +1,4 @@
-# config
+# > config
 
 Shared, dependency-free configuration loader, bundled into every `@aljazmc` package.
 
@@ -19,6 +19,6 @@ export default {
 ```
 
 `config.files()` lists the files that are not ignored, and `config.sources()`
-reads the text ones. `Includes` matches Biome-like `includes` globs, where
+reads the text ones. `Includes` matches `includes` globs like formatero and lintero use them, where
 the last matching glob decides and `!` excludes. `config.custom` holds what the
 config file set, before the defaults were merged in.

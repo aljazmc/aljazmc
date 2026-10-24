@@ -119,6 +119,26 @@ describe("testero", () => {
         expect(output).toContain("at tests/meta.test.mjs:9:29");
     });
 
+    test("import.meta in strings and comments stays as it is", async () => {
+        write(
+            "tests/strings.test.mjs",
+            [
+                "// import.meta.url",
+                'const text = "import.meta.url";',
+                "const url = import.meta.url;",
+                "",
+                'test("keeps strings", () => {',
+                '    expect(text).toBe(["import", "meta", "url"].join("."));',
+                "    expect(url).toMatch(/\\/tests\\/strings\\.test\\.mjs$/);",
+                "});",
+                "",
+            ].join("\n"),
+        );
+        const { passed, output } = await testero();
+        expect(output).toContain("✓ keeps strings");
+        expect(passed).toBe(true);
+    });
+
     test("globals can be imported like from @jest/globals, mocks included", async () => {
         write(
             "tests/globals.test.js",

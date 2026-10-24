@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import Ignore from "./ignore.js";
@@ -56,6 +56,82 @@ export default class Config<Rules extends object = object> {
         }
 
         return new Config(defaults, root);
+    }
+
+    /** Handles `--config`, writing the defaults to a TypeScript config file, or with `--config js` a JavaScript one. Returns whether it was given. */
+    static init(
+        name: string,
+        defaults: Options,
+        argv: string[] = process.argv.slice(2),
+        root: string = process.cwd(),
+    ): boolean {
+        const index = argv.indexOf("--config");
+        if (index === -1) return false;
+
+        const next = argv[index + 1];
+        const extension =
+            next === undefined || next.startsWith("-") ? "ts" : next;
+        try {
+            console.log(
+                `created: ${Config.export(name, defaults, extension, root)}`,
+            );
+        } catch (error) {
+            console.error(error instanceof Error ? error.message : error);
+            process.exitCode = 1;
+        }
+        return true;
+    }
+
+    /** Writes the defaults to `<name>.config.<extension>` in the root, unless a config file is there already. */
+    static export(
+        name: string,
+        defaults: Options,
+        extension = "ts",
+        root: string = process.cwd(),
+    ): string {
+        if (!Config.extensions.includes(extension))
+            throw new Error(
+                `Unknown config file type ${extension}, use ts or js.`,
+            );
+        for (const existing of Config.extensions) {
+            const file = `${name}.config.${existing}`;
+            if (existsSync(join(root, file)))
+                throw new Error(`${file} already exists.`);
+        }
+
+        const file = `${name}.config.${extension}`;
+        writeFileSync(
+            join(root, file),
+            `export default ${Config.#literal(defaults)};\n`,
+        );
+        return file;
+    }
+
+    /** A value as JavaScript source, objects one property per line, short arrays on one line. */
+    static #literal(value: unknown, indent = ""): string {
+        const inner = `${indent}    `;
+        const lines = (items: string[], open: string, close: string) =>
+            items.length === 0
+                ? `${open}${close}`
+                : `${open}\n${items.map((item) => `${inner}${item},\n`).join("")}${indent}${close}`;
+
+        if (Array.isArray(value)) {
+            const items = value.map((item) => Config.#literal(item, inner));
+            const line = `[${items.join(", ")}]`;
+            return line.length <= 60 && !line.includes("\n")
+                ? line
+                : lines(items, "[", "]");
+        }
+        if (value?.constructor === Object)
+            return lines(
+                Object.entries(value).map(
+                    ([key, item]) =>
+                        `${/^[A-Za-z_$][\w$]*$/.test(key) ? key : JSON.stringify(key)}: ${Config.#literal(item, inner)}`,
+                ),
+                "{",
+                "}",
+            );
+        return JSON.stringify(value);
     }
 
     /** Deep merges plain objects, anything else in override replaces base. */

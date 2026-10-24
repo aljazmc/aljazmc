@@ -9,6 +9,8 @@ A simple, Biome-like formatter. Easy to understand, easy to customize and easy t
 ```sh
 formatero          # list unformatted files, exit 1 if any
 formatero --write  # format them in place
+formatero --config     # write the defaults to formatero.config.ts
+formatero --config js  # or to formatero.config.js
 ```
 
 JavaScript, TypeScript, JSX and JSON are parsed and printed again with Biome-like formatting rules and line breaking, aiming for the same output as [Biome](https://biomejs.dev/formatter/). Other text files are reindented line by line, counting a tab as one level.

@@ -4,6 +4,8 @@ import defaults from "./config.js";
 import EditorConfig from "./editorconfig.js";
 import Formatero, { FormatError } from "./formatero.js";
 
+if (Config.init("formatero", defaults)) process.exit();
+
 const config = await Config.load("formatero", defaults);
 const editorconfig = config.rules.useEditorconfig
     ? EditorConfig.load(config.root)

@@ -3,6 +3,7 @@ import defaults from "./config.js";
 import Monorepo from "./monorepo.js";
 
 const usage = `Usage: monorepo [<command>] [--write] [--push] [--dry-run] [--remote <name>] [--branch <name>]
+       monorepo --config [js]
 
 Without a command, monorepo runs tags, then version: tags left on commits a
 rebase replaced are moved first, so versions count only the new commits.
@@ -20,6 +21,7 @@ Commands:
              files, making commits or pushing
   --remote   the remote to push to, origin by default
   --branch   the branch tags must be in, or to push to, HEAD by default
+  --config   write the default monorepo.config.ts, or with js .js, and exit
 `;
 
 interface Options {
@@ -61,6 +63,8 @@ const version = (monorepo: Monorepo, options: Options) => {
 };
 
 try {
+    if (Config.init("monorepo", defaults)) process.exit();
+
     const argv = process.argv.slice(2);
     // without a command, the options are for both
     const command = argv[0]?.startsWith("--") ? undefined : argv[0];

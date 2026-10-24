@@ -10,6 +10,8 @@ A simple, Biome-like linter. Easy to understand, easy to customize and easy to e
 lintero                   # report problems, exit 1 if there are errors
 lintero --write           # apply safe fixes, then report what is left
 lintero --write --unsafe  # apply unsafe fixes too
+lintero --config          # write the defaults to lintero.config.ts
+lintero --config js       # or to lintero.config.js
 ```
 
 JavaScript, TypeScript, JSX and JSON files are checked with Biome-like lint rules, aiming for the same diagnostics, positions and messages as [Biome](https://biomejs.dev/linter/):

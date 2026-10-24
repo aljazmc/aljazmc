@@ -4,6 +4,8 @@ import defaults from "./config.js";
 import Testero from "./testero.js";
 
 try {
+    if (Config.init("testero", defaults)) process.exit();
+
     const args = new Arguments(process.argv.slice(2));
 
     if (args.help) process.stdout.write(Arguments.usage);

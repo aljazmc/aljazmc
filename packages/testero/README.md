@@ -12,6 +12,7 @@ testero math unit/         # run test files whose path matches a pattern
 testero -t "adds numbers"  # run tests whose full name matches
 testero --verbose --bail   # list every test, stop at the first failing file
 testero --listTests        # print the test files instead of running them
+testero --config           # write the defaults to testero.config.ts, --config js to testero.config.js
 testero --help
 ```
 

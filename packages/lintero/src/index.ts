@@ -5,6 +5,8 @@ import defaults from "./config.js";
 import Lintero from "./lintero.js";
 import all from "./rules/index.js";
 
+if (Config.init("lintero", defaults)) process.exit();
+
 const config = await Config.load("lintero", defaults);
 
 /** Reads a JSON file of the project, also with comments and trailing commas like `turbo.jsonc`. */

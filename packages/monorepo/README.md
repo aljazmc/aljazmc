@@ -17,6 +17,7 @@ monorepo version --push --dry-run  # print what it would write, commit, tag and 
 monorepo tags                  # list tags left on commits a rebase replaced, exit 1 if any
 monorepo tags --write          # move the local tags to the rebased commits
 monorepo tags --write --push   # also force push the moved tags to origin
+monorepo --config              # write the defaults to monorepo.config.ts, --config js to monorepo.config.js
 ```
 
 `--dry-run` prints what `--write` and `--push` would do, without changing files, making commits, tagging or pushing; alone it shows what `--write` would do:

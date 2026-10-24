@@ -14,6 +14,7 @@ Options:
   --listTests                    print the test files instead of running them
   --passWithNoTests              succeed when there are no test files
   --testTimeout <ms>             milliseconds a test or hook may take
+  --config [js]                  write the default testero.config.ts, or .js
   -h, --help                     show this help
 `;
 

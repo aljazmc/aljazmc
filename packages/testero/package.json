@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/testero",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "A simple, Jest like test runner. Easy to understand, easy to customize and easy to extend.",
     "author": "aljazmc",
     "license": "MIT",

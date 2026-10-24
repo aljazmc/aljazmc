@@ -24,7 +24,7 @@ const format = (source: string, file = "a.ts", rules: object = {}) =>
         }),
     ).format(source, file);
 
-/** Inputs with the output Biome 2.5 gives for them, the printer must match it. */
+/** Inputs with the output Biome 2.6 gives for them, the printer must match it. */
 const biome: {
     name: string;
     file: string;

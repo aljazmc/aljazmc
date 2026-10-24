@@ -39,8 +39,16 @@ export type RuleConfiguration =
     | Level
     | { level: Level; fix?: FixKind; options?: object };
 
-/** A level for the whole group, or a configuration per rule. */
-export type GroupConfiguration = Level | Record<string, RuleConfiguration>;
+/** A level for the whole group, or a preset for the group and a configuration per rule. */
+export type GroupConfiguration =
+    | Level
+    | {
+          /** Replaces `preset` for the group. */
+          preset?: Preset;
+          /** Biome's older switch, `preset` takes precedence. */
+          recommended?: boolean;
+          [rule: string]: RuleConfiguration | Preset | boolean | undefined;
+      };
 
 /** Biome's linter settings: linter.*, linter.rules.*, javascript.* and json.linter. */
 export interface Rules {

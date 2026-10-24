@@ -11003,6 +11003,71 @@ describe("lintero", () => {
             ).toEqual([]);
         });
 
+        test("groups take a preset, rules and domains override it", () => {
+            const source = "debugger;\ntest.only('a', () => {});\n";
+            const lintero = (rules: object) =>
+                new Lintero(settings(rules))
+                    .lint(source, "a.js")
+                    .map((d) => d.category.replace(/^lint\/\w+\//, ""))
+                    .sort();
+            expect(
+                lintero({
+                    preset: "none",
+                    suspicious: { preset: "recommended" },
+                }),
+            ).toEqual(["noDebugger"]);
+            expect(lintero({ suspicious: { preset: "all" } })).toEqual([
+                "noDebugger",
+                "noFocusedTests",
+            ]);
+            expect(lintero({ suspicious: { preset: "none" } })).toEqual([]);
+            expect(
+                lintero({ preset: "none", suspicious: { recommended: true } }),
+            ).toEqual(["noDebugger"]);
+            expect(
+                lintero({ suspicious: { preset: "none", recommended: true } }),
+            ).toEqual([]);
+            expect(
+                lintero({ suspicious: { preset: "none", noDebugger: "on" } }),
+            ).toEqual(["noDebugger"]);
+            expect(
+                lintero({
+                    domains: { test: "none" },
+                    suspicious: { preset: "all" },
+                }),
+            ).toEqual(["noDebugger"]);
+            expect(
+                lintero({
+                    domains: { test: "all" },
+                    suspicious: { preset: "none" },
+                }),
+            ).toEqual(["noFocusedTests"]);
+        });
+
+        test("a level for a group leaves domain rules to their domains", () => {
+            const source = "debugger;\ntest.only('a', () => {});\n";
+            const lintero = (rules: object) =>
+                new Lintero(settings(rules))
+                    .lint(source, "a.js")
+                    .map((d) => `${d.category} ${d.severity}`)
+                    .sort();
+            expect(lintero({ preset: "all", suspicious: "info" })).toEqual([
+                "lint/suspicious/noDebugger info",
+            ]);
+            expect(
+                lintero({
+                    domains: { test: "recommended" },
+                    suspicious: "info",
+                }),
+            ).toEqual([
+                "lint/suspicious/noDebugger info",
+                "lint/suspicious/noFocusedTests info",
+            ]);
+            expect(
+                lintero({ domains: { test: "all" }, suspicious: "off" }),
+            ).toEqual([]);
+        });
+
         test("the linter, languages and files can be turned off", () => {
             expect(lint("debugger;", "a.js", { enabled: false })).toEqual([]);
             expect(

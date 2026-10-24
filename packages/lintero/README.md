@@ -28,9 +28,11 @@ export default {
         includes: ["**"], // globs of files to lint in order, the last match decides, "!" excludes
         domains: {}, // like { react: "recommended", test: "none" }: "all" | "recommended" | "none"
         preset: "recommended", // "recommended" | "all" | "none"
-        // per group: a level for all of its rules, or a level or configuration per rule
+        // per group: a level for all of its rules (domain rules still follow their domains),
+        // or a preset for the group and a level or configuration per rule
         // levels: "off" | "on" (the rule's severity) | "info" | "warn" | "error"
         suspicious: {
+            preset: "all", // replaces the preset above for this group
             noDebugger: "off",
             noDoubleEquals: {
                 level: "warn",

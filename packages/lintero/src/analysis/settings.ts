@@ -2,7 +2,9 @@ import type {
     Domain,
     FixKind,
     Group,
+    GroupConfiguration,
     Level,
+    Preset,
     Rule,
     RuleConfiguration,
     Rules,
@@ -89,26 +91,40 @@ export default class Settings {
         const active: Active[] = [];
 
         for (const rule of rules) {
-            let enabled = Settings.#preset(settings, rule, preset, detected);
+            const group = settings[rule.group as Group];
+            let enabled: boolean;
             let severity = rule.severity;
             let options: object = rule.options ?? {};
             let fix = rule.fix;
 
-            const group = settings[rule.group as Group];
             if (typeof group === "string") {
-                enabled = group !== "off";
+                // like Biome, a level for the group leaves domain rules to their domains
+                enabled =
+                    group !== "off" &&
+                    (!rule.domains ||
+                        Settings.#preset(settings, rule, "none", detected));
                 severity = Settings.#severity(group, rule.severity);
-            } else if (group?.[rule.name] !== undefined) {
-                const configuration = group[rule.name] as RuleConfiguration;
-                const level =
-                    typeof configuration === "string"
-                        ? configuration
-                        : configuration.level;
-                enabled = level !== "off";
-                severity = Settings.#severity(level, rule.severity);
-                if (typeof configuration === "object") {
-                    options = { ...options, ...configuration.options };
-                    if (configuration.fix) fix = configuration.fix;
+            } else {
+                enabled = Settings.#preset(
+                    settings,
+                    rule,
+                    Settings.#groupPreset(group) ?? preset,
+                    detected,
+                );
+                const configuration = group?.[rule.name] as
+                    | RuleConfiguration
+                    | undefined;
+                if (configuration !== undefined) {
+                    const level =
+                        typeof configuration === "string"
+                            ? configuration
+                            : configuration.level;
+                    enabled = level !== "off";
+                    severity = Settings.#severity(level, rule.severity);
+                    if (typeof configuration === "object") {
+                        options = { ...options, ...configuration.options };
+                        if (configuration.fix) fix = configuration.fix;
+                    }
                 }
             }
 
@@ -143,6 +159,15 @@ export default class Settings {
             },
         );
         return values.some(Boolean);
+    }
+
+    /** The preset a group replaces the top-level one with, `preset` before the older `recommended`. */
+    static #groupPreset(
+        group: Exclude<GroupConfiguration, Level> | undefined,
+    ): Preset | undefined {
+        if (group?.preset) return group.preset;
+        if (group?.recommended === undefined) return undefined;
+        return group.recommended ? "recommended" : "none";
     }
 
     static #severity(level: Level, fallback: Severity): Severity {

@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/formatero",
-    "version": "0.4.2",
+    "version": "0.5.0",
     "description": "A simple formatter for JavaScript, TypeScript, JSX and JSON. Easy to understand, easy to customize and easy to extend.",
     "author": "aljazmc",
     "license": "MIT",

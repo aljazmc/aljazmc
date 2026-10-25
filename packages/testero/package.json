@@ -20,7 +20,7 @@
         "modular"
     ],
     "engines": {
-        "node": "^22.18.0 || ^24 || ^25 || ^26"
+        "node": "^22.18.0 || ^24.2.0 || ^25 || ^26"
     },
     "types": "./bin/types/testero.d.ts",
     "bin": "./bin/main.js",
@@ -28,6 +28,9 @@
         ".": {
             "types": "./bin/types/testero.d.ts",
             "default": "./bin/main.js"
+        },
+        "./globals": {
+            "types": "./bin/types/ambient.d.ts"
         },
         "./package.json": "./package.json"
     },

@@ -1,2 +1,6 @@
 #!/usr/bin/env node
-import "./index.js";
+export * from "./monorepo.js";
+export { default } from "./monorepo.js";
+
+// the command line runs only when this file is run, not when it is imported
+if (import.meta.main) await import("./index.js");

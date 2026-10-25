@@ -3,7 +3,13 @@ import { type Body, type HookKind, type Mode, Suite, Test } from "./suite.js";
 
 type TestFunction = (name: string, body?: Body, timeout?: number) => void;
 type DescribeFunction = (name: string, body: () => unknown) => void;
-type Table = (table: unknown, ...values: unknown[]) => unknown;
+// biome-ignore lint/suspicious/noExplicitAny: rows can have any arguments
+type Row = (...args: any[]) => unknown;
+/** `each` takes a table, then declares a test or suite for each of its rows. */
+type Table = (
+    table: unknown,
+    ...values: unknown[]
+) => (name: string, body: Row, timeout?: number) => void;
 
 /** `test` and `it`, with `only`, `skip`, `todo` and `each`. */
 export interface TestApi extends TestFunction {

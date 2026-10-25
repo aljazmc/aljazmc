@@ -14,20 +14,20 @@ published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
 
 ## Packages
 
-| Package | What it does | npm |
-|---|---|---|
-| [formatero](packages/formatero) | Formats JavaScript, TypeScript, JSX and JSON, with options compatible with Biome's. | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
-| [lintero](packages/lintero) | Lints JavaScript, TypeScript, JSX and JSON with 226 rules compatible with Biome's, and fixes them. | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero) |
-| [monorepo](packages/monorepo) | Versions each package on its own by conventional commits, and moves the tags a rebase left behind. | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo) |
-| [testero](packages/testero) | Runs Jest-like tests in JavaScript, TypeScript and JSX, compiled with esbuild. | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero) |
+| Package                         | What it does                                                                                       | npm                                                                    |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [formatero](packages/formatero) | Formats JavaScript, TypeScript, JSX and JSON, with options compatible with Biome's.                | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
+| [lintero](packages/lintero)     | Lints JavaScript, TypeScript, JSX and JSON with 226 rules compatible with Biome's, and fixes them. | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
+| [monorepo](packages/monorepo)   | Versions each package on its own by conventional commits, and moves the tags a rebase left behind. | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
+| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, TypeScript and JSX, compiled with esbuild.                     | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
 
 The packages share code that is not published on its own. esbuild
 bundles it into the packages that use it:
 
-| Shared code | What it does |
-|---|---|
+| Shared code                      | What it does                                                      |
+| -------------------------------- | ----------------------------------------------------------------- |
 | [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs. |
-| [@aljazmc/syntax](shared/syntax) | Parses JavaScript, TypeScript, JSX and JSON into syntax trees. |
+| [@aljazmc/syntax](shared/syntax) | Parses JavaScript, TypeScript, JSX and JSON into syntax trees.    |
 
 ## Requirements
 
@@ -57,19 +57,19 @@ docker compose run --rm node node packages/monorepo/bin/main.js tags
 The scripts of `package.json` are named `<prefix>:<package>`, like
 `c:lintero`, and most prefixes also have `<prefix>:all`:
 
-| Prefix | What it does |
-|---|---|
-| `b:` | builds the package with esbuild |
-| `c:` | completes every check: lints, tests, builds and exports the types |
-| `ct:` | checks the types |
-| `et:` | exports the types, as declaration files |
-| `l:` | lints with Biome |
-| `lw:` | lints and writes the safe fixes |
-| `lwu:` | lints and writes the unsafe fixes too |
-| `p:` | publishes to npm |
-| `t:` | runs the tests |
-| `te2e:` | runs the end-to-end tests |
-| `tunit:` | runs the unit tests |
+| Prefix   | What it does                                                      |
+| -------- | ----------------------------------------------------------------- |
+| `b:`     | builds the package with esbuild                                   |
+| `c:`     | completes every check: lints, tests, builds and exports the types |
+| `ct:`    | checks the types                                                  |
+| `et:`    | exports the types, as declaration files                           |
+| `l:`     | lints with Biome                                                  |
+| `lw:`    | lints and writes the safe fixes                                   |
+| `lwu:`   | lints and writes the unsafe fixes too                             |
+| `p:`     | publishes to npm                                                  |
+| `t:`     | runs the tests                                                    |
+| `te2e:`  | runs the end-to-end tests                                         |
+| `tunit:` | runs the unit tests                                               |
 
 ## Monorepo structure
 

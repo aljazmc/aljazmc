@@ -56,12 +56,12 @@ package. Those that change its folder count, and so do those that change
 the packages it depends on through `workspace:`, like bundled shared
 code. Their types decide the bump:
 
-| Commit | Bump |
-|---|---|
-| `feat` | minor |
-| `fix`, `perf`, `revert`, `chore`, `docs` | patch |
+| Commit                                                     | Bump                         |
+| ---------------------------------------------------------- | ---------------------------- |
+| `feat`                                                     | minor                        |
+| `fix`, `perf`, `revert`, `chore`, `docs`                   | patch                        |
 | a breaking change: `feat!:` or a `BREAKING CHANGE:` footer | major, or minor before 1.0.0 |
-| any other type, like `test` or `style` | none |
+| any other type, like `test` or `style`                     | none                         |
 
 ```text
 released: @aljazmc/lintero 0.2.0 -> 0.3.0 (minor, @aljazmc/lintero@0.3.0)
@@ -132,15 +132,15 @@ export default {
 `ignore` lists the files and folders that are never searched for
 packages. The `rules` are:
 
-| Option | Default | What it does |
-|---|---|---|
-| `remote` | `"origin"` | The remote that tags and versions are pushed to. |
-| `branch` | `"HEAD"` | The branch whose history tags must be in, and that versions are pushed to. |
-| `packages` | `[".", "packages/*"]` | The folders of the packages that are versioned on their own, `"."` for the root `package.json`. |
-| `bump` | `feat: "minor"`, and `"patch"` for `fix`, `perf`, `revert`, `chore` and `docs` | The commit types that bump a version, merged with the defaults. `false` turns one off. |
-| `message` | `"version: update {name} to v{version}"` | The commit message of a version. |
-| `tag` | `"{name}@{version}"` | The tag of a version of a package. |
-| `rootTag` | `"v{version}"` | The tag of a version of the root `package.json`. |
+| Option     | Default                                                                        | What it does                                                                                    |
+| ---------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `remote`   | `"origin"`                                                                     | The remote that tags and versions are pushed to.                                                |
+| `branch`   | `"HEAD"`                                                                       | The branch whose history tags must be in, and that versions are pushed to.                      |
+| `packages` | `[".", "packages/*"]`                                                          | The folders of the packages that are versioned on their own, `"."` for the root `package.json`. |
+| `bump`     | `feat: "minor"`, and `"patch"` for `fix`, `perf`, `revert`, `chore` and `docs` | The commit types that bump a version, merged with the defaults. `false` turns one off.          |
+| `message`  | `"version: update {name} to v{version}"`                                       | The commit message of a version.                                                                |
+| `tag`      | `"{name}@{version}"`                                                           | The tag of a version of a package.                                                              |
+| `rootTag`  | `"v{version}"`                                                                 | The tag of a version of the root `package.json`.                                                |
 
 ## How it works
 

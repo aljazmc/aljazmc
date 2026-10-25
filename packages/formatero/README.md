@@ -50,51 +50,51 @@ export default {
 
 ### Files
 
-| Option | Default | What it does |
-|---|---|---|
-| `includes` | `["**"]` | Globs of the files to format, in order. The last match decides, and `!` excludes. |
-| `useEditorconfig` | `false` | Takes indentation, line endings and the final newline from `.editorconfig`, see [below](#editorconfig). |
+| Option            | Default  | What it does                                                                                            |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| `includes`        | `["**"]` | Globs of the files to format, in order. The last match decides, and `!` excludes.                       |
+| `useEditorconfig` | `false`  | Takes indentation, line endings and the final newline from `.editorconfig`, see [below](#editorconfig). |
 
 ### Every language
 
 These options apply to every language. The `javascript` and `json`
 sections can set them again, for that language only.
 
-| Option | Default | Values | What it does |
-|---|---|---|---|
-| `enabled` | `true` | | Formats files at all. |
-| `indentStyle` | `"tab"` | `"tab"`, `"space"` | Indents with tabs or with spaces. |
-| `indentWidth` | `2` | a number | The number of spaces in a level of indentation. |
-| `lineEnding` | `"lf"` | `"lf"`, `"crlf"`, `"cr"`, `"auto"` | The line endings to write, `"auto"` uses those of the operating system. |
-| `lineWidth` | `80` | a number | The width that long lines are broken to fit. |
-| `trailingNewline` | `true` | | Ends every file with a newline. |
-| `expand` | `"auto"` | `"auto"`, `"always"`, `"never"` | When objects and arrays are written one item per line: `"auto"` keeps them that way when the source breaks the line after the opening bracket, `"always"` always does, and `"never"` only when they do not fit. `package.json` is always expanded with `"auto"`. |
-| `formatWithErrors` | `false` | | Formats files that do not parse by their tokens, instead of reporting them. |
-| `attributePosition` | `"auto"` | `"auto"`, `"multiline"` | `"multiline"` puts each JSX attribute on a line of its own when there are several, `"auto"` only when they do not fit. |
-| `bracketSameLine` | `false` | | Puts the `>` of a multi-line JSX tag at the end of its last line, instead of on a line of its own. |
-| `bracketSpacing` | `true` | | Spaces inside braces: `{ a }` instead of `{a}`. |
-| `delimiterSpacing` | `false` | | Spaces inside parentheses, brackets, type arguments and template interpolations, and after `!`. |
+| Option              | Default  | Values                             | What it does                                                                                                                                                                                                                                                     |
+| ------------------- | -------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`           | `true`   |                                    | Formats files at all.                                                                                                                                                                                                                                            |
+| `indentStyle`       | `"tab"`  | `"tab"`, `"space"`                 | Indents with tabs or with spaces.                                                                                                                                                                                                                                |
+| `indentWidth`       | `2`      | a number                           | The number of spaces in a level of indentation.                                                                                                                                                                                                                  |
+| `lineEnding`        | `"lf"`   | `"lf"`, `"crlf"`, `"cr"`, `"auto"` | The line endings to write, `"auto"` uses those of the operating system.                                                                                                                                                                                          |
+| `lineWidth`         | `80`     | a number                           | The width that long lines are broken to fit.                                                                                                                                                                                                                     |
+| `trailingNewline`   | `true`   |                                    | Ends every file with a newline.                                                                                                                                                                                                                                  |
+| `expand`            | `"auto"` | `"auto"`, `"always"`, `"never"`    | When objects and arrays are written one item per line: `"auto"` keeps them that way when the source breaks the line after the opening bracket, `"always"` always does, and `"never"` only when they do not fit. `package.json` is always expanded with `"auto"`. |
+| `formatWithErrors`  | `false`  |                                    | Formats files that do not parse by their tokens, instead of reporting them.                                                                                                                                                                                      |
+| `attributePosition` | `"auto"` | `"auto"`, `"multiline"`            | `"multiline"` puts each JSX attribute on a line of its own when there are several, `"auto"` only when they do not fit.                                                                                                                                           |
+| `bracketSameLine`   | `false`  |                                    | Puts the `>` of a multi-line JSX tag at the end of its last line, instead of on a line of its own.                                                                                                                                                               |
+| `bracketSpacing`    | `true`   |                                    | Spaces inside braces: `{ a }` instead of `{a}`.                                                                                                                                                                                                                  |
+| `delimiterSpacing`  | `false`  |                                    | Spaces inside parentheses, brackets, type arguments and template interpolations, and after `!`.                                                                                                                                                                  |
 
 ### JavaScript, TypeScript and JSX
 
 These options are set in the `javascript` section.
 
-| Option | Default | Values | What it does |
-|---|---|---|---|
-| `arrowParentheses` | `"always"` | `"always"`, `"asNeeded"` | Parentheses around a single arrow function parameter: `(a) => a` or `a => a`. |
-| `jsxQuoteStyle` | `"double"` | `"double"`, `"single"` | The quotes of JSX attributes. |
-| `operatorLinebreak` | `"after"` | `"after"`, `"before"` | Breaks long binary expressions after their operators, or before them. |
-| `quoteProperties` | `"asNeeded"` | `"asNeeded"`, `"preserve"` | Removes the quotes from object keys that do not need them, or keeps them as written. |
-| `quoteStyle` | `"double"` | `"double"`, `"single"` | The quotes of strings. |
-| `semicolons` | `"always"` | `"always"`, `"asNeeded"` | Ends every statement with a semicolon, or only those that need one. |
-| `trailingCommas` | `"all"` | `"all"`, `"es5"`, `"none"` | Trailing commas in multi-line lists: everywhere, only where ES5 allows them, or nowhere. |
+| Option              | Default      | Values                     | What it does                                                                             |
+| ------------------- | ------------ | -------------------------- | ---------------------------------------------------------------------------------------- |
+| `arrowParentheses`  | `"always"`   | `"always"`, `"asNeeded"`   | Parentheses around a single arrow function parameter: `(a) => a` or `a => a`.            |
+| `jsxQuoteStyle`     | `"double"`   | `"double"`, `"single"`     | The quotes of JSX attributes.                                                            |
+| `operatorLinebreak` | `"after"`    | `"after"`, `"before"`      | Breaks long binary expressions after their operators, or before them.                    |
+| `quoteProperties`   | `"asNeeded"` | `"asNeeded"`, `"preserve"` | Removes the quotes from object keys that do not need them, or keeps them as written.     |
+| `quoteStyle`        | `"double"`   | `"double"`, `"single"`     | The quotes of strings.                                                                   |
+| `semicolons`        | `"always"`   | `"always"`, `"asNeeded"`   | Ends every statement with a semicolon, or only those that need one.                      |
+| `trailingCommas`    | `"all"`      | `"all"`, `"es5"`, `"none"` | Trailing commas in multi-line lists: everywhere, only where ES5 allows them, or nowhere. |
 
 ### JSON
 
 These options are set in the `json` section.
 
-| Option | Default | Values | What it does |
-|---|---|---|---|
+| Option           | Default  | Values            | What it does                                                                                              |
+| ---------------- | -------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
 | `trailingCommas` | `"none"` | `"none"`, `"all"` | Trailing commas in multi-line lists. `"all"` applies to `.jsonc` files only, as JSON does not allow them. |
 
 ### .editorconfig

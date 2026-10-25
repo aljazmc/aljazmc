@@ -56,16 +56,17 @@ describe("add", () => {
 });
 ```
 
-| Globals | What they do |
-|---|---|
-| `describe`, `test`, `it` | Declare suites and tests, with `.only`, `.skip` and `.each`, and `test.todo`. `fdescribe`, `xdescribe`, `fit`, `xit` and `xtest` work too. |
-| `beforeAll`, `afterAll`, `beforeEach`, `afterEach` | Run code around the tests of a suite. |
-| `expect` | Asserts with Jest's matchers, `.not`, `.resolves` and `.rejects`, and has `expect.extend`, `expect.assertions` and `expect.hasAssertions`. |
-| `expect.any`, `expect.anything`, `expect.objectContaining`, `expect.arrayContaining`, `expect.stringContaining`, `expect.stringMatching`, `expect.closeTo` | Asymmetric matchers, also as `expect.not.*`. |
-| `testero`, `jest` | Mocks: `fn`, `spyOn`, `clearAllMocks`, `resetAllMocks` and `restoreAllMocks`, and `setTimeout` for the tests of a file. |
+| Globals                                                                                                                                                    | What they do                                                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `describe`, `test`, `it`                                                                                                                                   | Declare suites and tests, with `.only`, `.skip`, `.each` and `test.todo`.                                                                  |
+| `beforeAll`, `afterAll`, `beforeEach`, `afterEach`                                                                                                         | Run code around the tests of a suite.                                                                                                      |
+| `expect`                                                                                                                                                   | Asserts with Jest's matchers, `.not`, `.resolves` and `.rejects`, and has `expect.extend`, `expect.assertions` and `expect.hasAssertions`. |
+| `expect.any`, `expect.anything`, `expect.objectContaining`, `expect.arrayContaining`, `expect.stringContaining`, `expect.stringMatching`, `expect.closeTo` | Asymmetric matchers, also as `expect.not.*`.                                                                                               |
+| `testero`, `jest`                                                                                                                                          | Mocks: `fn`, `spyOn`, `clearAllMocks`, `resetAllMocks` and `restoreAllMocks`, and `setTimeout` for the tests of a file.                    |
 
-Tests and hooks may return promises or take a `done` callback, and they
-time out. Imports from `@jest/globals` get the same functions.
+`fdescribe`, `xdescribe`, `fit`, `xit` and `xtest` work too. Tests and
+hooks may return promises or take a `done` callback, and they time out.
+Imports from `@jest/globals` get the same functions.
 
 Each failure is reported with its message, a diff of the expected and
 received values, and the code where it happened.
@@ -103,16 +104,16 @@ export default {
 `ignore` lists the files and folders that are never searched for tests.
 The `rules` are:
 
-| Option | Default | What it does |
-|---|---|---|
-| `testMatch` | `["**/__tests__/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}", "**/*.{spec,test}.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"]` | Globs of the test files, in order. The last match decides, and `!` excludes. |
-| `testTimeout` | `5000` | The milliseconds a test or hook may take. |
-| `bail` | `false` | Stops after the first failing test file. |
-| `verbose` | `false` | Lists every test, not only the failing ones. |
-| `passWithNoTests` | `false` | Succeeds when there are no test files. |
-| `clearMocks` | `false` | Clears the calls of every mock before each test. |
-| `resetMocks` | `false` | Also removes their implementations. |
-| `restoreMocks` | `false` | Also restores the original functions of spies. |
+| Option            | Default                                                                                                     | What it does                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `testMatch`       | `["**/__tests__/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}", "**/*.{spec,test}.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"]` | Globs of the test files, in order. The last match decides, and `!` excludes. |
+| `testTimeout`     | `5000`                                                                                                      | The milliseconds a test or hook may take.                                    |
+| `bail`            | `false`                                                                                                     | Stops after the first failing test file.                                     |
+| `verbose`         | `false`                                                                                                     | Lists every test, not only the failing ones.                                 |
+| `passWithNoTests` | `false`                                                                                                     | Succeeds when there are no test files.                                       |
+| `clearMocks`      | `false`                                                                                                     | Clears the calls of every mock before each test.                             |
+| `resetMocks`      | `false`                                                                                                     | Also removes their implementations.                                          |
+| `restoreMocks`    | `false`                                                                                                     | Also restores the original functions of spies.                               |
 
 ## How it works
 

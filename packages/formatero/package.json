@@ -29,9 +29,11 @@
         },
         "./package.json": "./package.json"
     },
+    "dependencies": {
+        "@aljazmc/config": "workspace:^",
+        "@aljazmc/syntax": "workspace:^"
+    },
     "devDependencies": {
-        "@aljazmc/config": "workspace:*",
-        "@aljazmc/syntax": "workspace:*",
         "@jest/globals": "^30.5.2",
         "@types/node": "^26.6.5"
     }

@@ -35,11 +35,11 @@
         "./package.json": "./package.json"
     },
     "devDependencies": {
-        "@aljazmc/config": "workspace:*",
         "@jest/globals": "^30.5.2",
         "@types/node": "^26.6.5"
     },
     "dependencies": {
+        "@aljazmc/config": "workspace:^",
         "esbuild": "0.28.2"
     }
 }

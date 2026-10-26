@@ -158,5 +158,4 @@ jobs:
                       yarn "c:$p"
                       echo "::endgroup::"
                   done
-                  # TODO: remove --dry-run once its output looks right
-                  yarn p:all --dry-run
+                  yarn p:all

@@ -1,7 +1,8 @@
 # > syntax
 
 Shared, dependency-free scanner and recursive descent parser for JavaScript,
-TypeScript, JSX and JSON, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`.
+TypeScript, JSX and JSON, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
+types.
 
 ```ts
 import { language, parse } from "@aljazmc/syntax";

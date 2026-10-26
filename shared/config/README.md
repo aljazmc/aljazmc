@@ -1,7 +1,7 @@
 # > config
 
 Shared, dependency-free configuration loader, file finder and glob matcher, bundled
-into every `@aljazmc` package.
+into every `@aljazmc` package and published for their types.
 
 Each package ships its defaults in `src/config.ts`. On run, `<package>.config.ts`
 (or `.js`) in the current directory, if present, overrides them key by key.

@@ -4,7 +4,6 @@
     "description": "Shared, dependency-free configuration loader, file finder and glob matcher for @aljazmc packages.",
     "author": "aljazmc",
     "license": "MIT",
-    "private": true,
     "type": "module",
     "repository": {
         "type": "git",
@@ -21,6 +20,15 @@
             "default": "./src/index.ts"
         },
         "./package.json": "./package.json"
+    },
+    "publishConfig": {
+        "exports": {
+            ".": {
+                "types": "./bin/types/index.d.ts",
+                "default": "./bin/index.js"
+            },
+            "./package.json": "./package.json"
+        }
     },
     "devDependencies": {
         "@jest/globals": "^30.5.2",

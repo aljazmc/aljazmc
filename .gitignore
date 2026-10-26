@@ -1,5 +1,6 @@
 # build output
 packages/*/bin/
+shared/*/bin/
 
 # cache folder
 .cache/

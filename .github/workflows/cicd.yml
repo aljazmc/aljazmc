@@ -126,18 +126,20 @@ jobs:
                   yarn b:monorepo
                   node packages/monorepo/bin/main.js --push
 
-            # a package is published when its package.json version is not on npm yet
+            # a package is published when its package.json version is not on npm yet,
+            # after the packages it depends on, see yarn p:all
             - name: Publish new versions
               if: (github.event_name == 'push' || inputs.publish) && steps.version.outputs.skip != 'true'
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
                   CHECKED: ${{ steps.changes.outputs.check }}
+                  SHARED: ${{ steps.changes.outputs.shared }}
               run: |
                   if [ -z "$NODE_AUTH_TOKEN" ]; then
                       echo "::error::The NPM_TOKEN secret is not set."
                       exit 1
                   fi
-                  for dir in packages/*/; do
+                  for dir in shared/*/ packages/*/; do
                       p=$(basename "$dir")
                       name=$(node -p "require('./${dir}package.json').name")
                       version=$(node -p "require('./${dir}package.json').version")
@@ -145,12 +147,16 @@ jobs:
                           echo "$name@$version is already on npm."
                           continue
                       fi
-                      echo "::group::publish $name@$version"
                       # packages left out of the checks are built and tested first
+                      if [ "$dir" = "shared/$p/" ] && [ "$SHARED" = true ]; then
+                          continue
+                      fi
                       case " $CHECKED " in
-                          *" $p "*) ;;
-                          *) yarn "c:$p" ;;
+                          *" $p "*) continue ;;
                       esac
-                      yarn "p:$p"
+                      echo "::group::check $name@$version"
+                      yarn "c:$p"
                       echo "::endgroup::"
                   done
+                  # TODO: remove --dry-run once its output looks right
+                  yarn p:all --dry-run

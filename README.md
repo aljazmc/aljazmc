@@ -8,9 +8,9 @@
 # aljazmc
 
 Lightweight npm packages, written in modern TypeScript: a formatter, a
-linter, a test runner and a monorepo tool. Each package has no
-dependencies of its own, except esbuild for testero, and all of them are
-published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
+linter, a test runner and a monorepo tool. No package depends on
+anything outside of this repository, except esbuild for testero, and all
+of them are published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
 
 ## Packages
 
@@ -21,8 +21,8 @@ published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
 | [monorepo](packages/monorepo)   | Versions each package on its own by conventional commits, and moves the tags a rebase left behind. | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
 | [testero](packages/testero)     | Runs Jest-like tests in JavaScript, TypeScript and JSX, compiled with esbuild.                     | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
 
-The packages share code that is not published on its own. esbuild
-bundles it into the packages that use it:
+The packages share code, published for its types and bundled by esbuild
+into the packages that use it:
 
 | Shared code                      | What it does                                                      |
 | -------------------------------- | ----------------------------------------------------------------- |
@@ -77,13 +77,12 @@ The scripts of `package.json` are named `<prefix>:<package>`, like
 push to main
 ├─> yarn c:<package>    lints, tests, builds and exports the types of each changed package
 ├─> monorepo --push     bumps, commits, tags and pushes the versions, by conventional commits
-└─> yarn p:<package>    publishes the versions that are not on npm yet
+└─> yarn p:all          publishes the versions that are not on npm yet, dependencies first
 ```
 
 ```
 packages/<name>/       the published packages, each with its src/, tests/ and README
-shared/<name>/         code bundled into the packages, not published on its own
-scripts/types.mts      copies the declarations of shared code into the packages
+shared/<name>/         code bundled into the packages, published for their types
 <package>.config.ts    how the packages check this repository
 project.sh             creates the container and runs the checks
 ```

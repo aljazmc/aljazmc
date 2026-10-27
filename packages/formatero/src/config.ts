@@ -28,6 +28,10 @@ const rules: Rules = {
     json: {
         trailingCommas: "none",
     },
+    markdown: {
+        proseWrap: "preserve",
+        formatEmbeds: true,
+    },
 };
 
 export default {

@@ -1,14 +1,17 @@
 import type { Node, Program } from "./ast.js";
+import type { Root } from "./markdown/ast.js";
+import Blocks, { type MarkdownOptions } from "./markdown/blocks.js";
 import type { Options } from "./parser/base.js";
 import Parser from "./parser/statements.js";
 import type { Comment } from "./scanner.js";
 
 export type * from "./ast.js";
 export { default as Lines } from "./lines.js";
+export type * as Markdown from "./markdown/ast.js";
 export type { Comment, Token } from "./scanner.js";
 export { ParseError } from "./scanner.js";
 export { default as Walker } from "./walker.js";
-export type { Options };
+export type { MarkdownOptions, Options };
 
 export interface Parsed {
     program: Program;
@@ -32,6 +35,19 @@ export function language(file: string): Language | undefined {
         typescript: /\.[cm]?tsx?$/.test(file),
         jsx: !/\.[cm]?ts$/.test(file),
     };
+}
+
+/** Whether a file is Markdown, by its extension. */
+export function isMarkdown(file: string): boolean {
+    return /\.(?:md|markdown)$/i.test(file);
+}
+
+/** Parses CommonMark, with GitHub's tables, task lists and strikethrough unless `gfm` is false. */
+export function parseMarkdown(
+    source: string,
+    options: MarkdownOptions = {},
+): Root {
+    return new Blocks(source, options).parse(options.frontmatter);
 }
 
 export function parse(source: string, options: Options): Parsed {

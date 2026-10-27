@@ -6965,6 +6965,219 @@ const biome: {
         expected: [],
     },
     {
+        rule: "nursery/useConsistentHeadingLevel",
+        file: "a.md",
+        source: "# Header 1\n### Header 3\n",
+        expected: ["2:1 This heading skipped a level."],
+    },
+    {
+        rule: "nursery/useConsistentHeadingLevel",
+        file: "a.md",
+        source: "# Header 1\n## Header 2\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useConsistentHeadingLevel",
+        file: "a.md",
+        source: "# A\n\ntext\n\n#### D\n## B\n#### C\nSetext\n======\n### E\n> # Q\n> ### R\n- # L\n\n  ### M\n",
+        expected: [
+            "12:3 This heading skipped a level.",
+            "15:3 This heading skipped a level.",
+            "5:1 This heading skipped a level.",
+            "7:1 This heading skipped a level.",
+        ],
+    },
+    {
+        rule: "nursery/useConsistentHeadingLevel",
+        file: "a.md",
+        source: "# A\n\n<!-- biome-ignore lint/nursery/useConsistentHeadingLevel: skip -->\n### C\n\n#### D\n\n###### F\n",
+        expected: ["8:1 This heading skipped a level."],
+    },
+    {
+        rule: "nursery/useConsistentUnicodeBom",
+        file: "a.md",
+        source: "\ufeff# Heading\n",
+        expected: [
+            "1:1 This file starts with a Unicode byte order mark (BOM).",
+        ],
+    },
+    {
+        rule: "nursery/useConsistentUnicodeBom",
+        file: "a.md",
+        source: "# Heading\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useConsistentUnicodeBom",
+        file: "a.md",
+        options: { bom: "always" },
+        source: "# Heading\n",
+        expected: ["1:1 This file is missing a Unicode byte order mark (BOM)."],
+    },
+    {
+        rule: "nursery/useConsistentUnicodeBom",
+        file: "a.md",
+        options: { bom: "always" },
+        source: "\ufeff# Heading\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useConsistentUnicodeBom",
+        file: "a.md",
+        options: { bom: "always" },
+        source: "",
+        expected: ["1:1 This file is missing a Unicode byte order mark (BOM)."],
+    },
+    {
+        rule: "nursery/useFencedCodeLanguage",
+        file: "a.md",
+        source: "```\nconsole.log(1)\n```\n",
+        expected: ["1:1 This fenced code block is missing a language tag."],
+    },
+    {
+        rule: "nursery/useFencedCodeLanguage",
+        file: "a.md",
+        source: "```js\nconsole.log(1)\n```\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useFencedCodeLanguage",
+        file: "a.md",
+        options: { allowedLanguages: ["js", "ts"] },
+        source: "```python\nprint(1)\n```\n",
+        expected: [
+            "1:4 This language tag isn't in the list of allowed languages.",
+        ],
+    },
+    {
+        rule: "nursery/useFencedCodeLanguage",
+        file: "a.md",
+        options: { languageOnly: true },
+        source: "```js startLine=3\nconsole.log(1)\n```\n",
+        expected: [
+            "1:6 This info string contains content beyond the language tag.",
+        ],
+    },
+    {
+        rule: "nursery/useFencedCodeLanguage",
+        file: "a.md",
+        options: { allowedLanguages: ["rust"], languageOnly: true },
+        source: "~~~\na\n~~~\n   ```   \nb\n```\n- ```Rust  ignore\n  c\n  ```\n> ````\n> d\n> ````\n    ```\n    indented\n",
+        expected: [
+            "10:3 This fenced code block is missing a language tag.",
+            "1:1 This fenced code block is missing a language tag.",
+            "4:4 This fenced code block is missing a language tag.",
+            "7:10 This info string contains content beyond the language tag.",
+            "7:6 This language tag isn't in the list of allowed languages.",
+        ],
+    },
+    {
+        rule: "nursery/useSingleTopLevelHeading",
+        file: "a.md",
+        source: "Title\n=====\nAnother top-level heading\n=========================\n",
+        expected: ["3:1 This document has more than one top-level heading."],
+    },
+    {
+        rule: "nursery/useSingleTopLevelHeading",
+        file: "a.md",
+        source: "Title\n=====\n## Heading\n## Another heading\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useSingleTopLevelHeading",
+        file: "a.md",
+        source: "# Title\n> # Quoted heading\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useSingleTopLevelHeading",
+        file: "a.md",
+        options: { level: 2 },
+        source: "## Section\n## Another top-level section\n",
+        expected: ["2:1 This document has more than one top-level heading."],
+    },
+    {
+        rule: "nursery/useSingleTopLevelHeading",
+        file: "a.md",
+        source: "<!-- c -->\n\n# A\n\ntext\n\n# B\n- # C\n# D\n",
+        expected: [
+            "7:1 This document has more than one top-level heading.",
+            "9:1 This document has more than one top-level heading.",
+        ],
+    },
+    {
+        rule: "nursery/useSingleTopLevelHeading",
+        file: "a.md",
+        source: "text\n\n# A\n\n# B\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useSingleTopLevelHeading",
+        file: "a.md",
+        source: "## Intro\n\n# A\n\n# B\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "Some text\n# Heading\n",
+        expected: ["1:1 Missing top-level heading."],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "# Heading\nSome text\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "---\ntitle: Example\n---\n## Section\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "<div>Intro</div>\n## Section\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "<!-- preamble -->\n\n## Section\n",
+        expected: ["3:1 Missing top-level heading."],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "<!-- preamble -->\n\nTitle\n=====\n",
+        expected: [],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "",
+        expected: [],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "- item\n",
+        expected: ["1:1 Missing top-level heading."],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "Sub\n---\n",
+        expected: ["1:1 Missing top-level heading."],
+    },
+    {
+        rule: "nursery/useTopLevelHeading",
+        file: "a.md",
+        source: "<!-- biome-ignore lint/nursery/useTopLevelHeading: no title -->\n## Section\n",
+        expected: [],
+    },
+    {
         rule: "performance/noAccumulatingSpread",
         file: "a.js",
         source: "var a = ['a', 'b', 'c'];\na.reduce((acc, val) => [...acc, val], []);\n",
@@ -7213,6 +7426,20 @@ const biome: {
             "5:6 innerText is not recommended for reading DOM node text.",
             "6:9 innerText is not recommended for reading DOM node text.",
             "7:9 innerText is not recommended for reading DOM node text.",
+        ],
+    },
+    {
+        rule: "performance/useDomNodeTextContent",
+        file: "a.ts",
+        source: 'function a(node: { innerText: string }) { node.innerText; }\nfunction b(node: string | number) { node.innerText = "x"; }\nfunction c(node: HTMLElement) { node.innerText; }\nfunction d(node: HTMLElement | string) { node.innerText; }\nfunction e({ innerText }: { innerText: string }) {}\nfunction f({ innerText }: Element) {}\nconst g: { innerText: string } = x; g.innerText;\nconst h: (string) = x; h["innerText"];\nfunction i(node: { innerText: string } = y) { node.innerText; }\nfunction j(node: any) { node.innerText; }\nfunction k(node: [string]) { (node).innerText; }\nconst { innerText: l }: { innerText: string } = x;\nfunction m(...node: string[]) { node.innerText; }\nlet n: unknown; n.innerText;\nfunction o(node: `a${string}`) { node.innerText; }\nfunction p(node: () => void) { node.innerText; }\nfunction q(node: "a" | 1 | true | null | undefined) { node.innerText; }\nfunction r(node: object) { node.innerText; }\n',
+        expected: [
+            "10:30 innerText is not recommended for reading DOM node text.",
+            "13:38 innerText is not recommended for reading DOM node text.",
+            "14:19 innerText is not recommended for reading DOM node text.",
+            "18:33 innerText is not recommended for reading DOM node text.",
+            "3:38 innerText is not recommended for reading DOM node text.",
+            "4:47 innerText is not recommended for reading DOM node text.",
+            "6:14 innerText is not recommended for reading DOM node text.",
         ],
     },
     {
@@ -9067,6 +9294,123 @@ const biome: {
         expected: [],
     },
     {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        source: "",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        source: "\n\n",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        source: "<!-- Only comments -->\n",
+        expected: ["1:23 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        options: { allowComments: true },
+        source: "<!-- Only comments -->\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        options: { allowComments: true },
+        source: "",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        source: "\n<!-- a -->\n\n<!-- b -->\n",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        source: "# Title\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        source: "<!-- a --> text\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.md",
+        source: "<div></div>\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        source: "",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        source: "\n\n",
+        expected: ["3:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        source: "// comment\n",
+        expected: ["2:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        options: { allowComments: true },
+        source: "// comment\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.ts",
+        source: ";\n{}\n",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        source: "'use strict';\n",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        source: "{ a; }\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.cjs",
+        source: "",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        source: "import a from 'a';\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.js",
+        source: "/* a */ ;\n",
+        expected: ["1:9 An empty source is not allowed."],
+    },
+    {
         rule: "suspicious/noExplicitAny",
         file: "a.ts",
         source: "let variable: any = 1;\n",
@@ -9522,25 +9866,33 @@ const biome: {
         rule: "suspicious/noIdenticalTestTitle",
         file: "a.js",
         source: "it('should do bar', () => {});\nit('should do bar', () => {});\n",
-        expected: ["2:1 Duplicate test title found."],
+        expected: [
+            '1:4 The test title "should do bar" is used more than once in the same scope.',
+        ],
     },
     {
         rule: "suspicious/noIdenticalTestTitle",
         file: "a.js",
         source: "describe('foo', () => {\n  it('should do bar', () => {});\n  it('should do bar', () => {});\n});\n",
-        expected: ["3:3 Duplicate test title found."],
+        expected: [
+            '2:6 The test title "should do bar" is used more than once in the same scope.',
+        ],
     },
     {
         rule: "suspicious/noIdenticalTestTitle",
         file: "a.js",
         source: "describe('foo', () => {});\ndescribe('foo', () => {});\n",
-        expected: ["2:1 Duplicate describe title found."],
+        expected: [
+            '1:10 The describe title "foo" is used more than once in the same scope.',
+        ],
     },
     {
         rule: "suspicious/noIdenticalTestTitle",
         file: "a.js",
         source: "describe('foo', () => {\n  describe('baz', () => {});\n  describe('baz', () => {});\n});\n",
-        expected: ["3:3 Duplicate describe title found."],
+        expected: [
+            '2:12 The describe title "baz" is used more than once in the same scope.',
+        ],
     },
     {
         rule: "suspicious/noIdenticalTestTitle",
@@ -9559,11 +9911,11 @@ const biome: {
         file: "a.js",
         source: 'test("a", () => {});\nit("a", () => {});\ndescribe("a", () => {});\ntest.skip("b", () => {});\ntest.only("b", () => {});\ntest(`c`, () => {});\ntest("c", () => {});\ntest(`d${x}`, () => {});\ntest(`d${x}`, () => {});\ntest(name, () => {});\ntest(name, () => {});\ntest.each([])("f", () => {});\ntest.each([])("f", () => {});\ntest.todo("g");\ntest.todo("g");\nfdescribe("i", () => {});\nxdescribe("i", () => {});\ntest("q\\u0071", () => {});\ntest("qq", () => {});\n',
         expected: [
-            "15:1 Duplicate test title found.",
-            "17:1 Duplicate describe title found.",
-            "2:1 Duplicate test title found.",
-            "5:1 Duplicate test title found.",
-            "7:1 Duplicate test title found.",
+            '14:11 The test title "g" is used more than once in the same scope.',
+            '16:11 The describe title "i" is used more than once in the same scope.',
+            '1:6 The test title "a" is used more than once in the same scope.',
+            '4:11 The test title "b" is used more than once in the same scope.',
+            '6:6 The test title "c" is used more than once in the same scope.',
         ],
     },
     {
@@ -9571,8 +9923,17 @@ const biome: {
         file: "a.js",
         source: 'describe("a", () => {\n  if (x) { test("l", () => {}); }\n  test("l", () => {});\n  function f() { test("n", () => {}); }\n  test("n", () => {});\n  test("o", () => { test("p", () => {}); test("p", () => {}); });\n  void test("u", () => {}); void test("u", () => {});\n  test("x", () => {}); describe("x", () => {});\n  suite("w", () => {}); test.describe("w", () => {});\n});\ndescribe.each([])("d", () => { test("z", () => {}); test("z", () => {}); });\ndescribe("b", function () { test("z", () => {}); test("z", () => {}); });\n',
         expected: [
-            "12:50 Duplicate test title found.",
-            "9:25 Duplicate describe title found.",
+            '12:34 The test title "z" is used more than once in the same scope.',
+            '9:9 The describe title "w" is used more than once in the same scope.',
+        ],
+    },
+    {
+        rule: "suspicious/noIdenticalTestTitle",
+        file: "a.js",
+        source: 'test(``, () => {});\ntest(``, () => {});\ntest("", () => {});\ntest(\'\', () => {});\ntest("r", () => {});\ntest("r", () => {});\ntest("r", () => {});\ndescribe("r", () => {});\n',
+        expected: [
+            '3:6 The test title "" is used more than once in the same scope.',
+            '5:6 The test title "r" is used more than once in the same scope.',
         ],
     },
     {
@@ -11188,9 +11549,46 @@ describe("lintero", () => {
                 "\nfunction foo() {\n\t\n}\n",
             );
         });
+
+        test("Markdown files are linted unless markdown.enabled is false", () => {
+            const rules = {
+                suspicious: { noEmptySource: "on" },
+                nursery: { useTopLevelHeading: "on" },
+            };
+            expect(new Lintero(settings()).lints("README.md")).toBe(true);
+            expect(lint("", "a.md", rules)).toEqual([
+                "1:1 lint/suspicious/noEmptySource An empty source is not allowed.",
+            ]);
+            expect(lint("text\n", "a.markdown", rules)).toEqual([
+                "1:1 lint/nursery/useTopLevelHeading Missing top-level heading.",
+            ]);
+            const disabled = { ...rules, markdown: { enabled: false } };
+            expect(new Lintero(settings(disabled)).lints("a.md")).toBe(false);
+            expect(lint("text\n", "a.md", disabled)).toEqual([]);
+            // JavaScript rules do not run on Markdown, nor Markdown rules on JavaScript
+            expect(lint("debugger;\n", "a.md")).toEqual([]);
+            expect(
+                lint("", "a.js", { nursery: { useTopLevelHeading: "on" } }),
+            ).toEqual([]);
+        });
     });
 
     describe("suppressions", () => {
+        test("HTML comments suppress diagnostics in Markdown", () => {
+            const rules = { nursery: { useConsistentHeadingLevel: "on" } };
+            expect(
+                lint(
+                    "# A\n\n<!-- biome-ignore lint/nursery/useConsistentHeadingLevel: on purpose -->\n### C\n\nText <!-- lintero-ignore lint/nursery: inline --> more\n#### D\n\n<!-- biome-ignore lint/style/useConst: other -->\n\n###### F\n\n<!-- biome-ignore lint/foo -->\n",
+                    "a.md",
+                    rules,
+                ),
+            ).toEqual([
+                "9:1 suppressions/unused Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.",
+                "11:1 lint/nursery/useConsistentHeadingLevel This heading skipped a level.",
+                '13:19 suppressions/parse Failed to parse category "lint/foo". Example of suppression: // biome-ignore lint: reason',
+            ]);
+        });
+
         test("a comment suppresses rules on the line of the next token", () => {
             expect(
                 lint(
@@ -11264,6 +11662,20 @@ describe("lintero", () => {
     });
 
     describe("fixes", () => {
+        test("Markdown fixes, like the byte order mark", () => {
+            const rules = (bom: string) => ({
+                preset: "none",
+                nursery: {
+                    useConsistentUnicodeBom: { level: "on", options: { bom } },
+                },
+            });
+            const fix = (source: string, bom: string) =>
+                new Lintero(settings(rules(bom))).fix(source, "a.md");
+            expect(fix("\uFEFF# A\n", "never")).toBe("# A\n");
+            expect(fix("# A\n", "always")).toBe("\uFEFF# A\n");
+            expect(fix("# A\n", "never")).toBe("# A\n");
+        });
+
         test("safe fixes apply with write, unsafe ones only when asked", () => {
             const lintero = new Lintero(settings());
             const source = "let a = 1;\nif (a == 2) debugger;\n";

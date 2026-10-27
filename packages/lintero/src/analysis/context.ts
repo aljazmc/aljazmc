@@ -1,4 +1,4 @@
-import type { Comment, Language, Node } from "@aljazmc/syntax";
+import type { Comment, Language, Markdown, Node } from "@aljazmc/syntax";
 import type { Fix, Report, Rules } from "../rules.js";
 import type Semantic from "./semantic.js";
 import type { Manifest, Project } from "./settings.js";
@@ -9,6 +9,8 @@ export interface Source {
     text: string;
     language: Language;
     program: Node;
+    /** The tree of Markdown files, their program is empty. */
+    markdown?: Markdown.Root;
     comments: Comment[];
     settings: Rules;
     /** The closest package.json. */
@@ -49,6 +51,11 @@ export default class Context<Options extends object = object> {
 
     get program(): Node {
         return this.#source.program;
+    }
+
+    /** The tree of a Markdown file. */
+    get markdown(): Markdown.Root | undefined {
+        return this.#source.markdown;
     }
 
     get comments(): Comment[] {

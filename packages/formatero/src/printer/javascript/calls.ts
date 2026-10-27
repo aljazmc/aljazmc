@@ -394,8 +394,6 @@ export default class Calls extends Section {
                         this.couldExpand(body, true)) ||
                     body.type === "ObjectExpression" ||
                     body.type === "ArrayExpression" ||
-                    body.type === "TSAsExpression" ||
-                    body.type === "TSSatisfiesExpression" ||
                     (!arrowChainRecursion &&
                         (body.type === "CallExpression" ||
                             body.type === "ConditionalExpression")) ||

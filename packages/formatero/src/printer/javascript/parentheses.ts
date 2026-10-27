@@ -172,6 +172,21 @@ export default class Parentheses {
                     return this.#hasCall(node);
                 return false;
             case "TSInstantiationExpression":
+                // `(a<T>)<U>` and `(a<T>)!`: `a<T><U>` and `a<T>!` do not parse
+                if (
+                    parent.type === "TSInstantiationExpression" ||
+                    parent.type === "TSNonNullExpression"
+                )
+                    return true;
+                // `class A extends (B<T>)<U> {}`: `extends B<T><U>` does not parse
+                if (
+                    (parent.type === "ClassDeclaration" ||
+                        parent.type === "ClassExpression") &&
+                    parent.superClass === node &&
+                    parent.superTypeArguments
+                )
+                    return true;
+                if (this.#beforeTypeArgumentOperator(node)) return true;
                 return (
                     parent.type === "MemberExpression" && parent.object === node
                 );
@@ -383,6 +398,7 @@ export default class Parentheses {
             case "ClassDeclaration":
                 return parent.superClass === node;
             case "TSTypeAssertion":
+            case "TSInstantiationExpression":
             case "TaggedTemplateExpression":
             case "UnaryExpression":
             case "JSXSpreadAttribute":
@@ -508,11 +524,41 @@ export default class Parentheses {
         }
     }
 
+    /**
+     * TypeScript reads `a<T> + b` as `a < T > +b` and rejects `a<T> >> b`,
+     * also when `a<T>` only ends the left operand, like `(c + a<T>) - b`.
+     */
+    #beforeTypeArgumentOperator(node: Node): boolean {
+        let child = node;
+        for (const ancestor of this.#printer.ancestors()) {
+            if (ancestor.type === "BinaryExpression") {
+                if (ancestor.right === child) {
+                    child = ancestor;
+                    continue;
+                }
+                return (
+                    ancestor.left === child &&
+                    ["+", "-", "<", ">", ">=", ">>", ">>>"].includes(
+                        ancestor.operator,
+                    )
+                );
+            }
+            if (
+                ancestor.type !== "UnaryExpression" &&
+                ancestor.type !== "TSTypeAssertion"
+            )
+                return false;
+            child = ancestor;
+        }
+        return false;
+    }
+
     #hasCall(node: Node): boolean {
         let current: Node = node;
         for (;;) {
             switch (current.type) {
                 case "CallExpression":
+                case "ImportExpression":
                     return true;
                 case "MemberExpression":
                     current = current.object;

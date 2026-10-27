@@ -14,6 +14,9 @@ const rules: Rules = {
     json: {
         enabled: true,
     },
+    markdown: {
+        enabled: true,
+    },
 };
 
 export default {

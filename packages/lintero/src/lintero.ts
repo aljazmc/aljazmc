@@ -1,13 +1,17 @@
 import { Includes } from "@aljazmc/config";
 import {
+    type Comment,
+    isMarkdown,
     type Language,
     Lines,
     language as languageOf,
+    type Markdown,
     type Node,
     type Parsed,
     ParseError,
     parse,
     parseExpression,
+    parseMarkdown,
     Walker,
 } from "@aljazmc/syntax";
 import Context, { type Source } from "./analysis/context.js";
@@ -62,8 +66,13 @@ export default class Lintero {
 
     /** Whether the settings lint a file at all. */
     lints(file: string): boolean {
+        if (!this.#settings.enabled) return false;
+        if (isMarkdown(file))
+            return (
+                this.#settings.markdown.enabled && this.#includes.matches(file)
+            );
         const language = languageOf(file);
-        if (!language || !this.#settings.enabled) return false;
+        if (!language) return false;
         if (
             !(language.json ? this.#settings.json : this.#settings.javascript)
                 .enabled
@@ -73,7 +82,10 @@ export default class Lintero {
     }
 
     lint(text: string, file: string): Diagnostic[] {
-        const language = languageOf(file);
+        const markdown = isMarkdown(file);
+        const language = markdown
+            ? { json: false, typescript: false, jsx: false }
+            : languageOf(file);
         if (!language || !this.lints(file)) return [];
 
         const lines = new Lines(text);
@@ -95,10 +107,24 @@ export default class Lintero {
         });
 
         let parsed: Parsed;
+        let root: Markdown.Root | undefined;
         try {
-            parsed = language.json
-                ? parseExpression(text)
-                : parse(text, language);
+            if (markdown) {
+                root = parseMarkdown(text);
+                parsed = {
+                    program: {
+                        type: "Program",
+                        start: 0,
+                        end: text.length,
+                        body: [],
+                        directives: [],
+                    },
+                    comments: Lintero.#htmlComments(root, text),
+                };
+            } else
+                parsed = language.json
+                    ? parseExpression(text)
+                    : parse(text, language);
         } catch (error) {
             if (!(error instanceof ParseError)) throw error;
             return [
@@ -117,6 +143,7 @@ export default class Lintero {
             text,
             language,
             program: parsed.program,
+            ...(root && { markdown: root }),
             comments: parsed.comments,
             settings: this.#settings,
             manifest: this.#manifest,
@@ -227,7 +254,9 @@ export default class Lintero {
         const enter = new Map<string, Handler[]>();
         const leave = new Map<string, Handler[]>();
         const runs = this.active
-            .filter(({ rule }) => Lintero.#applies(rule, source.language))
+            .filter(({ rule }) =>
+                Lintero.#applies(rule, source.language, !!source.markdown),
+            )
             .map((active) => {
                 const context = new Context(source, active.options, lazy);
                 const visitor = active.rule.create(context);
@@ -246,6 +275,22 @@ export default class Lintero {
             });
 
         if (runs.length === 0) return runs;
+
+        const markdown = source.markdown;
+        if (markdown) {
+            const visit = (node: Markdown.Node) => {
+                const handle = (handlers: Handler[] | undefined) => {
+                    for (const handler of handlers ?? [])
+                        handler(node as unknown as Node);
+                };
+                handle(enter.get(node.type));
+                for (const child of Lintero.#markdownChildren(node))
+                    visit(child);
+                handle(leave.get(node.type));
+            };
+            visit(markdown);
+            return runs;
+        }
 
         // every parent is known before rules run, also of nodes ahead
         const children = new Map<Node, Node[]>();
@@ -270,7 +315,78 @@ export default class Lintero {
         return runs;
     }
 
-    static #applies(rule: Rule, language: Language): boolean {
+    static #markdownChildren(node: Markdown.Node): Markdown.Node[] {
+        if (node.type === "Table") return node.rows;
+        if (node.type === "TableRow") return node.cells;
+        return "children" in node ? node.children : [];
+    }
+
+    /** HTML comments of a Markdown file, which can be suppression comments. */
+    static #htmlComments(root: Markdown.Root, text: string): Comment[] {
+        const comments: Comment[] = [];
+        const starts = [0];
+        for (const match of text.matchAll(/\r\n|\r|\n/g))
+            starts.push(match.index + match[0].length);
+        const add = (start: number, value: string) => {
+            if (value.startsWith("<!--") && value.endsWith("-->"))
+                comments.push({
+                    type: "Block",
+                    value,
+                    start,
+                    end: start + value.length,
+                });
+        };
+        const inlines = (
+            nodes: Markdown.Inline[],
+            block: Markdown.Paragraph | Markdown.Heading,
+        ) => {
+            for (const node of nodes) {
+                if ("children" in node) inlines(node.children, block);
+                if (node.type !== "Html") continue;
+                // inline offsets are into the text of the block, without the prefixes of its lines
+                const before = block.text.slice(0, node.start).split("\n");
+                const index = before.length - 1;
+                const column = before.at(-1)?.length ?? 0;
+                if (block.type === "Paragraph")
+                    add(
+                        (starts[block.line - 1 + index] ?? 0) +
+                            (block.prefixes[index]?.length ?? 0) +
+                            column,
+                        node.raw,
+                    );
+                else if (!block.setext)
+                    add(
+                        block.start +
+                            (/^#+[ \t]*/.exec(text.slice(block.start))?.[0]
+                                .length ?? 0) +
+                            column,
+                        node.raw,
+                    );
+            }
+        };
+        const blocks = (nodes: Markdown.Block[]) => {
+            for (const node of nodes)
+                if (node.type === "HtmlBlock") {
+                    const raw = text.slice(node.start, node.end);
+                    const offset = raw.indexOf("<!--");
+                    if (offset >= 0)
+                        add(node.start + offset, raw.slice(offset).trimEnd());
+                } else if (node.type === "Paragraph" || node.type === "Heading")
+                    inlines(node.children, node);
+                else if (node.type === "BlockQuote") blocks(node.children);
+                else if (node.type === "List")
+                    for (const item of node.children) blocks(item.children);
+        };
+        blocks(root.children);
+        return comments;
+    }
+
+    static #applies(
+        rule: Rule,
+        language: Language,
+        markdown: boolean,
+    ): boolean {
+        if (markdown) return rule.languages.includes("md");
         if (language.json) return rule.languages.includes("json");
         return rule.languages.some(
             (name) =>

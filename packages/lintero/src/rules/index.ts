@@ -125,6 +125,11 @@ import useReactNativePlatformComponents from "./correctness/use-react-native-pla
 import useValidForDirection from "./correctness/use-valid-for-direction.js";
 import useValidTypeof from "./correctness/use-valid-typeof.js";
 import useYield from "./correctness/use-yield.js";
+import useConsistentHeadingLevel from "./nursery/use-consistent-heading-level.js";
+import useConsistentUnicodeBom from "./nursery/use-consistent-unicode-bom.js";
+import useFencedCodeLanguage from "./nursery/use-fenced-code-language.js";
+import useSingleTopLevelHeading from "./nursery/use-single-top-level-heading.js";
+import useTopLevelHeading from "./nursery/use-top-level-heading.js";
 import noAccumulatingSpread from "./performance/no-accumulating-spread.js";
 import noDynamicNamespaceImportAccess from "./performance/no-dynamic-namespace-import-access.js";
 import noImgElement from "./performance/no-img-element.js";
@@ -176,6 +181,7 @@ import noDuplicateObjectKeys from "./suspicious/no-duplicate-object-keys.js";
 import noDuplicateParameters from "./suspicious/no-duplicate-parameters.js";
 import noDuplicateTestHooks from "./suspicious/no-duplicate-test-hooks.js";
 import noEmptyInterface from "./suspicious/no-empty-interface.js";
+import noEmptySource from "./suspicious/no-empty-source.js";
 import noExplicitAny from "./suspicious/no-explicit-any.js";
 import noExportsInTest from "./suspicious/no-exports-in-test.js";
 import noExtraNonNullAssertion from "./suspicious/no-extra-non-null-assertion.js";
@@ -354,6 +360,11 @@ export default [
     useValidForDirection,
     useValidTypeof,
     useYield,
+    useConsistentHeadingLevel,
+    useConsistentUnicodeBom,
+    useFencedCodeLanguage,
+    useSingleTopLevelHeading,
+    useTopLevelHeading,
     noAccumulatingSpread,
     noDynamicNamespaceImportAccess,
     noImgElement,
@@ -405,6 +416,7 @@ export default [
     noDuplicateParameters,
     noDuplicateTestHooks,
     noEmptyInterface,
+    noEmptySource,
     noExplicitAny,
     noExportsInTest,
     noExtraNonNullAssertion,

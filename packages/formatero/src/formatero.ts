@@ -1,7 +1,14 @@
 import { EOL } from "node:os";
 import { Includes } from "@aljazmc/config";
-import { Lines, language as languageOf, ParseError } from "@aljazmc/syntax";
+import {
+    isMarkdown,
+    Lines,
+    language as languageOf,
+    ParseError,
+    parse,
+} from "@aljazmc/syntax";
 import JavaScript, { type Options } from "./printer/javascript/index.js";
+import Markdown from "./printer/markdown.js";
 import ArrowParentheses from "./rules/arrow-parentheses.js";
 import Indentation from "./rules/indentation.js";
 import QuoteProperties from "./rules/quote-properties.js";
@@ -41,23 +48,53 @@ export default class Formatero {
 
     /** Whether the rules format a file at all, its language may be disabled. */
     formats(file: string): boolean {
-        const { enabled, javascript, json } = this.#rules;
-        const language = languageOf(file);
-        const section = language && (language.json ? json : javascript);
-
         return (
-            (section?.enabled ?? enabled) &&
-            (file === "" || this.#includes.matches(file))
+            this.#enabled(file) && (file === "" || this.#includes.matches(file))
         );
+    }
+
+    #enabled(file: string): boolean {
+        const { enabled, javascript, json, markdown } = this.#rules;
+        const language = languageOf(file);
+        const section = isMarkdown(file)
+            ? markdown
+            : language && (language.json ? json : javascript);
+        return section?.enabled ?? enabled;
     }
 
     /** Formats source, unchanged when the file is not formatted. */
     format(source: string, file = ""): string {
         if (!this.formats(file)) return source;
+        return this.#format(source, file);
+    }
 
-        const { javascript, json, includes, useEditorconfig, ...shared } =
-            this.#rules;
+    #format(source: string, file: string): string {
+        const {
+            javascript,
+            json,
+            markdown,
+            includes,
+            useEditorconfig,
+            ...shared
+        } = this.#rules;
         const language = languageOf(file);
+
+        if (isMarkdown(file)) {
+            const rules = { ...shared, ...markdown };
+            const printed = new Markdown({
+                lineWidth: rules.lineWidth,
+                indent:
+                    rules.indentStyle === "tab"
+                        ? "\t"
+                        : " ".repeat(rules.indentWidth),
+                proseWrap: rules.proseWrap,
+                ...(rules.formatEmbeds && {
+                    embed: (code: string, info: string) =>
+                        this.#embed(code, info),
+                }),
+            }).format(source);
+            return this.#finish(printed, rules);
+        }
 
         if (language && !language.json) {
             const rules = { ...shared, ...javascript };
@@ -109,6 +146,56 @@ export default class Formatero {
             new TextIndentation(shared).format(source),
             shared,
         );
+    }
+
+    /**
+     * Formats the code of a fenced block like a file of its language, like
+     * Biome, it stays as written when it has errors or is in another language.
+     */
+    #embed(code: string, info: string): string | undefined {
+        const file = Formatero.#embedded(info);
+        if (!file || !this.#enabled(file)) return;
+        // a hashbang starts a file, not a block
+        if (code.startsWith("#!") && !isMarkdown(file)) return;
+        // like Biome, `js` is JavaScript without JSX
+        if (/^embed\.c?js$/.test(file))
+            try {
+                parse(code, { typescript: false, jsx: false });
+            } catch (error) {
+                if (error instanceof ParseError) return;
+                throw error;
+            }
+        try {
+            // the language's own line endings and final newline do not apply in Markdown
+            return new Formatero({ ...this.#rules, formatWithErrors: false })
+                .#format(code, file)
+                .replace(/\r\n?/g, "\n")
+                .replace(/\n+$/, "");
+        } catch (error) {
+            if (error instanceof FormatError) return;
+            throw error;
+        }
+    }
+
+    /** A file name for the language of an info string, like Biome reads it. */
+    static #embedded(info: string): string | undefined {
+        const language = info.split(/\s/)[0]?.toLowerCase() ?? "";
+        if (/^m?js$/.test(language)) return "embed.js";
+        if (/^(?:jsx|javascript|javascriptreact)$/.test(language))
+            return "embed.jsx";
+        if (language === "cjs") return "embed.cjs";
+        if (/^(?:ts|typescript|d\.ts)$/.test(language)) return "embed.ts";
+        if (/^(?:mts|cts|d\.mts|d\.cts)$/.test(language)) return "embed.mts";
+        if (/^(?:tsx|typescriptreact)$/.test(language)) return "embed.tsx";
+        if (/^(?:json|jsonld|webapp|webmanifest)$/.test(language))
+            return "embed.json";
+        if (
+            /^(?:jsonc|snippets|code-snippets|code-workspace|sublime[-_]\w+)$/.test(
+                language,
+            )
+        )
+            return "embed.jsonc";
+        if (/^(?:md|markdown)$/.test(language)) return "embed.md";
     }
 
     static #options(

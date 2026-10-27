@@ -1,7 +1,7 @@
 import type { Comment, Lines } from "@aljazmc/syntax";
 import type { Group } from "../rules.js";
 
-/** A `biome-ignore` (or `lintero-ignore`) comment, for lint categories. */
+/** A `biome-ignore` (or `lintero-ignore`) comment, for lint categories, `<!-- -->` ones in Markdown. */
 export interface Suppression {
     comment: Comment;
     /** Categories like `lint`, `lint/style` or `lint/style/useConst`. */
@@ -42,17 +42,20 @@ export default class Suppressions {
         const starts: Suppression[] = [];
 
         for (const comment of comments) {
+            const html = comment.value.startsWith("<!--");
             const body =
                 comment.type === "Line"
                     ? comment.value.slice(2)
-                    : comment.value.slice(2, -2);
+                    : html
+                      ? comment.value.slice(4, -3)
+                      : comment.value.slice(2, -2);
             const match =
                 /^\s*(?:biome|lintero)-ignore(-all|-start|-end)?(?=\s|$)/.exec(
                     body,
                 );
             if (!match) continue;
 
-            const offset = comment.start + 2 + match[0].length;
+            const offset = comment.start + (html ? 4 : 2) + match[0].length;
             const parsed = this.#categories(
                 body.slice(match[0].length),
                 offset,
@@ -179,7 +182,7 @@ export default class Suppressions {
 
     /** The start of the first token after a position, skipping comments. */
     static #next(text: string, from: number): number {
-        const pattern = /\s+|\/\/[^\n]*|\/\*[\s\S]*?\*\//y;
+        const pattern = /\s+|\/\/[^\n]*|\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->/y;
         let index = from;
         pattern.lastIndex = index;
         while (pattern.exec(text)) index = pattern.lastIndex;

@@ -4,6 +4,36 @@ import { rule } from "../../rules.js";
 
 const message = "innerText is not recommended for reading DOM node text.";
 
+/** Types written so that they cannot hold a DOM node, like `string` or `{ innerText: string }`, named types are not resolved. */
+const notDom = (type: Node): boolean => {
+    switch (type.type) {
+        case "TSParenthesizedType":
+            return notDom(type.typeAnnotation);
+        case "TSUnionType":
+            return type.types.every(notDom);
+        case "TSKeyword":
+            return [
+                "bigint",
+                "boolean",
+                "null",
+                "number",
+                "string",
+                "symbol",
+                "undefined",
+            ].includes(type.name);
+        case "TSArrayType":
+        case "TSConstructorType":
+        case "TSFunctionType":
+        case "TSLiteralType":
+        case "TSTemplateLiteralType":
+        case "TSTupleType":
+        case "TSTypeLiteral":
+            return true;
+        default:
+            return false;
+    }
+};
+
 export default rule({
     name: "useDomNodeTextContent",
     group: "performance",
@@ -16,9 +46,22 @@ export default rule({
             message: "Use textContent instead.",
             edits: [{ start: node.start, end: node.end, text }],
         });
+        /** Whether the object is a parameter or variable declared with a type that is not a DOM node. */
+        const typed = (object: Node): boolean => {
+            if (object.type !== "Identifier") return false;
+            const declaration =
+                context.semantic.referenced(object)?.binding?.declarations[0];
+            const id = declaration?.id;
+            return (
+                id?.type === "Identifier" &&
+                !!id.typeAnnotation &&
+                notDom(id.typeAnnotation)
+            );
+        };
         return {
             MemberExpression(node) {
                 const { property } = node;
+                if (typed(node.object)) return;
                 if (
                     !node.computed &&
                     property.type === "Identifier" &&
@@ -44,6 +87,8 @@ export default rule({
                     );
             },
             ObjectPattern(node) {
+                // the type of a destructured parameter or variable
+                if (node.typeAnnotation && notDom(node.typeAnnotation)) return;
                 // destructured in declarations and parameters, not in assignments
                 for (const ancestor of context.ancestors(node)) {
                     if (ancestor.type === "AssignmentExpression") return;

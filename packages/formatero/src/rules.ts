@@ -32,6 +32,13 @@ export interface Json extends Shared {
     trailingCommas: "all" | "none";
 }
 
+export interface Markdown extends Shared {
+    /** Keeps the line breaks of paragraphs, wraps them at the line width, or joins them. */
+    proseWrap: "always" | "never" | "preserve";
+    /** Formats the code of fenced blocks in the languages formatero formats. */
+    formatEmbeds: boolean;
+}
+
 /** Biome compatible rules, language sections override the shared ones. */
 export interface Rules extends Shared {
     /** Globs of the files to format in order, the last match decides, "!" excludes. */
@@ -40,6 +47,7 @@ export interface Rules extends Shared {
     useEditorconfig: boolean;
     javascript: Partial<Shared> & Omit<Javascript, keyof Shared>;
     json: Partial<Shared> & Omit<Json, keyof Shared>;
+    markdown: Partial<Shared> & Omit<Markdown, keyof Shared>;
 }
 
 export interface Rule {

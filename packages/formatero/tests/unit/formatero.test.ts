@@ -294,6 +294,189 @@ const biome: {
         expected:
             "class A {\n    readonly hook =\n        (kind: HookKind) =>\n        (body: Body, timeout?: number): void => {\n            this.#open(kind);\n            this.#current.hooks[kind].push({ body, timeout });\n        };\n    static asymmetric(\n        value: unknown,\n    ): value is { asymmetricMatch(other: unknown): boolean } {\n        return true;\n    }\n}\n",
     },
+    {
+        name: "instantiation expressions keep the parentheses that TypeScript needs to parse them",
+        file: "a.ts",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "(make<T>) + y;\n(make<T>) - y;\n(make<T>) < y;\n(make<T>) > y;\n(make<T>) >= y;\n(make<T>) >> y;\n(make<T>) >>> y;\n(make<T>) * y;\n(make<T>) === y;\n(c + a<T>) - b;\n(typeof a<T>) + b;\n(<X>a<T>) + b;\nx = (a<T>)!;\nx = (a<T>)<U>;\nclass A extends (B<T>)<U> {}\nclass C extends (B<T>) {}\nx = (a + b)<T>;\nx = (a || b)<T>;\nx = (a as B)<T>;\nx = (<B>a)<T>;\nx = (a<T>).b;\n",
+        expected:
+            "(make<T>) + y;\n(make<T>) - y;\n(make<T>) < y;\n(make<T>) > y;\n(make<T>) >= y;\n(make<T>) >> y;\n(make<T>) >>> y;\nmake<T> * y;\nmake<T> === y;\nc + (a<T>) - b;\ntypeof (a<T>) + b;\n<X>(a<T>) + b;\nx = (a<T>)!;\nx = (a<T>)<U>;\nclass A extends (B<T>)<U> {}\nclass C extends B<T> {}\nx = (a + b)<T>;\nx = (a || b)<T>;\nx = (a as B)<T>;\nx = (<B>a)<T>;\nx = (a<T>).b;\n",
+    },
+    {
+        name: "arrow functions returning as expressions are not hugged",
+        file: "a.ts",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "const items = open.children.map((item) => this.block(item, definitions) as ListItem & Block);\nconst b = list.map((item) => ({ a: 1, b: 2, c: 3, d: 4, eeeeeeeeeeeeeeeeeeeeeeeeeeeee: 5 }) as Thing);\nfoo((x) => x as unknown as Something<VeryLongTypeArgument, AnotherLongTypeArgument>);\n",
+        expected:
+            "const items = open.children.map(\n    (item) => this.block(item, definitions) as ListItem & Block,\n);\nconst b = list.map(\n    (item) =>\n        ({ a: 1, b: 2, c: 3, d: 4, eeeeeeeeeeeeeeeeeeeeeeeeeeeee: 5 }) as Thing,\n);\nfoo(\n    (x) =>\n        x as unknown as Something<\n            VeryLongTypeArgument,\n            AnotherLongTypeArgument\n        >,\n);\n",
+    },
+    {
+        name: "new keeps the parentheses around a callee that contains import()",
+        file: "a.ts",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: 'new (import("x").Foo)();\nnew (import("x")).Foo();\n',
+        expected: 'new (import("x").Foo)();\nnew (import("x").Foo)();\n',
+    },
+    {
+        name: "headings use # markers and are followed by a blank line",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "# Heading with trailing hashes ##\n   ### indented\nSetext  with  spaces\n===\n\nMulti line\nsetext\n---\n# trailing one \n#  two  \n#\n",
+        expected:
+            "# Heading with trailing hashes\n\n### indented\n\n# Setext with spaces\n\nMulti line\nsetext\n---\n\n# trailing one \n\n# two\n\n#\n",
+    },
+    {
+        name: "paragraphs keep their lines and hard breaks, collapse spaces",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "para one   with   spaces\n   indented  continuation\ntrailing   \nbackslash\\\nend\n",
+        expected:
+            "para one with spaces\nindented continuation\ntrailing  \nbackslash\\\nend\n",
+    },
+    {
+        name: "markers alternate between sibling lists, numbers follow the first ones",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "* star\n* another\n+ plus\n1) paren\n2) two\n\n3. three\n4. four\n\n9. a\n10. b\n\n1. a\n1. b\n1. c\n",
+        expected:
+            "- star\n- another\n\n* plus\n\n1. paren\n2. two\n\n3) three\n4) four\n\n5) a\n6) b\n\n7) a\n8) b\n9) c\n",
+    },
+    {
+        name: "list items keep the spaces after their marker and align their lines",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "-   wide\n-  b\n- c\n    continuation\n- [X] task\n- [ ] open\n- \n",
+        expected:
+            "-   wide\n-  b\n- c\n  continuation\n- [x] task\n- [ ] open\n-\n",
+    },
+    {
+        name: "list items keep one blank line, put them around fences, none before nested lists",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "- a\n\n\n  para\n- b\n  ```\n  x\n  ```\n  after\n- c\n\n  - nested\n",
+        expected:
+            "- a\n\n  para\n- b\n\n  ```\n  x\n  ```\n\n  after\n- c\n  - nested\n",
+    },
+    {
+        name: "thematic breaks become --- with blank lines around them",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "***\npara\n___\n- - -\n* * *\n",
+        expected: "---\n\npara\n\n---\n\n---\n\n---\n",
+    },
+    {
+        name: "italics use _ unless next to words, bold uses **",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "Some *emph* and __strong__ and ***both*** and _under_ a*b*c and [*ref*][r]\n\n***whole paragraph***\n\n[r]: /url\n",
+        expected:
+            "Some _emph_ and **strong** and **_both_** and _under_ a*b*c and [*ref*][r]\n\n_**whole paragraph**_\n\n[r]: /url\n",
+    },
+    {
+        name: "code spans use the shortest fence and drop the spaces CommonMark strips",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "```request.body``` and `` `tick` `` and ``  a  `` and `a\n  b`\n",
+        expected: "`request.body` and `` `tick` `` and `  a  ` and `a\n  b`\n",
+    },
+    {
+        name: "fenced code uses backticks, trimmed info strings and closing fences",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "~~~python  \nprint( 1 )\n~~~\n\n````md\n```\nx\n```\n````\n\n```\nunclosed\n",
+        expected:
+            "```python\nprint( 1 )\n```\n\n````md\n```\nx\n```\n````\n\n```\nunclosed\n```\n",
+    },
+    {
+        name: "code in JavaScript, TypeScript, JSON and Markdown is formatted, other code stays",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: '```js\nconst a = {b:1}\n```\n\n```ts\nlet x:number=1\n```\n\n```json\n{"a":[1,2]}\n```\n\n```md\n* a\n```\n\n```js\nconst a = <div />\n```\n\n```sh\nls  -la\n```\n\n```js\nconst = ;\n```\n\n- ```js\n  const b = {c:1}\n  ```\n',
+        expected:
+            '```js\nconst a = { b: 1 };\n```\n\n```ts\nlet x: number = 1;\n```\n\n```json\n{ "a": [1, 2] }\n```\n\n```md\n- a\n```\n\n```js\nconst a = <div />\n```\n\n```sh\nls  -la\n```\n\n```js\nconst = ;\n```\n\n- ```js\n  const b = {c:1}\n  ```\n',
+    },
+    {
+        name: "tables are aligned by the display width of their cells",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "| Left | Center | Right |\n|:-----|:------:|------:|\n| a | b | c |\n| longer text | ✅ | 3 |\n",
+        expected:
+            "| Left        | Center | Right |\n| :---------- | :----: | ----: |\n| a           |   b    |     c |\n| longer text |   ✅   |     3 |\n",
+    },
+    {
+        name: "quotes keep their lines, and get markers on lazy lines",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "> quote\ncontinued lazily\n>\n> > nested\n\n>a\n>  b\n\n> para\n> ```js\n> x\n> ```\n",
+        expected:
+            "> quote\n> continued lazily\n>\n> > nested\n\n> a\n>  b\n\n> para\n>\n> ```js\n> x\n> ```\n",
+    },
+    {
+        name: "links, autolinks, images and definitions are normalized",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "[link]( http://example.com  \"title\" ) [b](u 'single')\n[ref]: http://example.com  'Title'\n  [a]: http://x\n\n\n[b]: http://y\n\n<http://auto.link> ![image](src.png)\n",
+        expected:
+            '[link](http://example.com "title") [b](u "single")\n[ref]: http://example.com \'Title\'\n[a]: http://x\n\n\n[b]: http://y\n\n<http://auto.link> ![image](src.png)\n',
+    },
+    {
+        name: "lines inside links and code keep their indentation",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "see [the\n  docs](http://x) now\n- item [with\n    link](x) and `code\n  span`\n",
+        expected:
+            "see [the\n  docs](http://x) now\n- item [with\n    link](x) and `code\n  span`\n",
+    },
+    {
+        name: "blank lines between blocks stay, but one after headings and around breaks",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "# A\n\n\n\nb\n\n\n\nc\n\n\n- list\n\n\n\npara\n\n\n<!-- c -->\n\n\n\n---\n",
+        expected:
+            "# A\n\nb\n\n\n\nc\n\n\n- list\n\n\n\npara\n\n\n<!-- c -->\n\n\n\n---\n",
+    },
+    {
+        name: "html blocks and comments stay as written",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: '<div align="center">\n<img src="x.png"   width="100">\n</div>\n\n<!-- a comment -->\n\n\n\npara <span   a="b">x</span>\n',
+        expected:
+            '<div align="center">\n<img src="x.png"   width="100">\n</div>\n\n<!-- a comment -->\n\n\n\npara <span   a="b">x</span>\n',
+    },
+    {
+        name: "lazy lines that start with a list marker are joined",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "  1. A string.  Conditional\n  expressions may take:\n    * For string values\n",
+        expected:
+            "1. A string. Conditional\n   expressions may take: * For string values\n",
+    },
+    {
+        name: "proseWrap always wraps paragraphs and long definitions",
+        file: "a.md",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            markdown: { proseWrap: "always" },
+        },
+        input: 'A paragraph with many words that goes on and on past the line width of eighty columns, with a [link that has spaces](http://example.com) inside.\nShort line.  \nAfter a break.\n\n- an item with a long text that also needs to be wrapped because it is too long to fit\n\n[definition]: https://example.com/a/very/long/path/that/does/not/fit/on/one/line/at/all "title"\n',
+        expected:
+            'A paragraph with many words that goes on and on past the line width of eighty\ncolumns, with a [link that has spaces](http://example.com) inside. Short line.  \nAfter a break.\n\n- an item with a long text that also needs to be wrapped because it is too long\n  to fit\n\n[definition]:\n    https://example.com/a/very/long/path/that/does/not/fit/on/one/line/at/all\n    "title"\n',
+    },
+    {
+        name: "proseWrap never joins the lines of paragraphs",
+        file: "a.md",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            markdown: { proseWrap: "never" },
+        },
+        input: "one\ntwo\nthree  \nfour\n\n> quoted\n> lines\n\n| a | b |\n| - | - |\n| a cell that is quite long, longer than the line | and another long cell beside it |\n",
+        expected:
+            "one two three  \nfour\n\n> quoted lines\n\n| a | b |\n| --- | --- |\n| a cell that is quite long, longer than the line | and another long cell beside it |\n",
+    },
 ];
 
 describe("formatero", () => {
@@ -372,6 +555,29 @@ describe("formatero", () => {
             expect(format(messy, "a.ts", { json: { enabled: false } })).toBe(
                 "let a = 1;\n",
             );
+            expect(
+                format("* a\n", "a.md", { markdown: { enabled: false } }),
+            ).toBe("* a\n");
+            expect(format("* a\n", "README.markdown")).toBe("- a\n");
+        });
+
+        test("Markdown formats the code of its fences, unless formatEmbeds is false", () => {
+            const source = "* a\n\n```ts\nlet  a\n```\n";
+            expect(format(source, "a.md")).toBe("- a\n\n```ts\nlet a;\n```\n");
+            expect(
+                format(source, "a.md", { markdown: { formatEmbeds: false } }),
+            ).toBe("- a\n\n```ts\nlet  a\n```\n");
+            expect(
+                format(source, "a.md", { javascript: { enabled: false } }),
+            ).toBe("- a\n\n```ts\nlet  a\n```\n");
+            expect(
+                format(source, "a.md", {
+                    javascript: { lineEnding: "crlf", trailingNewline: true },
+                }),
+            ).toBe("- a\n\n```ts\nlet a;\n```\n");
+            expect(
+                format("```js\n#!/usr/bin/env node\nlet  a\n```\n", "a.md"),
+            ).toBe("```js\n#!/usr/bin/env node\nlet  a\n```\n");
         });
 
         test("includes selects files in order, the last match decides", () => {
@@ -446,6 +652,15 @@ describe("formatero", () => {
             expect(format("a();\n", "a.ts", { trailingNewline: false })).toBe(
                 "a();",
             );
+        });
+
+        test("Markdown has the line endings and final newline of its rules", () => {
+            expect(
+                format("# a\r\n\r\nb", "a.md", {
+                    markdown: { lineEnding: "crlf", trailingNewline: false },
+                }),
+            ).toBe("# a\r\n\r\nb");
+            expect(format("\uFEFF# a\n", "a.md")).toBe("\uFEFF# a\n");
         });
 
         test("text files are reindented line by line, a tab is one level", () => {

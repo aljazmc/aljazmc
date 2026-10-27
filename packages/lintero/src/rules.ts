@@ -1,4 +1,4 @@
-import type { Node, NodeOf, NodeType } from "@aljazmc/syntax";
+import type { Markdown, Node, NodeOf, NodeType } from "@aljazmc/syntax";
 import type Context from "./analysis/context.js";
 
 /** "on" uses the rule's default severity. */
@@ -74,10 +74,11 @@ export interface Rules {
         jsxRuntime: "reactClassic" | "transparent";
     };
     json: { enabled: boolean };
+    markdown: { enabled: boolean };
 }
 
 /** The languages a rule applies to, "js" covers TypeScript and JSX too. */
-export type Language = "js" | "json" | "jsx" | "ts";
+export type Language = "js" | "json" | "jsx" | "md" | "ts";
 
 /** A text change, replacing source from start to end. */
 export interface Edit {
@@ -102,9 +103,20 @@ export interface Report {
 
 type Enter = { [T in NodeType]?: (node: NodeOf<T>) => void };
 type Leave = { [T in NodeType as `${T}:exit`]?: (node: NodeOf<T>) => void };
+type MarkdownType = Markdown.Node["type"];
+type MarkdownOf<T extends MarkdownType> = Extract<Markdown.Node, { type: T }>;
+type MarkdownEnter = {
+    [T in MarkdownType]?: (node: MarkdownOf<T>) => void;
+};
+type MarkdownLeave = {
+    [T in MarkdownType as `${T}:exit`]?: (node: MarkdownOf<T>) => void;
+};
 
-/** Handlers called on entering, or with `:exit` on leaving, nodes of a type. */
-export type Visitor = Enter & Leave & { "*"?: (node: Node) => void };
+/** Handlers called on entering, or with `:exit` on leaving, nodes of a type, Markdown ones in Markdown files. */
+export type Visitor = Enter &
+    Leave &
+    MarkdownEnter &
+    MarkdownLeave & { "*"?: (node: Node) => void };
 
 export interface Rule<Options extends object = object> {
     name: string;

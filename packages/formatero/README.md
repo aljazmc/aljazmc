@@ -2,9 +2,10 @@
 
 # formatero
 
-A simple formatter for JavaScript, TypeScript, JSX and JSON, with
-options and defaults compatible with [Biome](https://biomejs.dev)'s
-formatter. Easy to understand, easy to customize and easy to extend.
+A simple formatter for JavaScript, TypeScript, JSX, JSON and Markdown,
+with options and defaults compatible with [Biome](https://biomejs.dev)
+2.6.3's formatter. Easy to understand, easy to customize and easy to
+extend.
 
 ## Install
 
@@ -12,7 +13,7 @@ formatter. Easy to understand, easy to customize and easy to extend.
 npm install --save-dev @aljazmc/formatero
 ```
 
-formatero needs Node.js 22.18 or later, or 24.2 or later.
+formatero needs Node.js 22 (22.18 or later), 24 (24.2 or later), 25 or 26.
 
 ## Usage
 
@@ -24,8 +25,11 @@ formatero --config js  # or to formatero.config.js
 ```
 
 JavaScript, TypeScript, JSX and JSON files are parsed and printed again,
-with long lines broken to fit the line width. Other text files are only
-reindented, line by line, counting a tab as one level.
+with long lines broken to fit the line width. Markdown files, `.md` and
+`.markdown`, keep their text and line breaks, with normalized markers,
+fences, tables and spacing, and the code of their fences formatted like
+files of its language. Other text files are only reindented, line by
+line, counting a tab as one level.
 
 ## Configuration
 
@@ -57,8 +61,8 @@ export default {
 
 ### Every language
 
-These options apply to every language. The `javascript` and `json`
-sections can set them again, for that language only.
+These options apply to every language. The `javascript`, `json` and
+`markdown` sections can set them again, for that language only.
 
 | Option              | Default  | Values                             | What it does                                                                                                                                                                                                                                                     |
 | ------------------- | -------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -97,6 +101,21 @@ These options are set in the `json` section.
 | ---------------- | -------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
 | `trailingCommas` | `"none"` | `"none"`, `"all"` | Trailing commas in multi-line lists. `"all"` applies to `.jsonc` files only, as JSON does not allow them. |
 
+### Markdown
+
+These options are set in the `markdown` section.
+
+| Option         | Default      | Values                              | What it does                                                                                                                    |
+| -------------- | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `proseWrap`    | `"preserve"` | `"preserve"`, `"always"`, `"never"` | Keeps the line breaks of paragraphs, wraps paragraphs at the line width, or puts each on one line. Hard breaks always stay.     |
+| `formatEmbeds` | `true`       |                                     | Formats fenced code in JavaScript, TypeScript, JSX, JSON and Markdown, unless it does not parse. Code in other languages stays. |
+
+Like Biome, formatero writes headings with `#`, list items with `-`, and
+`*` or `)` for the next list beside them, numbers lists like their first
+items, italics with `_` and bold with `**`, thematic breaks as `---` and
+fences with backticks. It aligns tables and code spans, and keeps blank
+lines between blocks, but one after headings and around thematic breaks.
+
 ### .editorconfig
 
 With `useEditorconfig: true`, formatero reads `.editorconfig` from the
@@ -110,6 +129,7 @@ overrides them in turn.
 source
 ├─> @aljazmc/syntax          parses it into a syntax tree
 ├─> src/printer/javascript   turns the tree into a document
+├─> src/printer/markdown.ts  or prints the blocks of Markdown, and their code by its language
 ├─> src/printer/layout.ts    lays the document out within lineWidth
 └─> src/tokens, src/rules    with formatWithErrors, format a file that does not parse
 ```
@@ -117,6 +137,7 @@ source
 - `@aljazmc/syntax` (`shared/syntax`) parses sources into syntax trees, and is shared with lintero.
 - `@aljazmc/config` (`shared/config`) loads `formatero.config.ts`, finds the files and matches `includes`, and is shared with every package.
 - `src/printer/javascript` turns syntax trees into documents, with one section per kind of syntax, attaching comments and choosing layouts.
+- `src/printer/markdown.ts` prints Markdown trees line by line, keeping their text, separating their blocks and aligning list items, quotes and tables like Biome.
 - `src/printer/doc.ts` and `src/printer/layout.ts` define documents of groups, indentation and line breaks, and lay them out within the line width, after Wadler's "A prettier printer".
 - `src/tokens` and `src/rules` are a token stream and the rules applied to it, for files that do not parse when `formatWithErrors` is on.
 - `src/editorconfig.ts` reads formatero's options from `.editorconfig`.

@@ -13,7 +13,7 @@ easy to extend.
 npm install --save-dev @aljazmc/monorepo
 ```
 
-monorepo needs Node.js 22.18 or later, or 24.2 or later, and git.
+monorepo needs git and Node.js 22 (22.18 or later), 24 (24.2 or later), 25 or 26.
 
 ## Usage
 

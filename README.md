@@ -16,8 +16,8 @@ of them are published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
 
 | Package                         | What it does                                                                                       | npm                                                                    |
 | ------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [formatero](packages/formatero) | Formats JavaScript, TypeScript, JSX and JSON, with options compatible with Biome's.                | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
-| [lintero](packages/lintero)     | Lints JavaScript, TypeScript, JSX and JSON with 226 rules compatible with Biome's, and fixes them. | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
+| [formatero](packages/formatero) | Formats JavaScript, TypeScript, JSX, JSON and Markdown, with options compatible with Biome's.      | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
+| [lintero](packages/lintero)     | Lints JavaScript, TypeScript, JSX, JSON and Markdown with 232 rules compatible with Biome's.       | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
 | [monorepo](packages/monorepo)   | Versions each package on its own by conventional commits, and moves the tags a rebase left behind. | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
 | [testero](packages/testero)     | Runs Jest-like tests in JavaScript, TypeScript and JSX, compiled with esbuild.                     | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
 
@@ -27,7 +27,7 @@ into the packages that use it:
 | Shared code                      | What it does                                                      |
 | -------------------------------- | ----------------------------------------------------------------- |
 | [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs. |
-| [@aljazmc/syntax](shared/syntax) | Parses JavaScript, TypeScript, JSX and JSON into syntax trees.    |
+| [@aljazmc/syntax](shared/syntax) | Parses JavaScript, TypeScript, JSX, JSON and Markdown into trees. |
 
 ## Requirements
 

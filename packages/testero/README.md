@@ -12,7 +12,7 @@ Easy to understand, easy to customize and easy to extend.
 npm install --save-dev @aljazmc/testero
 ```
 
-testero needs Node.js 22.18 or later, or 24.2 or later.
+testero needs Node.js 22 (22.18 or later), 24 (24.2 or later), 25 or 26.
 
 ## Usage
 

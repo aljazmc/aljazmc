@@ -2,9 +2,9 @@
 
 # lintero
 
-A simple linter for JavaScript, TypeScript, JSX and JSON, with 226
-rules compatible with [Biome](https://biomejs.dev)'s, and their automatic
-fixes. Easy to understand, easy to customize and easy to extend.
+A simple linter for JavaScript, TypeScript, JSX, JSON and Markdown, with
+232 rules compatible with [Biome](https://biomejs.dev) 2.6.3's, and their
+automatic fixes. Easy to understand, easy to customize and easy to extend.
 
 ## Install
 
@@ -12,7 +12,7 @@ fixes. Easy to understand, easy to customize and easy to extend.
 npm install --save-dev @aljazmc/lintero
 ```
 
-lintero needs Node.js 22.18 or later, or 24.2 or later.
+lintero needs Node.js 22 (22.18 or later), 24 (24.2 or later), 25 or 26.
 
 ## Usage
 
@@ -61,17 +61,18 @@ export default {
 `ignore` lists the files and folders that are never linted. The `rules`
 are:
 
-| Option                                                                                | Default         | What it does                                                                                           |
-| ------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------ |
-| `enabled`                                                                             | `true`          | Lints files at all.                                                                                    |
-| `includes`                                                                            | `["**"]`        | Globs of the files to lint, in order. The last match decides, and `!` excludes.                        |
-| `preset`                                                                              | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.                                              |
-| `domains`                                                                             | `{}`            | Rules of frameworks and tools, see [Domains](#domains): `"recommended"`, `"all"` or `"none"` for each. |
-| `a11y`, `complexity`, `correctness`, `performance`, `security`, `style`, `suspicious` |                 | The rules of a [group](#rules), see [Groups](#groups).                                                 |
-| `javascript.enabled`                                                                  | `true`          | Lints JavaScript, TypeScript and JSX files.                                                            |
-| `javascript.globals`                                                                  | `[]`            | Global names that exist, for the rules about undeclared names.                                         |
-| `javascript.jsxRuntime`                                                               | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.                                                  |
-| `json.enabled`                                                                        | `true`          | Lints JSON files.                                                                                      |
+| Option                                                                                           | Default         | What it does                                                                                           |
+| ------------------------------------------------------------------------------------------------ | --------------- | ------------------------------------------------------------------------------------------------------ |
+| `enabled`                                                                                        | `true`          | Lints files at all.                                                                                    |
+| `includes`                                                                                       | `["**"]`        | Globs of the files to lint, in order. The last match decides, and `!` excludes.                        |
+| `preset`                                                                                         | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.                                              |
+| `domains`                                                                                        | `{}`            | Rules of frameworks and tools, see [Domains](#domains): `"recommended"`, `"all"` or `"none"` for each. |
+| `a11y`, `complexity`, `correctness`, `nursery`, `performance`, `security`, `style`, `suspicious` |                 | The rules of a [group](#rules), see [Groups](#groups).                                                 |
+| `javascript.enabled`                                                                             | `true`          | Lints JavaScript, TypeScript and JSX files.                                                            |
+| `javascript.globals`                                                                             | `[]`            | Global names that exist, for the rules about undeclared names.                                         |
+| `javascript.jsxRuntime`                                                                          | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.                                                  |
+| `json.enabled`                                                                                   | `true`          | Lints JSON files.                                                                                      |
+| `markdown.enabled`                                                                               | `true`          | Lints Markdown files, `.md` and `.markdown`.                                                           |
 
 ### Groups
 
@@ -88,7 +89,8 @@ for each rule:
 A rule configuration is an object with a `level`, a `fix` (`"none"`,
 `"safe"` or `"unsafe"`, to change how `--write` treats its fixes) and the
 rule's `options`. A level for a whole group leaves the rules of domains
-to their domains.
+to their domains. Like in Biome, `nursery` rules are new and still
+change, so no preset turns them on, only their own level does.
 
 ### Domains
 
@@ -124,6 +126,9 @@ to suppress, followed by a reason:
 // lintero-ignore-all lint/style: suppresses the whole file
 // lintero-ignore-start lint: suppresses everything up to the matching lintero-ignore-end
 ```
+
+In Markdown, suppressions are HTML comments, like
+`<!-- lintero-ignore lint/nursery/useTopLevelHeading: no title -->`.
 
 lintero reports suppressions that suppress nothing, when they name rules
 it implements. For other rules, it cannot tell.
@@ -281,6 +286,19 @@ Code that is certainly wrong, or does not do what it seems to. 56 rules:
 | `useValidTypeof`                     | Requires `typeof` to be compared with valid type names, like `"string"`.                                  | error    | unsafe | yes             |
 | `useYield`                           | Requires generator functions to `yield`.                                                                  | error    |        | yes             |
 
+### nursery
+
+New rules, which Biome may still change. They run only when their level
+is set, presets leave them off. 5 rules, all for Markdown:
+
+| Rule                        | What it reports                                                                                                 | Severity | Fix  | Recommended |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ---- | ----------- |
+| `useConsistentHeadingLevel` | Disallows headings that skip a level, like `###` after `#`.                                                     | info     |      | no          |
+| `useConsistentUnicodeBom`   | Requires, with `bom: "always"`, or disallows, by default, the byte order mark at the start of files.            | info     | safe | no          |
+| `useFencedCodeLanguage`     | Requires a language after the opening fence of code blocks, from `allowedLanguages`, alone with `languageOnly`. | info     |      | no          |
+| `useSingleTopLevelHeading`  | Disallows more top-level headings, of `level` 1 by default, after the one that starts a document.               | info     |      | no          |
+| `useTopLevelHeading`        | Requires documents to start with a level 1 heading, after comments, unless they start with HTML or a break.     | info     |      | no          |
+
 ### performance
 
 Code that is slower or bigger than it needs to be. 6 rules:
@@ -327,7 +345,7 @@ A consistent way to write the same thing. 12 rules:
 
 ### suspicious
 
-Code that is likely a mistake. 77 rules:
+Code that is likely a mistake. 78 rules:
 
 | Rule                             | What it reports                                                                                      | Severity | Fix    | Recommended     |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------- | -------- | ------ | --------------- |
@@ -359,6 +377,7 @@ Code that is likely a mistake. 77 rules:
 | `noDuplicateParameters`          | Disallows duplicate parameter names.                                                                 | error    |        | yes             |
 | `noDuplicateTestHooks`           | Disallows several hooks of the same kind, like two `beforeEach`, in one block.                       | error    |        | `test`          |
 | `noEmptyInterface`               | Disallows empty interfaces, which accept almost anything.                                            | error    | safe   | yes             |
+| `noEmptySource`                  | Disallows empty modules and Markdown files, also with only comments unless `allowComments`.          | warn     |        | no              |
 | `noExplicitAny`                  | Disallows the `any` type.                                                                            | warn     |        | yes             |
 | `noExportsInTest`                | Disallows exports from test files.                                                                   | error    |        | `test`          |
 | `noExtraNonNullAssertion`        | Disallows repeated or needless non-null assertions, like `a!!`.                                      | warn     | safe   | yes             |
@@ -412,7 +431,7 @@ Code that is likely a mistake. 77 rules:
 
 ```
 source
-├─> @aljazmc/syntax   parses it into a syntax tree
+├─> @aljazmc/syntax   parses it into a syntax tree, of JavaScript or Markdown
 ├─> src/analysis      finds scopes, references and control flow, and the rules that run
 └─> src/rules         visit the tree in one traversal, reporting problems and fixes
 ```
@@ -422,7 +441,7 @@ source
 - `src/analysis/settings.ts` resolves presets, domains, groups and rules to the rules that run.
 - `src/analysis/semantic.ts` finds scopes, bindings and references, and tells types from values.
 - `src/analysis/flow.ts` works out how statements complete, for unreachable code, fallthrough and returns.
-- `src/rules` has one file per rule, visiting the nodes it checks in a single traversal shared by all rules.
+- `src/rules` has one file per rule, visiting the nodes it checks in a single traversal shared by all rules, of the JavaScript or the Markdown tree.
 - `src/analysis/suppressions.ts` reads suppression comments, and reports unused and malformed ones, also those limited to instances like `useExhaustiveDependencies(a)`.
 - `src/analysis/aria.ts` knows ARIA roles and attributes and the roles of elements, and `src/analysis/regex.ts` parses regular expression literals.
 - `src/analysis/globals.ts`, `jsx.ts`, `nodes.ts`, `react.ts`, `tests.ts` and `vue.ts` are helpers the rules share: global names, JSX, nodes, and calls of React, test frameworks and Vue.

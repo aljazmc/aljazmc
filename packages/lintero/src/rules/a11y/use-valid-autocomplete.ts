@@ -1,8 +1,9 @@
 import type { Node } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import { rule } from "../../rules.js";
 
 /** Autofill field names, and the tokens allowed beside them. */
-const fields = new Set([
+export const fields = new Set([
     "name",
     "honorific-prefix",
     "given-name",
@@ -72,13 +73,43 @@ const valid = (value: string): boolean => {
     return tokens.slice(index).every((token) => fields.has(token));
 };
 
+const addresses = new Set([
+    "address-level1",
+    "address-level2",
+    "address-level3",
+    "address-level4",
+    "address-line1",
+    "address-line2",
+    "address-line3",
+    "country",
+    "country-name",
+    "postal-code",
+    "street-address",
+]);
+
+/** Whether autocomplete values are valid, Biome's `is_valid_autocomplete` of HTML. */
+const biomeAutocomplete = (values: string[]): boolean => {
+    const [first, second] = values;
+    if (first === undefined) return true;
+    if (second === undefined)
+        return (
+            first === "" || first.startsWith("section-") || fields.has(first)
+        );
+    return (
+        first.startsWith("section-") ||
+        ((first === "billing" || first === "shipping") &&
+            (addresses.has(second) || fields.has(second))) ||
+        values.every((value) => fields.has(value))
+    );
+};
+
 export default rule<{ inputComponents?: string[] }>({
     name: "useValidAutocomplete",
     group: "a11y",
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     options: { inputComponents: [] },
     create: (context) => ({
         JSXElement(node) {
@@ -108,6 +139,28 @@ export default rule<{ inputComponents?: string[] }>({
                         "Use valid values for the autocomplete attribute.",
                     );
             }
+        },
+        HtmlElement(node) {
+            if (
+                node.tag !== "input" &&
+                !(context.options.inputComponents ?? []).includes(node.name)
+            )
+                return;
+            const attribute = Html.attribute(node, "autocomplete");
+            const value = Html.value(attribute);
+            if (!attribute || value === undefined) return;
+            const values = value
+                .split(/[\t\n\f\r ]+/)
+                .filter((word) => word !== "");
+            if (
+                (values.length === 1 && values[0] === "none") ||
+                biomeAutocomplete(values)
+            )
+                return;
+            context.report(
+                attribute,
+                "Use valid values for the autocomplete attribute.",
+            );
         },
     }),
 });

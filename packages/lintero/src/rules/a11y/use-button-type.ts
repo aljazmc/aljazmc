@@ -1,4 +1,5 @@
 import type { Node } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import Nodes from "../../analysis/nodes.js";
 import { rule } from "../../rules.js";
@@ -11,7 +12,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["js", "jsx"],
+    languages: ["html", "js", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "button") return;
@@ -71,6 +72,27 @@ export default rule({
                     type.value,
                     "Provide a valid type prop for the button element.",
                 );
+        },
+        HtmlElement(node) {
+            if (node.tag !== "button") return;
+            const type = Html.attribute(node, "type");
+            if (!type) {
+                context.report(
+                    Html.opening(node),
+                    "Provide an explicit type attribute for the button element.",
+                );
+                return;
+            }
+            const value = Html.value(type);
+            if (
+                value !== undefined &&
+                ["submit", "button", "reset"].includes(value)
+            )
+                return;
+            context.report(
+                Html.opening(node),
+                "Provide a valid type attribute for the button element.",
+            );
         },
     }),
 });

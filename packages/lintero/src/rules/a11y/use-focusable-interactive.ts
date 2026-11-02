@@ -4,6 +4,8 @@ import {
     text,
     tokens,
 } from "../../analysis/aria.js";
+import Html, { AriaRoles } from "../../analysis/html.js";
+import { fromRoles, isComposite, isInteractive } from "../../analysis/roles.js";
 import { rule } from "../../rules.js";
 
 /** Interactive roles of elements users focus, unlike containers managing the focus of their items. */
@@ -19,7 +21,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             const name = node.name ?? "";
@@ -42,6 +44,25 @@ export default rule({
                 node,
                 `The HTML element with the interactive role ${context.slice(role.value)} is not focusable.`,
             );
+        },
+        HtmlElement(node) {
+            if (!AriaRoles.isNotInteractiveElement(Html.aria(node))) return;
+            const attribute = Html.attribute(node, "role");
+            if (!attribute) return;
+            const value = Html.value(attribute);
+            if (value === undefined) return;
+            const role = fromRoles(value);
+            if (role === undefined) return;
+            if (
+                role !== "separator" &&
+                isInteractive(role) &&
+                !isComposite(role) &&
+                !Html.has(node, "tabindex")
+            )
+                context.report(
+                    Html.opening(node),
+                    `The HTML element with the interactive role ${value} is not focusable.`,
+                );
         },
     }),
 });

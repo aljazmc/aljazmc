@@ -1,3 +1,4 @@
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -7,7 +8,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "audio" && node.name !== "video") return;
@@ -22,6 +23,23 @@ export default rule({
                 );
             });
             if (!captioned)
+                context.report(
+                    node,
+                    "Provide a track for captions when using audio or video elements.",
+                );
+        },
+        HtmlElement(node) {
+            if (node.tag !== "audio" && node.tag !== "video") return;
+            if (node.tag === "video" && Html.has(node, "muted")) return;
+            if (node.closing === null) return;
+            const captions = node.children.some(
+                (child) =>
+                    child.type === "Element" &&
+                    child.tag === "track" &&
+                    Html.value(Html.attribute(child, "kind"))?.toLowerCase() ===
+                        "captions",
+            );
+            if (!captions)
                 context.report(
                     node,
                     "Provide a track for captions when using audio or video elements.",

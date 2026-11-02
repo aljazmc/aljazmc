@@ -149,6 +149,10 @@ export default rule<{
                         !declaration ||
                         binding.name.startsWith("_") ||
                         binding.exported ||
+                        (context.embeddedBindings.has(binding.name) &&
+                            binding.declarations.every(({ kind }) =>
+                                ["const", "let", "var", "using"].includes(kind),
+                            )) ||
                         !binding.declarations.every(reportable) ||
                         ignored(binding.name, declaration.kind)
                     )

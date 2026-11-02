@@ -7,7 +7,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node) || node.name === "th") return;
@@ -23,6 +23,21 @@ export default rule({
                         ],
                     },
                 );
+        },
+        HtmlElement(node) {
+            if (node.tag === "th") return;
+            const scope = node.attributes.find(
+                (attribute) => attribute.name.toLowerCase() === "scope",
+            );
+            if (!scope) return;
+            context.report(
+                scope,
+                "Avoid using the scope attribute on elements other than th elements.",
+                {
+                    message: "Remove the scope attribute.",
+                    edits: [{ start: scope.start, end: scope.end, text: "" }],
+                },
+            );
         },
     }),
 });

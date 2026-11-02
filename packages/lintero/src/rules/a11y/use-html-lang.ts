@@ -1,3 +1,4 @@
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -7,7 +8,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "html" || Jsx.spreads(node)) return;
@@ -20,6 +21,13 @@ export default rule({
                 return;
             context.report(
                 node,
+                "Provide a lang attribute when using the html element.",
+            );
+        },
+        HtmlElement(node) {
+            if (node.tag !== "html" || Html.nonEmpty(node, "lang")) return;
+            context.report(
+                Html.opening(node),
                 "Provide a lang attribute when using the html element.",
             );
         },

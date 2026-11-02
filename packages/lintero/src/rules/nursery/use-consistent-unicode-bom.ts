@@ -6,10 +6,10 @@ export default rule<{ bom?: "always" | "never" }>({
     severity: "info",
     recommended: false,
     fix: "safe",
-    languages: ["md"],
+    languages: ["html", "md"],
     options: { bom: "never" },
-    create: (context) => ({
-        Root(node) {
+    create: (context) => {
+        const check = (node: { bom: boolean }) => {
             const always = context.options.bom === "always";
             if (node.bom === always) return;
             if (node.bom)
@@ -30,6 +30,7 @@ export default rule<{ bom?: "always" | "never" }>({
                         edits: [{ start: 0, end: 0, text: "﻿" }],
                     },
                 );
-        },
-    }),
+        };
+        return { Root: check, HtmlRoot: check };
+    },
 });

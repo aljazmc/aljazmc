@@ -1,4 +1,5 @@
-import type { Node, NodeOf } from "@aljazmc/syntax";
+import type { Node, NodeOf, Html as Tree } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -22,13 +23,34 @@ export const contentProps = (element: NodeOf<"JSXElement">): boolean =>
     Jsx.attribute(element, "children") !== undefined ||
     Jsx.attribute(element, "dangerouslySetInnerHTML") !== undefined;
 
+/** Whether HTML children have content screen readers read, like Biome's for headings. */
+const headingContent = (children: Tree.Child[]): boolean =>
+    children.some((child) => {
+        if (child.type === "Text") return child.value.trim() !== "";
+        if (child.type === "Cdata") return true;
+        if (child.closing !== null)
+            return (
+                !Html.truthyAriaHidden(child) && headingContent(child.children)
+            );
+        if (Html.truthyAriaHidden(child)) return false;
+        if (
+            Html.nonEmpty(child, "aria-label") ||
+            Html.nonEmpty(child, "aria-labelledby") ||
+            Html.nonEmpty(child, "title")
+        )
+            return true;
+        return (
+            child.name.toLowerCase() === "img" && Html.nonEmpty(child, "alt")
+        );
+    });
+
 export default rule({
     name: "useHeadingContent",
     group: "a11y",
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!/^h[1-6]$/.test(node.name ?? "")) return;
@@ -44,6 +66,21 @@ export default rule({
                     node,
                     "Provide screen reader accessible content when using heading  elements.",
                 );
+        },
+        HtmlElement(node) {
+            if (!/^h[1-6]$/.test(node.tag ?? "")) return;
+            const message =
+                "Provide screen reader accessible content when using heading elements.";
+            if (Html.truthyAriaHidden(node))
+                return context.report(node, message);
+            if (
+                Html.nonEmpty(node, "aria-label") ||
+                Html.nonEmpty(node, "aria-labelledby") ||
+                Html.nonEmpty(node, "title")
+            )
+                return;
+            if (node.closing !== null && headingContent(node.children)) return;
+            context.report(node, message);
         },
     }),
 });

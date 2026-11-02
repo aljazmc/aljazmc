@@ -1,3 +1,4 @@
+import Html, { AriaRoles } from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -7,7 +8,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "svg" || Jsx.spreads(node)) return;
@@ -32,6 +33,38 @@ export default rule({
                     Jsx.opening(node, context),
                     "Alternative text title element cannot be empty",
                 );
+        },
+        HtmlElement(node) {
+            if (node.tag !== "svg" || node.closing === null) return;
+            if (Html.ariaHiddenTrue(node)) return;
+            const first = node.children[0];
+            if (
+                first?.type === "Element" &&
+                first.closing !== null &&
+                first.name === "title" &&
+                first.children.length > 0
+            )
+                return;
+            if (!AriaRoles.hasNameRequiredImageRole(Html.aria(node))) return;
+            if (Html.has(node, "aria-label")) return;
+            const labelledby = Html.attribute(node, "aria-labelledby");
+            if (labelledby?.value) {
+                const id = Html.value(labelledby);
+                if (
+                    node.children.some(
+                        (child) =>
+                            child.type === "Element" &&
+                            child.closing !== null &&
+                            Html.attribute(child, "id")?.value &&
+                            Html.value(Html.attribute(child, "id")) === id,
+                    )
+                )
+                    return;
+            }
+            context.report(
+                node,
+                "Alternative text title element cannot be empty",
+            );
         },
     }),
 });

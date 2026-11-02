@@ -5,7 +5,9 @@ import {
     text,
     tokens,
 } from "../../analysis/aria.js";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
+import { fromRoles, role as roleData } from "../../analysis/roles.js";
 import { rule } from "../../rules.js";
 
 export default rule({
@@ -14,7 +16,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             // custom elements like <my-element> have no semantic alternatives
@@ -42,6 +44,42 @@ export default rule({
                 role,
                 `The elements with this role can be changed to the following elements:\n${elements.map((element) => `<${element}>`).join("\n")}`,
             );
+        },
+        HtmlElement(node) {
+            const attribute = Html.attribute(node, "role");
+            const value = Html.value(attribute)?.trim();
+            if (!attribute || value === undefined) return;
+            const role = fromRoles(value);
+            if (role === undefined) return;
+            if (
+                [
+                    "img",
+                    "combobox",
+                    "listbox",
+                    "option",
+                    "status",
+                    "alert",
+                ].includes(role)
+            )
+                return;
+            const data = roleData(role);
+            const instances = [...(data?.base ?? []), ...(data?.related ?? [])];
+            if (instances.length === 0) return;
+            const semantic = instances.some(
+                (instance) =>
+                    node.tag === instance.element &&
+                    instance.attributes.every(
+                        ([name, expected]) =>
+                            Html.value(
+                                Html.attribute(node, name),
+                            )?.toLowerCase() === expected.toLowerCase(),
+                    ),
+            );
+            if (!semantic)
+                context.report(
+                    attribute,
+                    "The elements with this role can be changed to semantic elements.",
+                );
         },
     }),
 });

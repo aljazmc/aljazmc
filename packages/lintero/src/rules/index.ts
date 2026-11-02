@@ -8,6 +8,8 @@ import noDistractingElements from "./a11y/no-distracting-elements.js";
 import noHeaderScope from "./a11y/no-header-scope.js";
 import noInteractiveElementToNoninteractiveRole from "./a11y/no-interactive-element-to-noninteractive-role.js";
 import noLabelWithoutControl from "./a11y/no-label-without-control.js";
+/** Every rule lintero implements, by group. */
+import noNoninteractiveElementInteractions from "./a11y/no-noninteractive-element-interactions.js";
 import noNoninteractiveElementToInteractiveRole from "./a11y/no-noninteractive-element-to-interactive-role.js";
 import noNoninteractiveTabindex from "./a11y/no-noninteractive-tabindex.js";
 import noPositiveTabindex from "./a11y/no-positive-tabindex.js";
@@ -75,6 +77,7 @@ import noConstAssign from "./correctness/no-const-assign.js";
 import noConstantCondition from "./correctness/no-constant-condition.js";
 import noConstantMathMinMaxClamp from "./correctness/no-constant-math-min-max-clamp.js";
 import noConstructorReturn from "./correctness/no-constructor-return.js";
+import noDuplicateAttributes from "./correctness/no-duplicate-attributes.js";
 import noEmptyCharacterClassInRegex from "./correctness/no-empty-character-class-in-regex.js";
 import noEmptyPattern from "./correctness/no-empty-pattern.js";
 import noGlobalObjectCalls from "./correctness/no-global-object-calls.js";
@@ -90,6 +93,7 @@ import noPrivateImports from "./correctness/no-private-imports.js";
 import noQwikUseVisibleTask from "./correctness/no-qwik-use-visible-task.js";
 import noReactNativeRawText from "./correctness/no-react-native-raw-text.js";
 import noRenderReturnValue from "./correctness/no-render-return-value.js";
+import noRestrictedElements from "./correctness/no-restricted-elements.js";
 import noSelfAssign from "./correctness/no-self-assign.js";
 import noSetterReturn from "./correctness/no-setter-return.js";
 import noStringCaseMismatch from "./correctness/no-string-case-mismatch.js";
@@ -125,14 +129,22 @@ import useReactNativePlatformComponents from "./correctness/use-react-native-pla
 import useValidForDirection from "./correctness/use-valid-for-direction.js";
 import useValidTypeof from "./correctness/use-valid-typeof.js";
 import useYield from "./correctness/use-yield.js";
+import noInvalidFileInputAccept from "./nursery/no-invalid-file-input-accept.js";
+import noMisplacedListElements from "./nursery/no-misplaced-list-elements.js";
+import noNonScalableViewport from "./nursery/no-non-scalable-viewport.js";
+import noObsoleteAttributes from "./nursery/no-obsolete-attributes.js";
+import noObsoleteTags from "./nursery/no-obsolete-tags.js";
+import noUnsafeIframeSandbox from "./nursery/no-unsafe-iframe-sandbox.js";
 import useConsistentHeadingLevel from "./nursery/use-consistent-heading-level.js";
 import useConsistentUnicodeBom from "./nursery/use-consistent-unicode-bom.js";
+import useControlLabel from "./nursery/use-control-label.js";
 import useFencedCodeLanguage from "./nursery/use-fenced-code-language.js";
 import useSingleTopLevelHeading from "./nursery/use-single-top-level-heading.js";
 import useTopLevelHeading from "./nursery/use-top-level-heading.js";
 import noAccumulatingSpread from "./performance/no-accumulating-spread.js";
 import noDynamicNamespaceImportAccess from "./performance/no-dynamic-namespace-import-access.js";
 import noImgElement from "./performance/no-img-element.js";
+import noSyncScripts from "./performance/no-sync-scripts.js";
 import noUnwantedPolyfillio from "./performance/no-unwanted-polyfillio.js";
 import useDomNodeTextContent from "./performance/use-dom-node-text-content.js";
 import useGoogleFontPreconnect from "./performance/use-google-font-preconnect.js";
@@ -141,7 +153,10 @@ import noDangerouslySetInnerHtml from "./security/no-dangerously-set-inner-html.
 import noDangerouslySetInnerHtmlWithChildren from "./security/no-dangerously-set-inner-html-with-children.js";
 import noGlobalEval from "./security/no-global-eval.js";
 import noScriptUrl from "./security/no-script-url.js";
+import useIframeSandbox from "./security/use-iframe-sandbox.js";
+import noExcessiveLinesPerFile from "./style/no-excessive-lines-per-file.js";
 import noHeadElement from "./style/no-head-element.js";
+import noInlineStyles from "./style/no-inline-styles.js";
 import noNonNullAssertion from "./style/no-non-null-assertion.js";
 import useArrayLiterals from "./style/use-array-literals.js";
 import useConst from "./style/use-const.js";
@@ -232,7 +247,6 @@ import useIsArray from "./suspicious/use-is-array.js";
 import useIterableCallbackReturn from "./suspicious/use-iterable-callback-return.js";
 import useNamespaceKeyword from "./suspicious/use-namespace-keyword.js";
 
-/** Every rule lintero implements, by group. */
 export default [
     noAccessKey,
     noAmbiguousAnchorText,
@@ -243,6 +257,7 @@ export default [
     noHeaderScope,
     noInteractiveElementToNoninteractiveRole,
     noLabelWithoutControl,
+    noNoninteractiveElementInteractions,
     noNoninteractiveElementToInteractiveRole,
     noNoninteractiveTabindex,
     noPositiveTabindex,
@@ -310,6 +325,7 @@ export default [
     noConstantCondition,
     noConstantMathMinMaxClamp,
     noConstructorReturn,
+    noDuplicateAttributes,
     noEmptyCharacterClassInRegex,
     noEmptyPattern,
     noGlobalObjectCalls,
@@ -325,12 +341,13 @@ export default [
     noQwikUseVisibleTask,
     noReactNativeRawText,
     noRenderReturnValue,
+    noRestrictedElements,
     noSelfAssign,
     noSetterReturn,
     noStringCaseMismatch,
     noSwitchDeclarations,
-    noUnreachableSuper,
     noUnreachable,
+    noUnreachableSuper,
     noUnsafeFinally,
     noUnsafeOptionalChaining,
     noUnusedFunctionParameters,
@@ -360,23 +377,34 @@ export default [
     useValidForDirection,
     useValidTypeof,
     useYield,
+    noInvalidFileInputAccept,
+    noMisplacedListElements,
+    noNonScalableViewport,
+    noObsoleteAttributes,
+    noObsoleteTags,
+    noUnsafeIframeSandbox,
     useConsistentHeadingLevel,
     useConsistentUnicodeBom,
+    useControlLabel,
     useFencedCodeLanguage,
     useSingleTopLevelHeading,
     useTopLevelHeading,
     noAccumulatingSpread,
     noDynamicNamespaceImportAccess,
     noImgElement,
+    noSyncScripts,
     noUnwantedPolyfillio,
     useDomNodeTextContent,
     useGoogleFontPreconnect,
     noBlankTarget,
-    noDangerouslySetInnerHtmlWithChildren,
     noDangerouslySetInnerHtml,
+    noDangerouslySetInnerHtmlWithChildren,
     noGlobalEval,
     noScriptUrl,
+    useIframeSandbox,
+    noExcessiveLinesPerFile,
     noHeadElement,
+    noInlineStyles,
     noNonNullAssertion,
     useArrayLiterals,
     useConst,

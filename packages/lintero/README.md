@@ -2,9 +2,9 @@
 
 # lintero
 
-A simple linter for JavaScript, TypeScript, JSX, JSON and Markdown, with
-232 rules compatible with [Biome](https://biomejs.dev) 2.6.3's, and their
-automatic fixes. Easy to understand, easy to customize and easy to extend.
+A simple linter for JavaScript, TypeScript, JSX, JSON, Markdown and HTML,
+with 246 rules compatible with [Biome](https://biomejs.dev) 2.6.4's, and
+their automatic fixes. Easy to understand, easy to customize and easy to extend.
 
 ## Install
 
@@ -73,6 +73,7 @@ are:
 | `javascript.jsxRuntime`                                                                          | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.                                                  |
 | `json.enabled`                                                                                   | `true`          | Lints JSON files.                                                                                      |
 | `markdown.enabled`                                                                               | `true`          | Lints Markdown files, `.md` and `.markdown`.                                                           |
+| `html.enabled`                                                                                   | `true`          | Lints HTML files, `.html` and `.htm`, and their scripts.                                               |
 
 ### Groups
 
@@ -100,8 +101,8 @@ on it:
 
 | Domain        | Enabled when `package.json` depends on                        | Rules |
 | ------------- | ------------------------------------------------------------- | ----- |
-| `react`       | `react` 16 or later                                           | 12    |
-| `next`        | `next` 14 or later                                            | 9     |
+| `react`       | `react` 16 or later                                           | 13    |
+| `next`        | `next` 14 or later                                            | 10    |
 | `qwik`        | `@builder.io/qwik` 1 or later, or `@qwik.dev/core` 2 or later | 8     |
 | `vue`         | `vue` 3 or later                                              | 4     |
 | `test`        | `jest` 26, `vitest` 1, `mocha` 8 or `ava` 2, or later         | 4     |
@@ -127,8 +128,16 @@ to suppress, followed by a reason:
 // lintero-ignore-start lint: suppresses everything up to the matching lintero-ignore-end
 ```
 
-In Markdown, suppressions are HTML comments, like
+In Markdown and HTML, suppressions are HTML comments, like
 `<!-- lintero-ignore lint/nursery/useTopLevelHeading: no title -->`.
+
+Like Biome, lintero lints the scripts of HTML files like files of their
+language: JavaScript scripts and modules with the JavaScript rules, import
+maps and JSON scripts with the JSON rules, at their place in the file, and
+scripts of other types not at all. A suppression comment before a
+`<script>` suppresses its diagnostics too. The top level imports and
+variables of module scripts may be used by the page, so no script reports
+them as unused.
 
 lintero reports suppressions that suppress nothing, when they name rules
 it implements. For other rules, it cannot tell.
@@ -141,7 +150,7 @@ Recommended rules run by default. The others run with
 
 ### a11y
 
-Accessibility of JSX and HTML: elements, ARIA roles and attributes, and keyboard use. 36 rules:
+Accessibility of JSX and HTML: elements, ARIA roles and attributes, and keyboard use. 37 rules:
 
 | Rule                                       | What it reports                                                                                           | Severity | Fix    | Recommended |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
@@ -154,6 +163,7 @@ Accessibility of JSX and HTML: elements, ARIA roles and attributes, and keyboard
 | `noHeaderScope`                            | Allows `scope` only on `th` elements.                                                                     | error    | unsafe | yes         |
 | `noInteractiveElementToNoninteractiveRole` | Disallows non-interactive roles on interactive elements, like `role="img"` on a `button`.                 | error    | unsafe | yes         |
 | `noLabelWithoutControl`                    | Requires every `label` to have text and an associated form control.                                       | error    |        | yes         |
+| `noNoninteractiveElementInteractions`      | Disallows event handlers on non-interactive HTML elements, like `onclick` on `<h1>`.                      | info     |        | no          |
 | `noNoninteractiveElementToInteractiveRole` | Disallows interactive roles on non-interactive elements, like `role="button"` on an `li`.                 | error    | unsafe | yes         |
 | `noNoninteractiveTabindex`                 | Disallows `tabIndex` on non-interactive elements, so they do not take focus.                              | error    | unsafe | yes         |
 | `noPositiveTabindex`                       | Disallows a positive `tabIndex`, which breaks the natural tab order.                                      | error    | unsafe | yes         |
@@ -225,16 +235,17 @@ Code that can be simpler, with the same result. 34 rules:
 
 ### correctness
 
-Code that is certainly wrong, or does not do what it seems to. 56 rules:
+Code that is certainly wrong, or does not do what it seems to. 58 rules:
 
 | Rule                                 | What it reports                                                                                           | Severity | Fix    | Recommended     |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------- | -------- | ------ | --------------- |
 | `noChildrenProp`                     | Disallows passing children as the `children` prop, instead of nesting them.                               | error    |        | `react`         |
 | `noComponentHookFactories`           | Disallows defining components and hooks inside other functions.                                           | error    |        | `react`         |
-| `noConstAssign`                      | Disallows assigning to `const` variables.                                                                 | error    | unsafe | yes             |
 | `noConstantCondition`                | Disallows conditions that are always true or always false.                                                | error    |        | yes             |
 | `noConstantMathMinMaxClamp`          | Disallows `Math.min` and `Math.max` combinations that always give the same result.                        | error    | unsafe | yes             |
+| `noConstAssign`                      | Disallows assigning to `const` variables.                                                                 | error    | unsafe | yes             |
 | `noConstructorReturn`                | Disallows returning a value from a constructor.                                                           | error    |        | yes             |
+| `noDuplicateAttributes`              | Disallows HTML attributes written twice on an element.                                                    | error    |        | yes             |
 | `noEmptyCharacterClassInRegex`       | Disallows empty character classes in regular expressions, like `[]`, which match nothing.                 | error    |        | yes             |
 | `noEmptyPattern`                     | Disallows empty destructuring patterns, like `const {} = a`.                                              | error    |        | yes             |
 | `noGlobalObjectCalls`                | Disallows calling objects like `Math`, `JSON` and `Reflect` as functions.                                 | error    |        | yes             |
@@ -250,12 +261,13 @@ Code that is certainly wrong, or does not do what it seems to. 56 rules:
 | `noQwikUseVisibleTask`               | Disallows `useVisibleTask$`, which runs eagerly in the browser.                                           | error    |        | `qwik`          |
 | `noReactNativeRawText`               | Requires text in React Native to be inside a `Text` component.                                            | error    |        | `reactNative`   |
 | `noRenderReturnValue`                | Disallows using the return value of `ReactDOM.render()`.                                                  | error    |        | `react`         |
+| `noRestrictedElements`               | Disallows the HTML elements named in the `elements` option.                                               | info     |        | no              |
 | `noSelfAssign`                       | Disallows assigning a variable or property to itself.                                                     | error    |        | yes             |
 | `noSetterReturn`                     | Disallows returning a value from a setter.                                                                | error    |        | yes             |
 | `noStringCaseMismatch`               | Disallows comparing `toUpperCase()` or `toLowerCase()` with a string of the other case.                   | error    | unsafe | yes             |
 | `noSwitchDeclarations`               | Requires declarations in `case` clauses to be in a block, so other clauses cannot reach them.             | error    | safe   | yes             |
-| `noUnreachableSuper`                 | Requires constructors to call `super()` exactly once before `this`, on every path.                        | error    |        | yes             |
 | `noUnreachable`                      | Disallows code that can never run, like after `return`.                                                   | error    |        | yes             |
+| `noUnreachableSuper`                 | Requires constructors to call `super()` exactly once before `this`, on every path.                        | error    |        | yes             |
 | `noUnsafeFinally`                    | Disallows `return`, `throw`, `break` and `continue` in `finally`.                                         | error    |        | yes             |
 | `noUnsafeOptionalChaining`           | Disallows optional chains where `undefined` throws, like `(a?.b)()` or `new a?.b()`.                      | error    |        | yes             |
 | `noUnusedFunctionParameters`         | Disallows unused function parameters.                                                                     | warn     | unsafe | yes             |
@@ -289,59 +301,70 @@ Code that is certainly wrong, or does not do what it seems to. 56 rules:
 ### nursery
 
 New rules, which Biome may still change. They run only when their level
-is set, presets leave them off. 5 rules, all for Markdown:
+is set, presets leave them off. 12 rules, for Markdown and HTML:
 
-| Rule                        | What it reports                                                                                                 | Severity | Fix  | Recommended |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ---- | ----------- |
-| `useConsistentHeadingLevel` | Disallows headings that skip a level, like `###` after `#`.                                                     | info     |      | no          |
-| `useConsistentUnicodeBom`   | Requires, with `bom: "always"`, or disallows, by default, the byte order mark at the start of files.            | info     | safe | no          |
-| `useFencedCodeLanguage`     | Requires a language after the opening fence of code blocks, from `allowedLanguages`, alone with `languageOnly`. | info     |      | no          |
-| `useSingleTopLevelHeading`  | Disallows more top-level headings, of `level` 1 by default, after the one that starts a document.               | info     |      | no          |
-| `useTopLevelHeading`        | Requires documents to start with a level 1 heading, after comments, unless they start with HTML or a break.     | info     |      | no          |
+| Rule                        | What it reports                                                                                                 | Severity | Fix    | Recommended |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
+| `noInvalidFileInputAccept`  | Requires valid file types in the `accept` of file inputs, written like Biome writes them.                       | error    | unsafe | no          |
+| `noMisplacedListElements`   | Disallows `<li>` outside `<ul>`, `<ol>` and `<menu>`.                                                           | error    |        | no          |
+| `noNonScalableViewport`     | Disallows viewports that disable zooming with `user-scalable=no`.                                               | error    |        | no          |
+| `noObsoleteAttributes`      | Disallows HTML attributes the HTML standard made obsolete, like `align` on `<div>`.                             | warn     |        | no          |
+| `noObsoleteTags`            | Disallows HTML elements the HTML standard made obsolete, like `<center>`.                                       | warn     |        | no          |
+| `noUnsafeIframeSandbox`     | Disallows `allow-scripts` with `allow-same-origin` in iframe sandboxes, which undoes them.                      | error    |        | no          |
+| `useConsistentHeadingLevel` | Disallows headings that skip a level, like `###` after `#`.                                                     | info     |        | no          |
+| `useConsistentUnicodeBom`   | Requires, with `bom: "always"`, or disallows, by default, the byte order mark at the start of files.            | info     | safe   | no          |
+| `useControlLabel`           | Requires buttons and menu items to have an accessible label.                                                    | error    |        | no          |
+| `useFencedCodeLanguage`     | Requires a language after the opening fence of code blocks, from `allowedLanguages`, alone with `languageOnly`. | info     |        | no          |
+| `useSingleTopLevelHeading`  | Disallows more top-level headings, of `level` 1 by default, after the one that starts a document.               | info     |        | no          |
+| `useTopLevelHeading`        | Requires documents to start with a level 1 heading, after comments, unless they start with HTML or a break.     | info     |        | no          |
 
 ### performance
 
-Code that is slower or bigger than it needs to be. 6 rules:
+Code that is slower or bigger than it needs to be. 7 rules:
 
 | Rule                             | What it reports                                                                            | Severity | Fix    | Recommended |
 | -------------------------------- | ------------------------------------------------------------------------------------------ | -------- | ------ | ----------- |
 | `noAccumulatingSpread`           | Disallows spreading the accumulator in `reduce`, which copies it on every call.            | warn     |        | yes         |
 | `noDynamicNamespaceImportAccess` | Disallows dynamic access to namespace imports, like `ns[key]`, which defeats tree shaking. | warn     |        | yes         |
 | `noImgElement`                   | Prefers `next/image` to `img` elements in Next.js.                                         | warn     |        | `next`      |
+| `noSyncScripts`                  | Disallows scripts with a `src` but no `async`, `defer` or `type="module"`.                 | warn     |        | no          |
 | `noUnwantedPolyfillio`           | Disallows Polyfill.io scripts, Next.js includes the polyfills already.                     | warn     |        | `next`      |
 | `useDomNodeTextContent`          | Prefers `textContent` to `innerText`, which forces a layout.                               | warn     | unsafe | yes         |
 | `useGoogleFontPreconnect`        | Requires `rel="preconnect"` on links to Google Fonts.                                      | info     | safe   | `next`      |
 
 ### security
 
-Code that opens the way to attacks. 5 rules:
+Code that opens the way to attacks. 6 rules:
 
 | Rule                                    | What it reports                                                                  | Severity | Fix  | Recommended |
 | --------------------------------------- | -------------------------------------------------------------------------------- | -------- | ---- | ----------- |
 | `noBlankTarget`                         | Requires `rel="noopener"` or `rel="noreferrer"` on links with `target="_blank"`. | error    | safe | yes         |
-| `noDangerouslySetInnerHtmlWithChildren` | Disallows `dangerouslySetInnerHTML` together with children.                      | error    |      | `react`     |
 | `noDangerouslySetInnerHtml`             | Disallows `dangerouslySetInnerHTML`, an easy way to cross-site scripting.        | error    |      | `react`     |
+| `noDangerouslySetInnerHtmlWithChildren` | Disallows `dangerouslySetInnerHTML` together with children.                      | error    |      | `react`     |
 | `noGlobalEval`                          | Disallows `eval()`.                                                              | error    |      | yes         |
 | `noScriptUrl`                           | Disallows `javascript:` URLs.                                                    | error    |      | yes         |
+| `useIframeSandbox`                      | Requires a `sandbox` on iframes.                                                 | error    |      | no          |
 
 ### style
 
-A consistent way to write the same thing. 12 rules:
+A consistent way to write the same thing. 14 rules:
 
-| Rule                            | What it reports                                                                         | Severity | Fix    | Recommended |
-| ------------------------------- | --------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
-| `noHeadElement`                 | Prefers `next/head` to `head` elements in Next.js pages.                                | warn     |        | `next`      |
-| `noNonNullAssertion`            | Disallows non-null assertions, like `a!.b`.                                             | warn     | unsafe | yes         |
-| `useArrayLiterals`              | Prefers array literals to the `Array` constructor.                                      | info     | safe   | yes         |
-| `useConst`                      | Prefers `const` to `let` for variables assigned only once.                              | warn     | safe   | yes         |
-| `useExponentiationOperator`     | Prefers `**` to `Math.pow()`.                                                           | info     | safe   | yes         |
-| `useExportType`                 | Requires `export type` for exports that are only types.                                 | warn     | safe   | yes         |
-| `useImportType`                 | Requires `import type` for imports used only as types.                                  | warn     | safe   | yes         |
-| `useLiteralEnumMembers`         | Requires enum members to be initialized with literals.                                  | warn     |        | yes         |
-| `useNodejsImportProtocol`       | Requires the `node:` protocol for Node.js builtin modules, like `node:fs`.              | info     | unsafe | yes         |
-| `useShorthandFunctionType`      | Prefers function types to interfaces and type literals with only a call signature.      | info     | safe   | yes         |
-| `useTemplate`                   | Prefers template literals to string concatenation.                                      | info     | unsafe | yes         |
-| `useVueMultiWordComponentNames` | Requires Vue component names of several words, so they cannot clash with HTML elements. | info     |        | `vue`       |
+| Rule                            | What it reports                                                                                              | Severity | Fix    | Recommended |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------- | ------ | ----------- |
+| `noExcessiveLinesPerFile`       | Disallows HTML files longer than `maxLines`, 300 by default, also without blank lines with `skipBlankLines`. | info     |        | no          |
+| `noHeadElement`                 | Prefers `next/head` to `head` elements in Next.js pages.                                                     | warn     |        | `next`      |
+| `noInlineStyles`                | Disallows the `style` attribute in HTML.                                                                     | info     | unsafe | no          |
+| `noNonNullAssertion`            | Disallows non-null assertions, like `a!.b`.                                                                  | warn     | unsafe | yes         |
+| `useArrayLiterals`              | Prefers array literals to the `Array` constructor.                                                           | info     | safe   | yes         |
+| `useConst`                      | Prefers `const` to `let` for variables assigned only once.                                                   | warn     | safe   | yes         |
+| `useExponentiationOperator`     | Prefers `**` to `Math.pow()`.                                                                                | info     | safe   | yes         |
+| `useExportType`                 | Requires `export type` for exports that are only types.                                                      | warn     | safe   | yes         |
+| `useImportType`                 | Requires `import type` for imports used only as types.                                                       | warn     | safe   | yes         |
+| `useLiteralEnumMembers`         | Requires enum members to be initialized with literals.                                                       | warn     |        | yes         |
+| `useNodejsImportProtocol`       | Requires the `node:` protocol for Node.js builtin modules, like `node:fs`.                                   | info     | unsafe | yes         |
+| `useShorthandFunctionType`      | Prefers function types to interfaces and type literals with only a call signature.                           | info     | safe   | yes         |
+| `useTemplate`                   | Prefers template literals to string concatenation.                                                           | info     | unsafe | yes         |
+| `useVueMultiWordComponentNames` | Requires Vue component names of several words, so they cannot clash with HTML elements.                      | info     |        | `vue`       |
 
 ### suspicious
 
@@ -431,7 +454,7 @@ Code that is likely a mistake. 78 rules:
 
 ```
 source
-├─> @aljazmc/syntax   parses it into a syntax tree, of JavaScript or Markdown
+├─> @aljazmc/syntax   parses it into a syntax tree, of JavaScript, Markdown or HTML
 ├─> src/analysis      finds scopes, references and control flow, and the rules that run
 └─> src/rules         visit the tree in one traversal, reporting problems and fixes
 ```
@@ -441,9 +464,10 @@ source
 - `src/analysis/settings.ts` resolves presets, domains, groups and rules to the rules that run.
 - `src/analysis/semantic.ts` finds scopes, bindings and references, and tells types from values.
 - `src/analysis/flow.ts` works out how statements complete, for unreachable code, fallthrough and returns.
-- `src/rules` has one file per rule, visiting the nodes it checks in a single traversal shared by all rules, of the JavaScript or the Markdown tree.
+- `src/rules` has one file per rule, visiting the nodes it checks in a single traversal shared by all rules, of the JavaScript, the Markdown or the HTML tree. HTML files lint their scripts again as files of their language.
 - `src/analysis/suppressions.ts` reads suppression comments, and reports unused and malformed ones, also those limited to instances like `useExhaustiveDependencies(a)`.
-- `src/analysis/aria.ts` knows ARIA roles and attributes and the roles of elements, and `src/analysis/regex.ts` parses regular expression literals.
+- `src/analysis/aria.ts` knows ARIA roles and attributes and the roles of elements, `src/analysis/roles.ts` the ARIA roles Biome generates from the ARIA specifications, and `src/analysis/regex.ts` parses regular expression literals.
+- `src/analysis/html.ts` reads HTML attributes and ARIA roles of HTML elements the way Biome's HTML rules do.
 - `src/analysis/globals.ts`, `jsx.ts`, `nodes.ts`, `react.ts`, `tests.ts` and `vue.ts` are helpers the rules share: global names, JSX, nodes, and calls of React, test frameworks and Vue.
 
 ## License

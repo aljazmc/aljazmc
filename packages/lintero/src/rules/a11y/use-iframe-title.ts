@@ -1,3 +1,4 @@
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -7,7 +8,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "iframe" || Jsx.spreads(node)) return;
@@ -20,6 +21,13 @@ export default rule({
                 return;
             context.report(
                 node,
+                "Provide a title attribute when using iframe elements.",
+            );
+        },
+        HtmlElement(node) {
+            if (node.tag !== "iframe" || Html.nonEmpty(node, "title")) return;
+            context.report(
+                Html.opening(node),
                 "Provide a title attribute when using iframe elements.",
             );
         },

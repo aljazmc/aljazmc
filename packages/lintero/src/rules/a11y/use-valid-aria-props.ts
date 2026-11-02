@@ -1,4 +1,7 @@
-import { properties } from "../../analysis/aria.js";
+import {
+    properties as ariaProperties,
+    properties,
+} from "../../analysis/aria.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -8,7 +11,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node)) return;
@@ -32,6 +35,19 @@ export default rule({
                             ],
                         },
                     );
+        },
+        HtmlElement(node) {
+            for (const attribute of node.attributes) {
+                const name = attribute.name.toLowerCase();
+                if (
+                    name.startsWith("aria-") &&
+                    ariaProperties[name.slice(5)] === undefined
+                )
+                    context.report(
+                        attribute,
+                        "The element contains an invalid ARIA attribute.",
+                    );
+            }
         },
     }),
 });

@@ -26,9 +26,11 @@ export default rule({
             for (const [name, entries] of seen) {
                 if (entries.length < 2) continue;
                 if (json) {
-                    for (const entry of entries.slice(1))
+                    // like Biome, once at the first key, the others are its details
+                    const [first] = entries;
+                    if (first)
                         context.report(
-                            (entry.node as { key: Node }).key,
+                            (first.node as { key: Node }).key,
                             `The key ${name} was already declared.`,
                         );
                     continue;

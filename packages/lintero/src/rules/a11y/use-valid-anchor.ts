@@ -1,4 +1,5 @@
 import type { Node, NodeOf } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -49,7 +50,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "a") return;
@@ -72,6 +73,39 @@ export default rule({
                         "Provide a valid value for the attribute href.",
                     );
             }
+        },
+        HtmlElement(node) {
+            if (node.name.toLowerCase() !== "a") return;
+            const href = Html.attribute(node, "href");
+            const click = Html.attribute(node, "onclick");
+            if (href) {
+                if (!href.value)
+                    return context.report(
+                        href,
+                        "Provide a valid value for the attribute href.",
+                    );
+                const value = Html.value(href);
+                if (value === undefined) return;
+                const lower = value.trim().toLowerCase();
+                if (
+                    lower === "" ||
+                    lower === "#" ||
+                    lower.startsWith("javascript:")
+                )
+                    context.report(
+                        href,
+                        "Provide a valid value for the attribute href.",
+                    );
+            } else if (click)
+                context.report(
+                    click,
+                    "Use a button element instead of an a element.",
+                );
+            else
+                context.report(
+                    Html.opening(node),
+                    "Provide a href attribute for the a element.",
+                );
         },
     }),
 });

@@ -1,4 +1,5 @@
 import { attribute, nonInteractiveElement } from "../../analysis/aria.js";
+import Html from "../../analysis/html.js";
 import { rule } from "../../rules.js";
 
 export default rule({
@@ -7,7 +8,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             const name = node.name ?? "";
@@ -32,6 +33,21 @@ export default rule({
                         },
                     ],
                 },
+            );
+        },
+        HtmlElement(node) {
+            if (!Html.has(node, "aria-activedescendant")) return;
+            if (
+                ["button", "input", "select", "textarea"].includes(
+                    node.tag ?? "",
+                )
+            )
+                return;
+            if (node.tag === "a" && Html.has(node, "href")) return;
+            if (Html.has(node, "tabindex")) return;
+            context.report(
+                Html.opening(node),
+                "Enforce elements with aria-activedescendant are tabbable.",
             );
         },
     }),

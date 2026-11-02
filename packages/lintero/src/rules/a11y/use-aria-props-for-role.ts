@@ -1,5 +1,7 @@
 import { attribute, required, text, tokens } from "../../analysis/aria.js";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
+import { fromRoles, role as roleData } from "../../analysis/roles.js";
 import { rule } from "../../rules.js";
 
 export default rule({
@@ -8,7 +10,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node)) return;
@@ -29,6 +31,22 @@ export default rule({
                     role,
                     `The element with the ${value} ARIA role does not have the required ARIA attributes.`,
                 );
+        },
+        HtmlElement(node) {
+            const attribute = Html.attribute(node, "role");
+            const value = Html.value(attribute);
+            if (!attribute || value === undefined) return;
+            const role = fromRoles(value.trim());
+            if (role === undefined) return;
+            if (role === "separator" && !Html.has(node, "tabindex")) return;
+            const missing = (roleData(role)?.required ?? []).filter(
+                (name) => !Html.has(node, name),
+            );
+            if (missing.length === 0) return;
+            context.report(
+                attribute,
+                `The element with the ${value} ARIA role does not have the required ARIA attributes.`,
+            );
         },
     }),
 });

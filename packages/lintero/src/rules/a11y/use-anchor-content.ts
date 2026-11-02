@@ -1,6 +1,36 @@
+import type { Html as Tree } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 import { accessible, contentProps } from "./use-heading-content.js";
+
+/** Whether HTML children have content screen readers read, like Biome's `has_accessible_content`. */
+const htmlAccessible = (children: Tree.Child[]): boolean =>
+    children.some((child) => {
+        if (child.type === "Text") return child.value.trim() !== "";
+        if (child.type === "Cdata") return true;
+        if (child.closing !== null)
+            return (
+                !Html.truthyAriaHidden(child) && htmlAccessible(child.children)
+            );
+        if (Html.truthyAriaHidden(child)) return false;
+        if (
+            Html.nonEmpty(child, "aria-label") ||
+            Html.nonEmpty(child, "aria-labelledby") ||
+            Html.nonEmpty(child, "title")
+        )
+            return true;
+        const name = child.name.toLowerCase();
+        if (name === "img") return Html.nonEmpty(child, "alt");
+        if (["br", "hr", "wbr", "meta", "link", "base", "col"].includes(name))
+            return false;
+        if (name === "input")
+            return (
+                Html.value(Html.attribute(child, "type"))?.toLowerCase() !==
+                "hidden"
+            );
+        return /^[A-Z]/.test(child.name);
+    });
 
 export default rule({
     name: "useAnchorContent",
@@ -8,7 +38,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "a") return;
@@ -48,6 +78,25 @@ export default rule({
                           ],
                       }
                     : undefined,
+            );
+        },
+        HtmlElement(node) {
+            if (node.tag !== "a") return;
+            const hidden = Html.truthyAriaHidden(node);
+            if (
+                !hidden &&
+                node.closing !== null &&
+                htmlAccessible(node.children)
+            )
+                return;
+            context.report(
+                node,
+                "Provide screen reader accessible content when using a elements.",
+                hidden && {
+                    message:
+                        "Remove the aria-hidden attribute to allow the anchor element and its content visible to assistive technologies.",
+                    edits: [{ start: hidden.start, end: hidden.end, text: "" }],
+                },
             );
         },
     }),

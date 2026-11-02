@@ -7,7 +7,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node)) return;
@@ -25,6 +25,24 @@ export default rule({
                     },
                 ],
             });
+        },
+        HtmlElement(node) {
+            for (const attribute of node.attributes)
+                if (attribute.name.toLowerCase() === "accesskey")
+                    context.report(
+                        attribute,
+                        "Avoid the accesskey attribute.",
+                        {
+                            message: "Remove the accesskey attribute.",
+                            edits: [
+                                {
+                                    start: attribute.start,
+                                    end: attribute.end,
+                                    text: "",
+                                },
+                            ],
+                        },
+                    );
         },
     }),
 });

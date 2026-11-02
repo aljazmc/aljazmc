@@ -1,4 +1,5 @@
 import { explicitRole, implicitRole } from "../../analysis/aria.js";
+import Html, { AriaRoles } from "../../analysis/html.js";
 import { rule } from "../../rules.js";
 
 /** Elements without semantics, which need a role to be interacted with. */
@@ -21,7 +22,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             const name = node.name ?? "";
@@ -53,6 +54,15 @@ export default rule({
             if (handles)
                 context.report(
                     node,
+                    "Unexpected event handler on static element.",
+                );
+        },
+        HtmlElement(node) {
+            if (Html.hiddenFromScreenReader(node)) return;
+            if (AriaRoles.isNotStaticElement(Html.aria(node))) return;
+            if (Html.handles(node, ["focus", "keyboard", "mouse"]))
+                context.report(
+                    Html.opening(node),
                     "Unexpected event handler on static element.",
                 );
         },

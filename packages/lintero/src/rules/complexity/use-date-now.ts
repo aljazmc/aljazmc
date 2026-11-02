@@ -17,6 +17,8 @@ export default rule({
                 current.callee.type === "Identifier" &&
                 current.callee.name === "Date" &&
                 current.arguments.length === 0 &&
+                // like Biome, `new Date` without parentheses is left alone
+                current.parentheses &&
                 context.semantic.isGlobal(current.callee)
             );
         };

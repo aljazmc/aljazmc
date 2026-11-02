@@ -17,6 +17,9 @@ const rules: Rules = {
     markdown: {
         enabled: true,
     },
+    html: {
+        enabled: true,
+    },
 };
 
 export default {

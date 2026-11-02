@@ -23,7 +23,12 @@ export default rule({
                     context.settings.javascript.jsxRuntime === "reactClassic";
                 const unused = (local: Node) => {
                     const binding = semantic.declared(local);
-                    if (!binding || used(binding) || binding.exported)
+                    if (
+                        !binding ||
+                        used(binding) ||
+                        binding.exported ||
+                        context.embeddedBindings.has(binding.name)
+                    )
                         return false;
                     return !(classic && jsx && binding.name === "React");
                 };

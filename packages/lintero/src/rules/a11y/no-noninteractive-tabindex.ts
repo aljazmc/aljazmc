@@ -6,7 +6,9 @@ import {
     text,
     tokens,
 } from "../../analysis/aria.js";
+import Html, { AriaRoles } from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
+import { fromRoles, isInteractive } from "../../analysis/roles.js";
 import { rule } from "../../rules.js";
 
 /** The number a `tabIndex` is set to, if known. */
@@ -25,7 +27,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             const name = node.name ?? "";
@@ -60,6 +62,29 @@ export default rule({
                 {
                     message: "Remove the tabIndex attribute.",
                     edits: [{ start: index.start, end: index.end, text: "" }],
+                },
+            );
+        },
+        HtmlElement(node) {
+            if (!AriaRoles.isNotInteractiveElement(Html.aria(node))) return;
+            const tabindex = Html.attribute(node, "tabindex");
+            const value = Html.value(tabindex);
+            if (!tabindex || value === undefined) return;
+            if (/^[+-]?\d+$/.test(value.trim()) && Number(value.trim()) < 0)
+                return;
+            const role = Html.value(Html.attribute(node, "role"));
+            if (role !== undefined) {
+                const explicit = fromRoles(role.trim());
+                if (explicit !== undefined && isInteractive(explicit)) return;
+            }
+            context.report(
+                tabindex,
+                `The HTML element ${node.name} is non-interactive. Do not use tabindex.`,
+                {
+                    message: "Remove the tabindex attribute.",
+                    edits: [
+                        { start: tabindex.start, end: tabindex.end, text: "" },
+                    ],
                 },
             );
         },

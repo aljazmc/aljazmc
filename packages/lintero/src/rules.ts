@@ -1,4 +1,4 @@
-import type { Markdown, Node, NodeOf, NodeType } from "@aljazmc/syntax";
+import type { Html, Markdown, Node, NodeOf, NodeType } from "@aljazmc/syntax";
 import type Context from "./analysis/context.js";
 
 /** "on" uses the rule's default severity. */
@@ -75,10 +75,11 @@ export interface Rules {
     };
     json: { enabled: boolean };
     markdown: { enabled: boolean };
+    html: { enabled: boolean };
 }
 
 /** The languages a rule applies to, "js" covers TypeScript and JSX too. */
-export type Language = "js" | "json" | "jsx" | "md" | "ts";
+export type Language = "html" | "js" | "json" | "jsx" | "md" | "ts";
 
 /** A text change, replacing source from start to end. */
 export interface Edit {
@@ -112,11 +113,19 @@ type MarkdownLeave = {
     [T in MarkdownType as `${T}:exit`]?: (node: MarkdownOf<T>) => void;
 };
 
-/** Handlers called on entering, or with `:exit` on leaving, nodes of a type, Markdown ones in Markdown files. */
+/** Handlers of HTML files, for the root and each element. */
+type HtmlVisitor = {
+    HtmlRoot?: (node: Html.Root) => void;
+    HtmlElement?: (node: Html.Element) => void;
+    "HtmlElement:exit"?: (node: Html.Element) => void;
+};
+
+/** Handlers called on entering, or with `:exit` on leaving, nodes of a type, Markdown ones in Markdown files and HTML ones in HTML files. */
 export type Visitor = Enter &
     Leave &
     MarkdownEnter &
-    MarkdownLeave & { "*"?: (node: Node) => void };
+    MarkdownLeave &
+    HtmlVisitor & { "*"?: (node: Node) => void };
 
 export interface Rule<Options extends object = object> {
     name: string;

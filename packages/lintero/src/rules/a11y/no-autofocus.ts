@@ -7,7 +7,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node)) return;
@@ -27,6 +27,37 @@ export default rule({
                     { start: attribute.start, end: attribute.end, text: "" },
                 ],
             });
+        },
+        HtmlElement(node) {
+            for (const attribute of node.attributes) {
+                if (attribute.name.toLowerCase() !== "autofocus") continue;
+                let allowed = false;
+                for (const ancestor of context.htmlAncestors(node))
+                    if (
+                        ancestor.tag === "dialog" ||
+                        ancestor.attributes.some(
+                            (a) => a.name.toLowerCase() === "popover",
+                        )
+                    ) {
+                        allowed = true;
+                        break;
+                    }
+                if (allowed) continue;
+                context.report(
+                    attribute,
+                    "This element uses the autofocus attribute outside an allowed modal context.",
+                    {
+                        message: "Remove the autofocus attribute.",
+                        edits: [
+                            {
+                                start: attribute.start,
+                                end: attribute.end,
+                                text: "",
+                            },
+                        ],
+                    },
+                );
+            }
         },
     }),
 });

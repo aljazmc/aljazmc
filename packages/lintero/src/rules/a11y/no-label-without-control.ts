@@ -1,4 +1,4 @@
-import type { Node } from "@aljazmc/syntax";
+import type { Node, Html as Tree } from "@aljazmc/syntax";
 import { attribute, text } from "../../analysis/aria.js";
 import { rule } from "../../rules.js";
 
@@ -24,7 +24,7 @@ export default rule<Options>({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     options: { inputComponents: [], labelAttributes: [], labelComponents: [] },
     create: (context) => {
         const controls = [
@@ -60,7 +60,54 @@ export default rule<Options>({
                 return textual(child.children);
             });
 
+        /** Whether an HTML element or its descendants have text or a label attribute, like Biome's walk. */
+        const htmlLabelled = (element: Tree.Element): boolean =>
+            element.attributes.some(
+                (attribute) =>
+                    labelAttributes.includes(attribute.name) &&
+                    attribute.value !== null &&
+                    attribute.value.text.trim() !== "",
+            ) ||
+            element.children.some((child) =>
+                child.type === "Text"
+                    ? !element.raw
+                    : child.type === "Element" && htmlLabelled(child),
+            );
+        /** Whether an HTML element or its descendants are inputs, by name ignoring case. */
+        const htmlControl = (element: Tree.Element): boolean =>
+            controls.some(
+                (control) =>
+                    control.toLowerCase() === element.name.toLowerCase() ||
+                    control.toLowerCase() ===
+                        element.closing?.name.toLowerCase(),
+            ) ||
+            element.children.some(
+                (child) => child.type === "Element" && htmlControl(child),
+            );
+
         return {
+            HtmlElement(node) {
+                if (
+                    !labels.some(
+                        (label) =>
+                            label.toLowerCase() === node.name.toLowerCase(),
+                    )
+                )
+                    return;
+                const associated =
+                    node.attributes.some(
+                        (attribute) => attribute.name.toLowerCase() === "for",
+                    ) ||
+                    node.children.some(
+                        (child) =>
+                            child.type === "Element" && htmlControl(child),
+                    );
+                if (!associated || !htmlLabelled(node))
+                    context.report(
+                        node,
+                        "A form label must be associated with an input.",
+                    );
+            },
             JSXElement(node) {
                 if (!labels.includes(node.name ?? "")) return;
                 const associated =

@@ -1,4 +1,5 @@
 import type { Node } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx, { type Value } from "../../analysis/jsx.js";
 import Nodes from "../../analysis/nodes.js";
 import { rule } from "../../rules.js";
@@ -15,7 +16,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["js", "jsx"],
+    languages: ["html", "js", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node)) return;
@@ -40,6 +41,26 @@ export default rule({
                     positive(Jsx.expression(property.value))
                 )
                     context.report(property.value as Node, message);
+        },
+        HtmlElement(node) {
+            const tabindex = Html.attribute(node, "tabindex");
+            const value = Html.value(tabindex)?.trim();
+            if (!tabindex?.value || value === undefined) return;
+            if (!/^[+-]?\d+$/.test(value) || Number(value) <= 0) return;
+            context.report(
+                tabindex.value,
+                "Avoid positive values for the tabindex attribute.",
+                {
+                    message: 'Replace the tabindex value with "0".',
+                    edits: [
+                        {
+                            start: tabindex.value.start,
+                            end: tabindex.value.end,
+                            text: '"0"',
+                        },
+                    ],
+                },
+            );
         },
     }),
 });

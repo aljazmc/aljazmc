@@ -1,5 +1,6 @@
 import type { Node } from "@aljazmc/syntax";
 import { properties, type ValueType } from "../../analysis/aria.js";
+import Html from "../../analysis/html.js";
 import { rule } from "../../rules.js";
 
 /** The value of an attribute as Biome reads it, undefined when only known at runtime. */
@@ -57,13 +58,43 @@ const valid = (text: string, kind: ValueType): boolean => {
     }
 };
 
+/** Whether a value has the type, like Biome's `AriaValueType::contains`. */
+const biomeValid = (text: string, kind: ValueType): boolean => {
+    if (text === "") return false;
+    const words = text.split(/[\t\n\f\r ]+/).filter((word) => word !== "");
+    switch (kind.type) {
+        case "string":
+            return true;
+        case "idref":
+            return !/[\t\n\f\r ]/.test(text);
+        case "idrefs":
+            return true;
+        case "integer":
+            return /^\+?\d+$/.test(text) && Number(text) <= 4294967295;
+        case "number":
+            return /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$|^[+-]?(?:inf|infinity|nan)$/i.test(
+                text,
+            );
+        case "boolean":
+            return text === "true" || text === "false";
+        case "optional":
+            return ["undefined", "false", "true"].includes(text);
+        case "tristate":
+            return ["false", "true", "mixed"].includes(text);
+        case "token":
+            return kind.values.includes(text);
+        case "tokens":
+            return words.every((word) => kind.values.includes(word));
+    }
+};
+
 export default rule({
     name: "useValidAriaValues",
     group: "a11y",
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXAttribute(node) {
             if (!node.name.startsWith("aria-")) return;
@@ -74,6 +105,22 @@ export default rule({
                     node,
                     `The value of the ARIA attribute ${node.name} is not correct.`,
                 );
+        },
+        HtmlElement(node) {
+            for (const attribute of node.attributes) {
+                const name = attribute.name;
+                const lower = name.toLowerCase();
+                if (!lower.startsWith("aria-")) continue;
+                const kind = properties[lower.slice(5)];
+                if (!kind) continue;
+                const text = attribute.value ? Html.value(attribute) : "true";
+                if (text === undefined) continue;
+                if (!biomeValid(text, kind))
+                    context.report(
+                        attribute,
+                        `The value of the ARIA attribute ${name} is not correct.`,
+                    );
+            }
         },
     }),
 });

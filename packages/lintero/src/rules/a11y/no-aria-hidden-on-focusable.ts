@@ -1,4 +1,5 @@
 import type { NodeOf } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -32,7 +33,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "unsafe",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node)) return;
@@ -60,6 +61,53 @@ export default rule({
                         ],
                     },
                 );
+        },
+        HtmlElement(node) {
+            const hidden = Html.truthyAriaHidden(node);
+            if (!hidden) return;
+            const report = () =>
+                context.report(
+                    Html.opening(node),
+                    'Incorrect use of aria-hidden="true" detected.',
+                    {
+                        message:
+                            "Remove the aria-hidden attribute from the element.",
+                        edits: [
+                            { start: hidden.start, end: hidden.end, text: "" },
+                        ],
+                    },
+                );
+            const tabindex = Html.value(
+                Html.attribute(node, "tabindex"),
+            )?.trim();
+            if (tabindex !== undefined && /^[+-]?\d+$/.test(tabindex)) {
+                if (Number(tabindex) >= 0) report();
+                return;
+            }
+            const tag = node.tag;
+            if ((tag === "a" || tag === "area") && Html.has(node, "href"))
+                return report();
+            if (
+                ["button", "select", "textarea", "details", "summary"].includes(
+                    tag ?? "",
+                )
+            )
+                return report();
+            if (tag === "input") {
+                const type = Html.value(Html.attribute(node, "type"))?.trim();
+                if (type?.toLowerCase() !== "hidden") report();
+                return;
+            }
+            const editable = Html.attribute(node, "contenteditable");
+            if (!editable) return;
+            const value = Html.value(editable)?.trim().toLowerCase();
+            if (
+                value === undefined ||
+                value === "" ||
+                value === "true" ||
+                value === "plaintext-only"
+            )
+                report();
         },
     }),
 });

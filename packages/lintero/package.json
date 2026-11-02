@@ -1,7 +1,7 @@
 {
     "name": "@aljazmc/lintero",
     "version": "0.6.0",
-    "description": "A simple linter for JavaScript, TypeScript, JSX, JSON and Markdown, with 232 rules and automatic fixes. Easy to understand, easy to customize and easy to extend.",
+    "description": "A simple linter for JavaScript, TypeScript, JSX, JSON, Markdown and HTML, with 246 rules and automatic fixes. Easy to understand, easy to customize and easy to extend.",
     "author": "aljazmc",
     "license": "MIT",
     "type": "module",
@@ -35,6 +35,6 @@
     },
     "devDependencies": {
         "@jest/globals": "^30.5.2",
-        "@types/node": "^26.6.5"
+        "@types/node": "^26.6.6"
     }
 }

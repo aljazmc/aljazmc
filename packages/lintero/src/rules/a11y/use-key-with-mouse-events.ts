@@ -1,3 +1,4 @@
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -12,7 +13,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node) || Jsx.spreads(node)) return;
@@ -25,6 +26,18 @@ export default rule({
                         Jsx.opening(node, context),
                         `${mouse} must be accompanied by ${keyboard} for accessibility.`,
                     );
+        },
+        HtmlElement(node) {
+            if (Html.has(node, "onmouseover") && !Html.has(node, "onfocus"))
+                context.report(
+                    Html.opening(node),
+                    "onmouseover must be accompanied by onfocus.",
+                );
+            else if (Html.has(node, "onmouseout") && !Html.has(node, "onblur"))
+                context.report(
+                    Html.opening(node),
+                    "onmouseout must be accompanied by onblur.",
+                );
         },
     }),
 });

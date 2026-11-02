@@ -1,4 +1,5 @@
 import type { NodeOf } from "@aljazmc/syntax";
+import Html, { AriaRoles } from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -28,7 +29,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (!Jsx.intrinsic(node) || !Jsx.attribute(node, "onClick")) return;
@@ -45,6 +46,30 @@ export default rule({
             context.report(
                 Jsx.opening(node, context),
                 "Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.",
+            );
+        },
+        HtmlElement(node) {
+            if (!Html.has(node, "onclick")) return;
+            const aria = Html.aria(node);
+            if (
+                Html.hiddenFromScreenReader(node) ||
+                AriaRoles.isPresentationRole(aria)
+            )
+                return;
+            if (
+                !AriaRoles.isNotInteractiveElement(aria) &&
+                (node.tag !== "a" || Html.has(node, "href"))
+            )
+                return;
+            if (
+                ["onkeydown", "onkeyup", "onkeypress"].some((name) =>
+                    Html.has(node, name),
+                )
+            )
+                return;
+            context.report(
+                Html.opening(node),
+                "Elements with onclick must also include at least one keyboard handler: onkeydown, onkeyup, or onkeypress.",
             );
         },
     }),

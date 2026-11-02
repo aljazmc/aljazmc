@@ -1,4 +1,4 @@
-import type { Comment, Language, Markdown, Node } from "@aljazmc/syntax";
+import type { Comment, Html, Language, Markdown, Node } from "@aljazmc/syntax";
 import type { Fix, Report, Rules } from "../rules.js";
 import type Semantic from "./semantic.js";
 import type { Manifest, Project } from "./settings.js";
@@ -11,7 +11,16 @@ export interface Source {
     program: Node;
     /** The tree of Markdown files, their program is empty. */
     markdown?: Markdown.Root;
+    /** The tree of HTML files, their program is empty. */
+    html?: Html.Root;
+    /** The element containing each element and text of an HTML file. */
+    htmlParents?: Map<Html.Child, Html.Element>;
     comments: Comment[];
+    /**
+     * Names of the top level imports and variables of the module scripts of
+     * an HTML file, which Biome treats as used by every script of it.
+     */
+    embeddedBindings?: ReadonlySet<string>;
     settings: Rules;
     /** The closest package.json. */
     manifest: Manifest;
@@ -56,6 +65,31 @@ export default class Context<Options extends object = object> {
     /** The tree of a Markdown file. */
     get markdown(): Markdown.Root | undefined {
         return this.#source.markdown;
+    }
+
+    /** Names a script in HTML may leave unused, see `Source.embeddedBindings`. */
+    get embeddedBindings(): ReadonlySet<string> {
+        return this.#source.embeddedBindings ?? new Set();
+    }
+
+    /** The tree of an HTML file. */
+    get html(): Html.Root | undefined {
+        return this.#source.html;
+    }
+
+    /** The element containing an element or text of an HTML file, undefined at the root. */
+    htmlParent(node: Html.Child): Html.Element | undefined {
+        return this.#source.htmlParents?.get(node);
+    }
+
+    /** The elements containing an element or text of an HTML file, from the closest. */
+    *htmlAncestors(node: Html.Child): Generator<Html.Element> {
+        for (
+            let current = this.htmlParent(node);
+            current;
+            current = this.htmlParent(current)
+        )
+            yield current;
     }
 
     get comments(): Comment[] {

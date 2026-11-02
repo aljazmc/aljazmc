@@ -1,4 +1,5 @@
 import type { NodeOf } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 
@@ -16,7 +17,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (Jsx.spreads(node)) return;
@@ -54,6 +55,34 @@ export default rule({
                 context.report(
                     node,
                     "Provide a text alternative through the alt, aria-label or aria-labelledby attribute",
+                );
+        },
+        HtmlElement(node) {
+            const labelled =
+                Html.nonEmpty(node, "aria-label") ||
+                Html.nonEmpty(node, "aria-labelledby") ||
+                Html.ariaHiddenTrue(node);
+            if (labelled) return;
+            const tag = node.tag;
+            const alt = Html.has(node, "alt");
+            if (tag === "object") {
+                if (!Html.nonEmpty(node, "title"))
+                    context.report(
+                        Html.opening(node),
+                        "Provide a text alternative through the title, aria-label, or aria-labelledby attribute.",
+                    );
+                return;
+            }
+            const image =
+                tag === "img" ||
+                tag === "area" ||
+                (tag === "input" &&
+                    Html.value(Html.attribute(node, "type"))?.toLowerCase() ===
+                        "image");
+            if (image && !alt)
+                context.report(
+                    Html.opening(node),
+                    "Provide a text alternative through the alt, aria-label, or aria-labelledby attribute.",
                 );
         },
     }),

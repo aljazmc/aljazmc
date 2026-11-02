@@ -1,8 +1,9 @@
 import type { Node } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import { rule } from "../../rules.js";
 
 /** ISO 639-1 languages, ISO 15924 scripts and ISO 3166-1 regions Biome knows. */
-const languages = new Set(
+export const languages = new Set(
     `
     aa ab af am an ar as ay az ba be bg bh bi bn bo br ca co cs cy da de dz
     el en eo es et eu fa fi fj fo fr fy ga gd gl gn gu gv ha he hi hr ht hu
@@ -15,15 +16,15 @@ const languages = new Set(
         .trim()
         .split(/\s+/),
 );
-const scripts = new Set(
+export const scripts = new Set(
     `
     Latn Cyrl Arab Hans Hant Grek Hebr Deva Beng Guru Gujr Orya Taml Telu
-    Mlym Sinh Thai Laoo Tibt Mymr Hang Ethi Khmr Hira Kana Zyyy Armn
+    Mlym Sinh Thai Laoo Tibt Mymr Hang Hani Ethi Khmr Hira Kana Zyyy Armn
 `
         .trim()
         .split(/\s+/),
 );
-const regions = new Set(
+export const regions = new Set(
     `
     AD AE AF AG AI AL AM AN AO AQ AR AS AT AU AW AZ BA BB BD BE BF BG BH BI
     BJ BL BM BN BO BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR
@@ -55,7 +56,7 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["jsx"],
+    languages: ["html", "jsx"],
     create: (context) => ({
         JSXElement(node) {
             if (node.name !== "html") return;
@@ -78,6 +79,31 @@ export default rule({
             if (text !== undefined && !valid(text))
                 context.report(
                     lang.value,
+                    "Provide a valid value for the lang attribute.",
+                );
+        },
+        HtmlElement(node) {
+            if (node.tag !== "html") return;
+            const attribute = Html.attribute(node, "lang");
+            const value = Html.value(attribute);
+            if (!attribute?.value || value === undefined) return;
+            const parts = value.split("-");
+            const [language = "", second, third] = parts;
+            let invalid = false;
+            if (third !== undefined)
+                invalid =
+                    parts.length > 3 ||
+                    !languages.has(language) ||
+                    !scripts.has(second ?? "") ||
+                    !regions.has(third);
+            else if (second !== undefined)
+                invalid =
+                    !languages.has(language) ||
+                    (!scripts.has(second) && !regions.has(second));
+            else invalid = !languages.has(language);
+            if (invalid)
+                context.report(
+                    attribute.value,
                     "Provide a valid value for the lang attribute.",
                 );
         },

@@ -1,6 +1,8 @@
 import { Includes } from "@aljazmc/config";
 import {
     type Comment,
+    type Html,
+    isHtml,
     isMarkdown,
     type Language,
     Lines,
@@ -11,6 +13,7 @@ import {
     ParseError,
     parse,
     parseExpression,
+    parseHtml,
     parseMarkdown,
     Walker,
 } from "@aljazmc/syntax";
@@ -67,6 +70,8 @@ export default class Lintero {
     /** Whether the settings lint a file at all. */
     lints(file: string): boolean {
         if (!this.#settings.enabled) return false;
+        if (isHtml(file))
+            return this.#settings.html.enabled && this.#includes.matches(file);
         if (isMarkdown(file))
             return (
                 this.#settings.markdown.enabled && this.#includes.matches(file)
@@ -82,12 +87,25 @@ export default class Lintero {
     }
 
     lint(text: string, file: string): Diagnostic[] {
-        const markdown = isMarkdown(file);
-        const language = markdown
-            ? { json: false, typescript: false, jsx: false }
-            : languageOf(file);
-        if (!language || !this.lints(file)) return [];
+        if (!this.lints(file)) return [];
+        const html = isHtml(file);
+        const markdown = !html && isMarkdown(file);
+        const language =
+            markdown || html
+                ? { json: false, typescript: false, jsx: false }
+                : languageOf(file);
+        if (!language) return [];
+        return this.#lint(text, file, language, markdown, html);
+    }
 
+    #lint(
+        text: string,
+        file: string,
+        language: Language,
+        markdown: boolean,
+        html: boolean,
+        embeddedBindings?: ReadonlySet<string>,
+    ): Diagnostic[] {
         const lines = new Lines(text);
         const diagnostic = (
             start: number,
@@ -108,8 +126,28 @@ export default class Lintero {
 
         let parsed: Parsed;
         let root: Markdown.Root | undefined;
+        let htmlRoot: Html.Root | undefined;
         try {
-            if (markdown) {
+            if (html) {
+                htmlRoot = parseHtml(text);
+                parsed = {
+                    program: {
+                        type: "Program",
+                        start: 0,
+                        end: text.length,
+                        body: [],
+                        directives: [],
+                    },
+                    comments: htmlRoot.comments.map(
+                        ({ start, end, value }) => ({
+                            type: "Block" as const,
+                            value,
+                            start,
+                            end,
+                        }),
+                    ),
+                };
+            } else if (markdown) {
                 root = parseMarkdown(text);
                 parsed = {
                     program: {
@@ -144,7 +182,12 @@ export default class Lintero {
             language,
             program: parsed.program,
             ...(root && { markdown: root }),
+            ...(htmlRoot && {
+                html: htmlRoot,
+                htmlParents: Lintero.#htmlParents(htmlRoot),
+            }),
             comments: parsed.comments,
+            ...(embeddedBindings && { embeddedBindings }),
             settings: this.#settings,
             manifest: this.#manifest,
             project: this.#project,
@@ -174,6 +217,18 @@ export default class Lintero {
                 diagnostics.push(result);
             }
         }
+
+        // like Biome, scripts in HTML are linted as files of their language
+        if (htmlRoot)
+            for (const diagnostic of this.#scripts(htmlRoot, file, lines))
+                if (
+                    !suppressions.suppresses(
+                        diagnostic.category,
+                        diagnostic.line,
+                        undefined,
+                    )
+                )
+                    diagnostics.push(diagnostic);
 
         const known = new Set(
             this.active.map(({ rule }) => `lint/${rule.group}/${rule.name}`),
@@ -239,6 +294,186 @@ export default class Lintero {
         return current;
     }
 
+    /** The diagnostics of the scripts of an HTML file, at their place in it. */
+    #scripts(root: Html.Root, file: string, lines: Lines): Diagnostic[] {
+        const scripts: { element: Html.Element; content: Html.Text }[] = [];
+        const collect = (children: Html.Child[]) => {
+            for (const child of children) {
+                if (child.type !== "Element") continue;
+                collect(child.children);
+                const content = child.children[0];
+                if (child.tag === "script" && content?.type === "Text")
+                    scripts.push({ element: child, content });
+            }
+        };
+        collect(root.children);
+        const embedded = Lintero.#embeddedBindings(scripts);
+
+        const diagnostics: Diagnostic[] = [];
+        for (const { element, content } of scripts) {
+            const kind = Lintero.#scriptKind(element);
+            if (!kind) continue;
+            const json = kind === "json";
+            if (
+                !(json ? this.#settings.json : this.#settings.javascript)
+                    .enabled
+            )
+                continue;
+            const offset = content.start;
+            const local = new Lines(content.value);
+            for (const diagnostic of this.#lint(
+                content.value,
+                file,
+                { json, typescript: false, jsx: false },
+                false,
+                false,
+                embedded,
+            )) {
+                const start = diagnostic.start + offset;
+                const line = lines.line(start);
+                const column = lines.column(start);
+                // parse errors name their position in the script, it is in the file
+                const message =
+                    diagnostic.category === "parse"
+                        ? diagnostic.message.replace(
+                              /\((\d+):(\d+)\)$/,
+                              (whole, row: string, col: string) =>
+                                  Number(row) ===
+                                      local.line(diagnostic.start) &&
+                                  Number(col) === local.column(diagnostic.start)
+                                      ? `(${line}:${column})`
+                                      : whole,
+                          )
+                        : diagnostic.message;
+                diagnostics.push({
+                    ...diagnostic,
+                    message,
+                    start,
+                    end: diagnostic.end + offset,
+                    line,
+                    column,
+                    ...(diagnostic.fix && {
+                        fix: {
+                            ...diagnostic.fix,
+                            edits: diagnostic.fix.edits.map((edit) => ({
+                                ...edit,
+                                start: edit.start + offset,
+                                end: edit.end + offset,
+                            })),
+                        },
+                    }),
+                });
+            }
+        }
+        return diagnostics;
+    }
+
+    /**
+     * The names of the top level imports and variables of module scripts.
+     * Biome's HTML support collects them for templates to use, and does not
+     * report them as unused in any script of the file.
+     */
+    static #embeddedBindings(
+        scripts: { element: Html.Element; content: Html.Text }[],
+    ): Set<string> {
+        const names = new Set<string>();
+        const pattern = (node: Node | null | undefined): void => {
+            if (!node) return;
+            switch (node.type) {
+                case "Identifier":
+                    names.add(node.name);
+                    return;
+                case "ObjectPattern":
+                    for (const property of node.properties)
+                        if (property.type === "RestElement")
+                            pattern(property.argument);
+                        else if (property.type === "Property")
+                            pattern(property.value);
+                    return;
+                case "ArrayPattern":
+                    for (const element of node.elements) pattern(element);
+                    return;
+                case "AssignmentPattern":
+                    pattern(node.left);
+                    return;
+                case "RestElement":
+                    pattern(node.argument);
+                    return;
+            }
+        };
+        for (const { element, content } of scripts) {
+            const type = element.attributes.find(
+                (attribute) => attribute.name.toLowerCase() === "type",
+            );
+            if (type?.value?.text.toLowerCase() !== "module") continue;
+            let program: Node;
+            try {
+                program = parse(content.value, {
+                    typescript: false,
+                    jsx: false,
+                }).program;
+            } catch (error) {
+                if (error instanceof ParseError) continue;
+                throw error;
+            }
+            if (program.type !== "Program") continue;
+            for (let statement of program.body) {
+                if (
+                    statement.type === "ExportNamedDeclaration" &&
+                    statement.declaration
+                )
+                    statement = statement.declaration;
+                if (statement.type === "ImportDeclaration")
+                    for (const specifier of statement.specifiers) {
+                        if (
+                            specifier.type === "ImportSpecifier" ||
+                            specifier.type === "ImportDefaultSpecifier" ||
+                            specifier.type === "ImportNamespaceSpecifier"
+                        )
+                            names.add(specifier.local.name);
+                    }
+                else if (statement.type === "VariableDeclaration")
+                    for (const declarator of statement.declarations)
+                        pattern(declarator.id);
+            }
+        }
+        return names;
+    }
+
+    /** How Biome reads a script by its type: JavaScript, JSON, or not at all. */
+    static #scriptKind(element: Html.Element): "js" | "json" | undefined {
+        const type = element.attributes.find(
+            (attribute) => attribute.name.toLowerCase() === "type",
+        );
+        if (!type?.value) return "js";
+        const value = type.value.text.toLowerCase();
+        if (
+            [
+                "module",
+                "text/javascript",
+                "application/javascript",
+                "application/ecmascript",
+            ].includes(value)
+        )
+            return "js";
+        if (value === "importmap" || value === "application/json")
+            return "json";
+        return undefined;
+    }
+
+    static #htmlParents(root: Html.Root): Map<Html.Child, Html.Element> {
+        const parents = new Map<Html.Child, Html.Element>();
+        const link = (element: Html.Element) => {
+            for (const child of element.children) {
+                parents.set(child, element);
+                if (child.type === "Element") link(child);
+            }
+        };
+        for (const child of root.children)
+            if (child.type === "Element") link(child);
+        return parents;
+    }
+
     /** Runs the rules for the language in one traversal. */
     #run(source: Source): { active: Active; context: Context }[] {
         let semantic: Semantic | undefined;
@@ -255,7 +490,12 @@ export default class Lintero {
         const leave = new Map<string, Handler[]>();
         const runs = this.active
             .filter(({ rule }) =>
-                Lintero.#applies(rule, source.language, !!source.markdown),
+                Lintero.#applies(
+                    rule,
+                    source.language,
+                    !!source.markdown,
+                    !!source.html,
+                ),
             )
             .map((active) => {
                 const context = new Context(source, active.options, lazy);
@@ -275,6 +515,26 @@ export default class Lintero {
             });
 
         if (runs.length === 0) return runs;
+
+        const html = source.html;
+        if (html) {
+            const handle = (key: string, node: unknown) => {
+                for (const handler of (key.endsWith(":exit")
+                    ? leave.get(key.slice(0, -5))
+                    : enter.get(key)) ?? [])
+                    handler(node as Node);
+            };
+            const visit = (element: Html.Element) => {
+                handle("HtmlElement", element);
+                for (const child of element.children)
+                    if (child.type === "Element") visit(child);
+                handle("HtmlElement:exit", element);
+            };
+            handle("HtmlRoot", html);
+            for (const child of html.children)
+                if (child.type === "Element") visit(child);
+            return runs;
+        }
 
         const markdown = source.markdown;
         if (markdown) {
@@ -385,7 +645,9 @@ export default class Lintero {
         rule: Rule,
         language: Language,
         markdown: boolean,
+        html: boolean,
     ): boolean {
+        if (html) return rule.languages.includes("html");
         if (markdown) return rule.languages.includes("md");
         if (language.json) return rule.languages.includes("json");
         return rule.languages.some(

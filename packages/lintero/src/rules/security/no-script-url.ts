@@ -1,4 +1,5 @@
 import type { Node } from "@aljazmc/syntax";
+import Html from "../../analysis/html.js";
 import Jsx from "../../analysis/jsx.js";
 import Nodes from "../../analysis/nodes.js";
 import { rule } from "../../rules.js";
@@ -13,8 +14,15 @@ export default rule({
     severity: "error",
     recommended: true,
     fix: "none",
-    languages: ["js", "jsx"],
+    languages: ["html", "js", "jsx"],
     create: (context) => ({
+        HtmlElement(node) {
+            if (node.tag !== "a") return;
+            const href = Html.attribute(node, "href");
+            const value = Html.value(href);
+            if (href && value?.trim().toLowerCase().startsWith("javascript:"))
+                context.report(href, message);
+        },
         JSXAttribute(node) {
             if (node.value && script(Jsx.value(node)))
                 context.report(

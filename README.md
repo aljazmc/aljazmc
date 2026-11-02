@@ -14,20 +14,20 @@ of them are published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
 
 ## Packages
 
-| Package                         | What it does                                                                                       | npm                                                                    |
-| ------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [formatero](packages/formatero) | Formats JavaScript, TypeScript, JSX, JSON and Markdown, with options compatible with Biome's.      | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
-| [lintero](packages/lintero)     | Lints JavaScript, TypeScript, JSX, JSON and Markdown with 232 rules compatible with Biome's.       | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
-| [monorepo](packages/monorepo)   | Versions each package on its own by conventional commits, and moves the tags a rebase left behind. | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
-| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, TypeScript and JSX, compiled with esbuild.                     | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
+| Package                         | What it does                                                                                        | npm                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [formatero](packages/formatero) | Formats JavaScript, TypeScript, JSX, JSON, Markdown and HTML, with options compatible with Biome's. | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
+| [lintero](packages/lintero)     | Lints JavaScript, TypeScript, JSX, JSON, Markdown and HTML with 246 rules compatible with Biome's.  | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
+| [monorepo](packages/monorepo)   | Versions each package on its own by conventional commits, and moves the tags a rebase left behind.  | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
+| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, TypeScript and JSX, compiled with esbuild.                      | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
 
 The packages share code, published for its types and bundled by esbuild
 into the packages that use it:
 
-| Shared code                      | What it does                                                      |
-| -------------------------------- | ----------------------------------------------------------------- |
-| [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs. |
-| [@aljazmc/syntax](shared/syntax) | Parses JavaScript, TypeScript, JSX, JSON and Markdown into trees. |
+| Shared code                      | What it does                                                            |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs.       |
+| [@aljazmc/syntax](shared/syntax) | Parses JavaScript, TypeScript, JSX, JSON, Markdown and HTML into trees. |
 
 ## Requirements
 

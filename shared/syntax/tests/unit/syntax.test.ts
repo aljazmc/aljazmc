@@ -1,12 +1,16 @@
 import { describe, expect, test } from "@jest/globals";
 import {
+    type Html,
+    isHtml,
     isMarkdown,
     language,
     type Markdown,
     ParseError,
     parse,
     parseExpression,
+    parseHtml,
     parseMarkdown,
+    tagOf,
 } from "../../src/index.ts";
 
 /** The types of nodes, nested like the tree, for short expectations. */
@@ -217,6 +221,129 @@ describe("syntax", () => {
             expect(
                 shape(parseMarkdown("---\ntitle: a\n---\n").children),
             ).toEqual(["ThematicBreak", { Heading: ["Text"] }]);
+        });
+    });
+
+    describe("html", () => {
+        /** Elements by name with their children, texts by value, for short expectations. */
+        const tree = (children: Html.Child[]): unknown[] =>
+            children.map((child) =>
+                child.type === "Element"
+                    ? { [child.name]: tree(child.children) }
+                    : child.type === "Text"
+                      ? child.value
+                      : child.type,
+            );
+
+        test("elements nest, whitespace and comments are not children", () => {
+            const root = parseHtml(
+                "<!-- a --><div>\n  <p>Some <b>bold</b> text</p>\n  <br><img src=x />\n</div>\n",
+            );
+            expect(tree(root.children)).toEqual([
+                {
+                    div: [
+                        { p: ["Some", { b: ["bold"] }, "text"] },
+                        { br: [] },
+                        { img: [] },
+                    ],
+                },
+            ]);
+            expect(root.comments.map((comment) => comment.value)).toEqual([
+                "<!-- a -->",
+            ]);
+            expect(isHtml("a.html")).toBe(true);
+            expect(isHtml("a.HTM")).toBe(true);
+            expect(isHtml("a.xhtml")).toBe(false);
+        });
+
+        test("text ends at a blank line, unless it has braces", () => {
+            const root = parseHtml("<p>a  b\n\n c</p><p>{a\n\nb}</p>");
+            expect(tree(root.children)).toEqual([
+                { p: ["a  b", "c"] },
+                { p: ["{a\n\nb}"] },
+            ]);
+        });
+
+        test("tags are known exactly or lower-cased, void and self-closing elements close themselves", () => {
+            const [div, svg, custom] = parseHtml(
+                '<DIV CLASS="a"></div><svg><feBlend/><foreignobject></foreignobject></svg><my-el/>',
+            ).children as Html.Element[];
+            expect(div).toMatchObject({ name: "DIV", tag: "div" });
+            expect(div?.attributes[0]).toMatchObject({
+                name: "CLASS",
+                value: { raw: '"a"', text: "a", quote: '"' },
+            });
+            expect(svg?.children).toMatchObject([
+                { tag: "feBlend", selfClosing: true, closing: null },
+                { tag: null },
+            ]);
+            expect(custom).toMatchObject({ tag: null, selfClosing: true });
+            expect(tagOf("CIRCLE")).toBe("circle");
+            expect(tagOf("fegaussianblur")).toBeNull();
+        });
+
+        test("scripts, styles and preformatted elements keep their content as raw text", () => {
+            const [pre, script] = parseHtml(
+                "<pre>\n  <b>a</b>\n</pre><script>if (a < b) x = '</p>';</script>",
+            ).children as Html.Element[];
+            expect(pre).toMatchObject({ raw: true });
+            expect(tree(pre?.children ?? [])).toEqual(["\n  <b>a</b>\n"]);
+            expect(tree(script?.children ?? [])).toEqual([
+                "if (a < b) x = '</p>';",
+            ]);
+        });
+
+        test("attribute values may be unquoted, doctypes and processing instructions start files", () => {
+            const root = parseHtml(
+                '<?xml version="1.0"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">\n<a href=x/y title=\'t\' hidden></a>',
+            );
+            expect(root.instruction).toMatchObject({ name: "xml" });
+            expect(root.doctype).toMatchObject({
+                keyword: "DOCTYPE",
+                name: "html",
+                literal: "PUBLIC",
+                identifiers: ['"-//W3C//DTD HTML 4.01//EN"'],
+            });
+            const [a] = root.children as Html.Element[];
+            expect(
+                a?.attributes.map((attribute) => attribute.value?.text),
+            ).toEqual(["x/y", "t", undefined]);
+        });
+
+        test("errors are reported like Biome's", () => {
+            const error = (source: string) => {
+                try {
+                    parseHtml(source);
+                } catch (caught) {
+                    if (caught instanceof ParseError)
+                        return `${caught.position} ${caught.message}`;
+                    throw caught;
+                }
+            };
+            expect(error("<div><span></div>")).toBe(
+                "11 Expected a matching closing tag but instead found '</div>'.",
+            );
+            expect(error("<p>a")).toBe(
+                "4 Expected a closing tag but instead found the end of the file.",
+            );
+            expect(error("</div>")).toBe(
+                "0 This closing tag has no matching opening tag.",
+            );
+            expect(error("<br></br>")).toBe(
+                "4 Void elements should not have a closing tag. Remove the closing tag.",
+            );
+            expect(error("a < b")).toBe(
+                "2 Unescaped `<` bracket character. Expected a tag or escaped character.",
+            );
+            expect(error("<p><![endif]--></p>")).toBe(
+                "4 Expected an element name but instead found '!'.",
+            );
+            // a declaration starting the file is read like a doctype
+            expect(error("<![endif]-->")).toBeUndefined();
+            expect(error("---\n---\n")).toBe(
+                "0 Frontmatter is only valid inside Astro files.",
+            );
+            expect(error('<a b="c></a>')).toBe("5 Missing closing quote");
         });
     });
 });

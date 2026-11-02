@@ -1,7 +1,7 @@
 {
     "name": "@aljazmc/syntax",
     "version": "0.4.0",
-    "description": "Shared, dependency-free JavaScript, TypeScript, JSX, JSON and Markdown parser for @aljazmc packages.",
+    "description": "Shared, dependency-free JavaScript, TypeScript, JSX, JSON, Markdown and HTML parser for @aljazmc packages.",
     "author": "aljazmc",
     "license": "MIT",
     "type": "module",
@@ -32,6 +32,6 @@
     },
     "devDependencies": {
         "@jest/globals": "^30.5.2",
-        "@types/node": "^26.6.5"
+        "@types/node": "^26.6.6"
     }
 }

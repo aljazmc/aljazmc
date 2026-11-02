@@ -1,7 +1,7 @@
 # > syntax
 
 Shared, dependency-free scanner and recursive descent parser for JavaScript,
-TypeScript, JSX, JSON and Markdown, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
+TypeScript, JSX, JSON, Markdown and HTML, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
 types.
 
 ```ts
@@ -31,3 +31,20 @@ const root = parseMarkdown("# Title\n\n- [x] done\n");
 Blocks have offsets into the source and 1-based lines, and keep what a
 formatter needs to print them as written, like the indentation of each
 line. Inlines have offsets into the text of their block.
+
+HTML is parsed like Biome parses it: elements must be closed, only void
+elements may have no closing tag, and whitespace and comments are trivia
+between nodes, not children:
+
+```ts
+import { isHtml, parseHtml } from "@aljazmc/syntax";
+
+isHtml("index.html"); // true
+const root = parseHtml('<p class="a">Hi <b>there</b></p>\n');
+// root.children: an Element p, with its attributes, a Text and an Element b
+// root.comments: every <!-- --> comment
+```
+
+Element names keep their case, and `tag` is the known tag they match, like
+`div` for `DIV` and `feBlend` for `feBlend`. Scripts, styles and
+preformatted elements keep their content as one raw text.

@@ -1,4 +1,6 @@
 import type { Node, Program } from "./ast.js";
+import type { Root as HtmlRoot } from "./html/ast.js";
+import HtmlParser from "./html/parser.js";
 import type { Root } from "./markdown/ast.js";
 import Blocks, { type MarkdownOptions } from "./markdown/blocks.js";
 import type { Options } from "./parser/base.js";
@@ -6,6 +8,8 @@ import Parser from "./parser/statements.js";
 import type { Comment } from "./scanner.js";
 
 export type * from "./ast.js";
+export type * as Html from "./html/ast.js";
+export { tagOf } from "./html/parser.js";
 export { default as Lines } from "./lines.js";
 export type * as Markdown from "./markdown/ast.js";
 export type { Comment, Token } from "./scanner.js";
@@ -40,6 +44,16 @@ export function language(file: string): Language | undefined {
 /** Whether a file is Markdown, by its extension. */
 export function isMarkdown(file: string): boolean {
     return /\.(?:md|markdown)$/i.test(file);
+}
+
+/** Whether a file is HTML, by its extension. */
+export function isHtml(file: string): boolean {
+    return /\.html?$/i.test(file);
+}
+
+/** Parses HTML like Biome, throwing a ParseError at the first error. */
+export function parseHtml(source: string): HtmlRoot {
+    return new HtmlParser(source).parse();
 }
 
 /** Parses CommonMark, with GitHub's tables, task lists and strikethrough unless `gfm` is false. */

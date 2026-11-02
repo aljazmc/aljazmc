@@ -2,10 +2,10 @@
 
 # formatero
 
-A simple formatter for JavaScript, TypeScript, JSX, JSON and Markdown,
-with options and defaults compatible with [Biome](https://biomejs.dev)
-2.6.3's formatter. Easy to understand, easy to customize and easy to
-extend.
+A simple formatter for JavaScript, TypeScript, JSX, JSON, Markdown and
+HTML, with options and defaults compatible with
+[Biome](https://biomejs.dev) 2.6.4's formatter. Easy to understand, easy
+to customize and easy to extend.
 
 ## Install
 
@@ -28,8 +28,10 @@ JavaScript, TypeScript, JSX and JSON files are parsed and printed again,
 with long lines broken to fit the line width. Markdown files, `.md` and
 `.markdown`, keep their text and line breaks, with normalized markers,
 fences, tables and spacing, and the code of their fences formatted like
-files of its language. Other text files are only reindented, line by
-line, counting a tab as one level.
+files of its language. HTML files, `.html` and `.htm`, are formatted
+like Biome formats them when `html.enabled` is set, see
+[below](#html). Other text files are only reindented, line by line,
+counting a tab as one level.
 
 ## Configuration
 
@@ -61,8 +63,9 @@ export default {
 
 ### Every language
 
-These options apply to every language. The `javascript`, `json` and
-`markdown` sections can set them again, for that language only.
+These options apply to every language. The `javascript`, `json`,
+`markdown` and `html` sections can set them again, for that language
+only.
 
 | Option              | Default  | Values                             | What it does                                                                                                                                                                                                                                                     |
 | ------------------- | -------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -74,8 +77,8 @@ These options apply to every language. The `javascript`, `json` and
 | `trailingNewline`   | `true`   |                                    | Ends every file with a newline.                                                                                                                                                                                                                                  |
 | `expand`            | `"auto"` | `"auto"`, `"always"`, `"never"`    | When objects and arrays are written one item per line: `"auto"` keeps them that way when the source breaks the line after the opening bracket, `"always"` always does, and `"never"` only when they do not fit. `package.json` is always expanded with `"auto"`. |
 | `formatWithErrors`  | `false`  |                                    | Formats files that do not parse by their tokens, instead of reporting them.                                                                                                                                                                                      |
-| `attributePosition` | `"auto"` | `"auto"`, `"multiline"`            | `"multiline"` puts each JSX attribute on a line of its own when there are several, `"auto"` only when they do not fit.                                                                                                                                           |
-| `bracketSameLine`   | `false`  |                                    | Puts the `>` of a multi-line JSX tag at the end of its last line, instead of on a line of its own.                                                                                                                                                               |
+| `attributePosition` | `"auto"` | `"auto"`, `"multiline"`            | `"multiline"` puts each JSX or HTML attribute on a line of its own when there are several, `"auto"` only when they do not fit.                                                                                                                                   |
+| `bracketSameLine`   | `false`  |                                    | Puts the `>` of a multi-line JSX or HTML tag at the end of its last line, instead of on a line of its own.                                                                                                                                                       |
 | `bracketSpacing`    | `true`   |                                    | Spaces inside braces: `{ a }` instead of `{a}`.                                                                                                                                                                                                                  |
 | `delimiterSpacing`  | `false`  |                                    | Spaces inside parentheses, brackets, type arguments and template interpolations, and after `!`.                                                                                                                                                                  |
 
@@ -105,16 +108,40 @@ These options are set in the `json` section.
 
 These options are set in the `markdown` section.
 
-| Option         | Default      | Values                              | What it does                                                                                                                    |
-| -------------- | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `proseWrap`    | `"preserve"` | `"preserve"`, `"always"`, `"never"` | Keeps the line breaks of paragraphs, wraps paragraphs at the line width, or puts each on one line. Hard breaks always stay.     |
-| `formatEmbeds` | `true`       |                                     | Formats fenced code in JavaScript, TypeScript, JSX, JSON and Markdown, unless it does not parse. Code in other languages stays. |
+| Option         | Default      | Values                              | What it does                                                                                                                          |
+| -------------- | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `proseWrap`    | `"preserve"` | `"preserve"`, `"always"`, `"never"` | Keeps the line breaks of paragraphs, wraps paragraphs at the line width, or puts each on one line. Hard breaks always stay.           |
+| `formatEmbeds` | `true`       |                                     | Formats fenced code in JavaScript, TypeScript, JSX, JSON, Markdown and HTML, unless it does not parse. Code in other languages stays. |
 
 Like Biome, formatero writes headings with `#`, list items with `-`, and
 `*` or `)` for the next list beside them, numbers lists like their first
 items, italics with `_` and bold with `**`, thematic breaks as `---` and
 fences with backticks. It aligns tables and code spans, and keeps blank
 lines between blocks, but one after headings and around thematic breaks.
+
+### HTML
+
+These options are set in the `html` section. Like Biome, formatting HTML
+is off unless `enabled` is set, and HTML ends with a newline unless the
+`html` section sets `trailingNewline` to `false`.
+
+| Option                  | Default   | Values                          | What it does                                                                                                                                                                              |
+| ----------------------- | --------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`               | `false`   |                                 | Formats HTML files.                                                                                                                                                                       |
+| `trailingNewline`       | `true`    |                                 | Ends HTML files with a newline, whatever the shared option says.                                                                                                                          |
+| `indentScriptAndStyle`  | `false`   |                                 | Indents the content of `<script>` by one level, like Biome indents `<script>` and `<style>`.                                                                                              |
+| `selfCloseVoidElements` | `"never"` | `"never"`, `"always"`           | Writes void elements like `<br>`, or like `<br />`.                                                                                                                                       |
+| `whitespaceSensitivity` | `"css"`   | `"css"`, `"strict"`, `"ignore"` | Whether whitespace inside and around elements may render: by their CSS display, like inline elements but not blocks, always, or never. formatero only adds or removes it where it cannot. |
+
+Like Biome, formatero lower-cases the names of HTML elements and their
+attributes, quotes attribute values, prefers double quotes, breaks
+`srcset` and `<iframe allow>` into lines, keeps `<pre>`, `<textarea>` and
+the content of unknown scripts as written, and formats scripts as
+JavaScript, and import maps and JSON scripts as JSON. An element or text
+after a `<!-- biome-ignore format: reason -->` comment, and a file with a
+`<!-- biome-ignore-all format: reason -->` comment, stay as written.
+Unlike Biome, formatero has no CSS formatter: the content of `<style>`
+stays as written.
 
 ### .editorconfig
 
@@ -130,6 +157,7 @@ source
 ├─> @aljazmc/syntax          parses it into a syntax tree
 ├─> src/printer/javascript   turns the tree into a document
 ├─> src/printer/markdown.ts  or prints the blocks of Markdown, and their code by its language
+├─> src/printer/html         or turns HTML into Biome's formatting IR, and prints it
 ├─> src/printer/layout.ts    lays the document out within lineWidth
 └─> src/tokens, src/rules    with formatWithErrors, format a file that does not parse
 ```
@@ -138,6 +166,7 @@ source
 - `@aljazmc/config` (`shared/config`) loads `formatero.config.ts`, finds the files and matches `includes`, and is shared with every package.
 - `src/printer/javascript` turns syntax trees into documents, with one section per kind of syntax, attaching comments and choosing layouts.
 - `src/printer/markdown.ts` prints Markdown trees line by line, keeping their text, separating their blocks and aligning list items, quotes and tables like Biome.
+- `src/printer/html` splits HTML children into words, whitespace and elements like Biome, decides where whitespace may render by their CSS display, and prints Biome's formatting IR with a port of Biome's printer, whose spaces wait for the next text. Scripts are formatted by `src/printer/javascript`, indented like the `<script>`.
 - `src/printer/doc.ts` and `src/printer/layout.ts` define documents of groups, indentation and line breaks, and lay them out within the line width, after Wadler's "A prettier printer".
 - `src/tokens` and `src/rules` are a token stream and the rules applied to it, for files that do not parse when `formatWithErrors` is on.
 - `src/editorconfig.ts` reads formatero's options from `.editorconfig`.

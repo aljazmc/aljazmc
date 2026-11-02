@@ -32,6 +32,15 @@ export interface Json extends Shared {
     trailingCommas: "all" | "none";
 }
 
+export interface Html extends Shared {
+    /** Indents the content of `<script>` and `<style>` by one level. */
+    indentScriptAndStyle: boolean;
+    /** Writes void elements like `<br />`, or like `<br>`. */
+    selfCloseVoidElements: "always" | "never";
+    /** Whether whitespace around and inside elements may render, by their CSS display. */
+    whitespaceSensitivity: "css" | "ignore" | "strict";
+}
+
 export interface Markdown extends Shared {
     /** Keeps the line breaks of paragraphs, wraps them at the line width, or joins them. */
     proseWrap: "always" | "never" | "preserve";
@@ -47,6 +56,7 @@ export interface Rules extends Shared {
     useEditorconfig: boolean;
     javascript: Partial<Shared> & Omit<Javascript, keyof Shared>;
     json: Partial<Shared> & Omit<Json, keyof Shared>;
+    html: Partial<Shared> & Omit<Html, keyof Shared>;
     markdown: Partial<Shared> & Omit<Markdown, keyof Shared>;
 }
 

@@ -128,12 +128,6 @@ export default class Markdown {
         if (previous.type === "Heading") return 1;
         if (previous.type === "List") return next.type === "List" ? 1 : blank;
         if (Markdown.#fenced(previous) && next.type === "List") return 1;
-        if (next.type === "List" && blank > 0) {
-            // like Biome, blocks ending with their own line break lose one blank line
-            if (previous.type === "HtmlBlock") return Math.max(blank, 1);
-            if (previous.type === "Table" || previous.type === "BlockQuote")
-                return blank - 1;
-        }
         return blank;
     }
 

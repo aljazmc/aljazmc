@@ -436,6 +436,14 @@ const biome: {
             "# A\n\nb\n\n\n\nc\n\n\n- list\n\n\n\npara\n\n\n<!-- c -->\n\n\n\n---\n",
     },
     {
+        name: "blank lines before a list stay after quotes, tables and html blocks",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
+        input: "> A note.\n\n- one\n- two\n\n| T |\n| - |\n| V |\n\n\n- Hello\n\n<div>\nx\n</div>\n\n- a\n\n> q\n- b\n",
+        expected:
+            "> A note.\n\n- one\n- two\n\n| T   |\n| --- |\n| V   |\n\n\n- Hello\n\n<div>\nx\n</div>\n\n- a\n\n> q\n- b\n",
+    },
+    {
         name: "html blocks and comments stay as written",
         file: "a.md",
         rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
@@ -476,6 +484,292 @@ const biome: {
         input: "one\ntwo\nthree  \nfour\n\n> quoted\n> lines\n\n| a | b |\n| - | - |\n| a cell that is quite long, longer than the line | and another long cell beside it |\n",
         expected:
             "one two three  \nfour\n\n> quoted lines\n\n| a | b |\n| --- | --- |\n| a cell that is quite long, longer than the line | and another long cell beside it |\n",
+    },
+    {
+        name: "html: inline elements fill lines and hug their tags when they break",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<p>Some <b>bold</b>, <i>italic</i>, <a href="#">a link</a>, <code>code</code>, and <em>emphasis</em> in a paragraph that is long enough to wrap around the line width.</p>\n<button type="button" class="btn btn-primary btn-lg" onclick="doSomething()" disabled>Click me please</button>\n',
+        expected:
+            '<p>\n    Some <b>bold</b>, <i>italic</i>, <a href="#">a link</a>, <code>code</code>,\n    and <em>emphasis</em> in a paragraph that is long enough to wrap around the\n    line width.\n</p>\n<button\n    type="button"\n    class="btn btn-primary btn-lg"\n    onclick="doSomething()"\n    disabled\n>\n    Click me please\n</button>\n',
+    },
+    {
+        name: "html: blocks break, blank lines stay, lists and tables break their children",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: "<ul>\n  <li>One</li>\n\n\n  <li>Two <span>nested <b>deep</b></span></li>\n</ul>\n<p>\n  text<br>more text<br/>\n  end\n</p>\n<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>\n<select><option>a</option><option selected>b</option></select>\n<dl><dt>t</dt><dd>d</dd></dl>\n",
+        expected:
+            "<ul>\n    <li>One</li>\n\n    <li>\n        Two <span>nested <b>deep</b></span>\n    </li>\n</ul>\n<p>\n    text<br>more text<br>\n    end\n</p>\n<table>\n    <thead>\n        <tr>\n            <th>A</th>\n            <th>B</th>\n        </tr>\n    </thead>\n    <tbody>\n        <tr>\n            <td>1</td>\n            <td>2</td>\n        </tr>\n    </tbody>\n</table>\n<select>\n    <option>a</option>\n    <option selected>b</option>\n</select>\n<dl>\n    <dt>t</dt>\n    <dd>d</dd>\n</dl>\n",
+    },
+    {
+        name: "html: scripts are formatted as JavaScript, import maps as JSON, other types stay",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<div>\n<script type="application/ld+json">{"a":1}</script>\n<script type="importmap">{"imports":{"a":"./a.js","b":"./b.js"}}</script>\n<script type="text/babel">let a=<b/></script>\n<script>\n\n  let x  = 1\n\n</script>\n<script></script>\n<script>   </script>\n<script type="module">import a from "a";const t=`\n  keep\n`</script>\n</div>\n',
+        expected:
+            '<div>\n    <script type="application/ld+json">{"a":1}</script>\n    <script type="importmap">\n    { "imports": { "a": "./a.js", "b": "./b.js" } }\n    </script>\n    <script type="text/babel">let a=<b/></script>\n    <script>\n    let x = 1;\n    </script>\n    <script></script>\n    <script>\n    </script>\n    <script type="module">\n    import a from "a";\n    const t = `\n  keep\n`;\n    </script>\n</div>\n',
+    },
+    {
+        name: "html: doctypes are normalized, comments keep their lines",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: "<!-- a -->\n\n<!-- b -->\n<!doctype html>\n<!-- c --><html><head><title>T</title></head></html>\n<!-- end1 -->\n\n<!-- end2 -->\n",
+        expected:
+            "<!-- a -->\n\n<!-- b -->\n<!doctype html>\n<!-- c -->\n<html>\n    <head>\n        <title>T</title>\n    </head>\n</html>\n<!-- end1 -->\n\n<!-- end2 -->\n",
+    },
+    {
+        name: "html: old doctypes keep their identifiers",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n<html><body><p>x</p></body></html>\n',
+        expected:
+            '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n<html>\n    <body>\n        <p>x</p>\n    </body>\n</html>\n',
+    },
+    {
+        name: "html: attribute values get double quotes unless single ones escape less",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<div\n  class="a"\n\n  id=b>text</div>\n<input value=\'he said "hi"\'>\n<input value="it&apos;s">\n<a href=x title=\'a\'>y</a>\n',
+        expected:
+            '<div class="a" id="b">text</div>\n<input value=\'he said "hi"\'>\n<input value="it\'s">\n<a href="x" title="a">y</a>\n',
+    },
+    {
+        name: "html: srcset candidates and iframe allow break into lines",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<img srcset="a.jpg 1x, b.jpg 2x, very-long-image-name-here.jpg 3x" src="a.jpg" alt="x"><img srcset="small.jpg 480w, medium-size-image.jpg 800w, large.jpg 1200w" sizes="(max-width: 600px) 480px, 800px" src="x.jpg" alt="y">\n<iframe allow="camera; microphone; geolocation; fullscreen; picture-in-picture; autoplay" src="x"></iframe>\n',
+        expected:
+            '<img\n    srcset="a.jpg 1x, b.jpg 2x, very-long-image-name-here.jpg 3x"\n    src="a.jpg"\n    alt="x"\n><img\n    srcset="small.jpg 480w, medium-size-image.jpg 800w, large.jpg 1200w"\n    sizes="(max-width: 600px) 480px, 800px"\n    src="x.jpg"\n    alt="y"\n>\n<iframe\n    allow="\n        camera;\n        microphone;\n        geolocation;\n        fullscreen;\n        picture-in-picture;\n        autoplay;\n    "\n    src="x"\n></iframe>\n',
+    },
+    {
+        name: "html: tag and attribute names of HTML elements are lower-cased",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<DIV CLASS=a ID=b DATA-X=1><SPAN TabIndex=0>x</SPAN><my-El FooBar=1></my-El><svg viewBox="0 0 1 1"><foreignObject></foreignObject></svg></DIV>\n',
+        expected:
+            '<div class="a" id="b" DATA-X="1">\n    <span tabindex="0">x</span><my-El FooBar="1"></my-El\n    ><svg viewBox="0 0 1 1"><foreignObject></foreignObject></svg>\n</div>\n',
+    },
+    {
+        name: "html: custom elements are inline, SVG and MathML elements blocks",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<custom-element some-attr="1"><nested-thing>x</nested-thing></custom-element>\n<svg width="10" height="10"><circle cx="5" cy="5" r="4"/><path d="M0 0L10 10"/></svg>\n<math><mi>x</mi><mo>=</mo><mn>1</mn></math>\n',
+        expected:
+            '<custom-element some-attr="1"><nested-thing>x</nested-thing></custom-element>\n<svg width="10" height="10">\n    <circle cx="5" cy="5" r="4" />\n    <path d="M0 0L10 10" />\n</svg>\n<math>\n    <mi>x</mi>\n    <mo>=</mo>\n    <mn>1</mn>\n</math>\n',
+    },
+    {
+        name: "html: line breaks between CJK characters are kept",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: "<p>中文文本\n继续中文。English text\nmore</p>\n<p>日本語の文章、\nつづき</p>\n",
+        expected:
+            "<p>\n    中文文本\n    继续中文。English text more\n</p>\n<p>\n    日本語の文章、\n    つづき\n</p>\n",
+    },
+    {
+        name: "html: details, media and templates",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<details><summary>Sum</summary>Details text here</details>\n<video controls><source src="a.mp4"><track kind="captions"></video>\n<template><div>t</div></template>\n',
+        expected:
+            '<details>\n    <summary>Sum</summary>\n    Details text here\n</details>\n<video controls>\n    <source src="a.mp4">\n    <track kind="captions">\n</video>\n<template>\n    <div>t</div>\n</template>\n',
+    },
+    {
+        name: "html: text at the root fills lines",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: "just text at the root, quite long, long enough that it should wrap at eighty columns for sure\n",
+        expected:
+            "just text at the root, quite long, long enough that it should wrap at eighty\ncolumns for sure\n",
+    },
+    {
+        name: "html: biome-ignore format keeps the next node as written",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: "<!-- biome-ignore format: don't break this -->\n<div>This is some really long content that should be broken on multiple lines. However, it won't because there is a suppression comment. This is the desired behavior.</div>\n<div>\n<!-- biome-ignore format: kept -->\n<span>one     two</span><!-- trailing -->\n<p>a    b</p>\n</div>\n123<!--biome-ignore format: kept-->4      56\n",
+        expected:
+            "<!-- biome-ignore format: don't break this -->\n<div>This is some really long content that should be broken on multiple lines. However, it won't because there is a suppression comment. This is the desired behavior.</div>\n<div>\n    <!-- biome-ignore format: kept -->\n    <span>one     two</span><!-- trailing -->\n    <p>a b</p>\n</div>\n123<!--biome-ignore format: kept-->4      56\n",
+    },
+    {
+        name: "html: biome-ignore-all format keeps the file as written",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: "<!-- biome-ignore-all format: generated -->\n<div>   code   </div>\n",
+        expected:
+            "<!-- biome-ignore-all format: generated -->\n<div>   code   </div>\n",
+    },
+    {
+        name: "html: whitespaceSensitivity strict hugs every tag",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true, whitespaceSensitivity: "strict" },
+        },
+        input: '<p>Some <b>bold</b>, <i>italic</i>, <a href="#">a link</a>, <code>code</code>, and <em>emphasis</em> in a paragraph that is long enough to wrap around the line width.</p>\n<button type="button" class="btn btn-primary btn-lg" onclick="doSomething()" disabled>Click me please</button>\n<div> a </div>\n',
+        expected:
+            '<p\n    >Some <b>bold</b>, <i>italic</i>, <a href="#">a link</a>, <code>code</code>,\n    and <em>emphasis</em> in a paragraph that is long enough to wrap around the\n    line width.</p\n>\n<button\n    type="button"\n    class="btn btn-primary btn-lg"\n    onclick="doSomething()"\n    disabled\n    >Click me please</button\n>\n<div> a </div>\n',
+    },
+    {
+        name: "html: whitespaceSensitivity ignore lets content move off tags",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true, whitespaceSensitivity: "ignore" },
+        },
+        input: '<p>Some <b>bold</b>, <i>italic</i>, <a href="#">a link</a>, <code>code</code>, and <em>emphasis</em> in a paragraph that is long enough to wrap around the line width.</p>\n<button type="button" class="btn btn-primary btn-lg" onclick="doSomething()" disabled>Click me please</button>\n<span> a </span>\n',
+        expected:
+            '<p>\n    Some<b>bold</b>,<i>italic</i>,<a href="#">a link</a>,<code>code</code>, and<em\n    >\n        emphasis\n    </em> in a paragraph that is long enough to wrap around the line width.\n</p>\n<button\n    type="button"\n    class="btn btn-primary btn-lg"\n    onclick="doSomething()"\n    disabled\n>\n    Click me please\n</button>\n<span>a</span>\n',
+    },
+    {
+        name: "html: selfCloseVoidElements always self-closes void elements",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true, selfCloseVoidElements: "always" },
+        },
+        input: '<br><img src=a.png alt=""><input type=text name=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa value=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb><div/>\n',
+        expected:
+            '<br /><img src="a.png" alt="" />\n<input\n    type="text"\n    name="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n    value="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"\n/>\n<div />\n',
+    },
+    {
+        name: "html: bracketSameLine keeps > after the last attribute",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true, bracketSameLine: true },
+        },
+        input: '<button type="submit" class="btn btn-primary btn-large" id="submit-button-with-long-id">Submit</button>\n<img src="aaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png" alt="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" />\n<div/>\n',
+        expected:
+            '<button\n    type="submit"\n    class="btn btn-primary btn-large"\n    id="submit-button-with-long-id">\n    Submit\n</button>\n<img\n    src="aaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"\n    alt="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb">\n<div />\n',
+    },
+    {
+        name: "html: attributePosition multiline puts each attribute on a line",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true, attributePosition: "multiline" },
+        },
+        input: '<a href="#" class="x">y</a>\n<b id="one">z</b>\n',
+        expected:
+            '<a\n    href="#"\n    class="x"\n    >y</a\n>\n<b id="one">z</b>\n',
+    },
+    {
+        name: "html: processing instructions break their attributes",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: '<?xml version="1.0" encoding="UTF-8" standalone="yes" something-long="to-break"?>\n<root></root>\n',
+        expected:
+            '<?xml\n    version="1.0"\n    encoding="UTF-8"\n    standalone="yes"\n    something-long="to-break" ?>\n<root></root>\n',
+    },
+    {
+        name: "html: preformatted elements stay as written",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true },
+        },
+        input: "<pre>\n  keep   this\n    exactly\n</pre>\n<textarea>\n  a  \n</textarea>\n<div><pre>x</pre></div>\n",
+        expected:
+            "<pre>\n  keep   this\n    exactly\n</pre>\n<textarea>\n  a  \n</textarea>\n<div><pre>x</pre></div>\n",
+    },
+    {
+        name: "html: indentScriptAndStyle indents scripts",
+        file: "a.html",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 80,
+            html: { enabled: true, indentScriptAndStyle: true },
+        },
+        input: "<head>\n<script>let  a=1</script>\n<style></style>\n</head>\n",
+        expected:
+            "<head>\n    <script>\n        let a = 1;\n    </script>\n    <style></style>\n</head>\n",
     },
 ];
 
@@ -540,6 +834,29 @@ describe("formatero", () => {
                 }),
             ).toBe('let  a =  "b";\nconst = ;\n');
         });
+
+        test("HTML must close its elements, like Biome", () => {
+            const html = { html: { enabled: true } };
+            expect(() => format("<div><span></div>\n", "a.html", html)).toThrow(
+                "1:12 Expected a matching closing tag but instead found '</div>'.",
+            );
+            expect(() => format("<p>a\n", "a.html", html)).toThrow(
+                "2:1 Expected a closing tag but instead found the end of the file.",
+            );
+            expect(() => format("<p>a < b</p>\n", "a.html", html)).toThrow(
+                /^1:6 Unescaped `<`/,
+            );
+            expect(() => format("<br></br>\n", "a.html", html)).toThrow(
+                /^1:5 Void elements should not have a closing tag/,
+            );
+            expect(() =>
+                format("---\na: 1\n---\n<p></p>\n", "a.html", html),
+            ).toThrow(/Frontmatter is only valid inside Astro files/);
+            // errors in scripts are at their place in the file
+            expect(() =>
+                format("<p></p>\n<script>const = 1</script>\n", "a.html", html),
+            ).toThrow(/^2:15 /);
+        });
     });
 
     describe("files", () => {
@@ -559,6 +876,43 @@ describe("formatero", () => {
                 format("* a\n", "a.md", { markdown: { enabled: false } }),
             ).toBe("* a\n");
             expect(format("* a\n", "README.markdown")).toBe("- a\n");
+        });
+
+        test("HTML is formatted when enabled, .htm too, keeping styles as written", () => {
+            const messy = "<DIV>x</DIV>\n";
+            expect(format(messy, "a.html")).toBe(messy);
+            expect(format(messy, "a.html", { html: { enabled: true } })).toBe(
+                "<div>x</div>\n",
+            );
+            expect(format(messy, "a.HTM", { html: { enabled: true } })).toBe(
+                "<div>x</div>\n",
+            );
+            // formatero has no CSS formatter, Biome formats styles as CSS
+            expect(
+                format("<style>\na{color:red}\n</style>\n", "a.html", {
+                    html: { enabled: true },
+                }),
+            ).toBe("<style>\na{color:red}\n</style>\n");
+            // like Biome, HTML ends with a newline unless HTML says otherwise
+            expect(
+                format("<p></p>", "a.html", {
+                    trailingNewline: false,
+                    html: { enabled: true },
+                }),
+            ).toBe("<p></p>\n");
+            expect(
+                format("<p></p>", "a.html", {
+                    html: { enabled: true, trailingNewline: false },
+                }),
+            ).toBe("<p></p>");
+        });
+
+        test("Markdown formats html fences when HTML is enabled", () => {
+            const source = "```html\n<DIV   class=x>x</DIV>\n```\n";
+            expect(format(source, "a.md")).toBe(source);
+            expect(format(source, "a.md", { html: { enabled: true } })).toBe(
+                '```html\n<div class="x">x</div>\n```\n',
+            );
         });
 
         test("Markdown formats the code of its fences, unless formatEmbeds is false", () => {

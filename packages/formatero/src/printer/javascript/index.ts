@@ -1,4 +1,5 @@
 import { parse, parseExpression } from "@aljazmc/syntax";
+import { hardline, indent } from "../doc.js";
 import Layout from "../layout.js";
 import Assignments from "./assignments.js";
 import Calls from "./calls.js";
@@ -35,9 +36,11 @@ export default class JavaScript {
         this.#options = options;
     }
 
+    /** Formats source, indented by `level` levels like code embedded in HTML. */
     format(
         source: string,
         language: { typescript: boolean; jsx: boolean },
+        level = 0,
     ): string {
         const { program, comments } = this.#options.json
             ? parseExpression(source)
@@ -56,10 +59,16 @@ export default class JavaScript {
                 `Comment would be lost: ${lost.value.slice(0, 40)}`,
             );
 
-        return new Layout({
+        const layout = new Layout({
             lineWidth: this.#options.lineWidth,
             useTabs: this.#options.useTabs,
             indentWidth: this.#options.indentWidth,
-        }).print(doc);
+        });
+        if (level === 0) return layout.print(doc);
+        // indented after a line break, literal lines of template literals stay at the start of lines
+        let indented = [hardline, doc];
+        for (let index = 0; index < level; index++)
+            indented = [indent(indented)];
+        return layout.print(indented).replace(/^\n[ \t]*/, "");
     }
 }

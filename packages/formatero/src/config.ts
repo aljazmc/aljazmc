@@ -28,6 +28,15 @@ const rules: Rules = {
     json: {
         trailingCommas: "none",
     },
+    html: {
+        // like Biome, formatting HTML is experimental and off unless enabled
+        enabled: false,
+        // unlike other languages, HTML ends with a newline unless it is disabled for HTML
+        trailingNewline: true,
+        indentScriptAndStyle: false,
+        selfCloseVoidElements: "never",
+        whitespaceSensitivity: "css",
+    },
     markdown: {
         proseWrap: "preserve",
         formatEmbeds: true,

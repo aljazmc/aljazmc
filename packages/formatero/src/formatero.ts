@@ -1,12 +1,14 @@
 import { EOL } from "node:os";
 import { Includes } from "@aljazmc/config";
 import {
+    isHtml,
     isMarkdown,
     Lines,
     language as languageOf,
     ParseError,
     parse,
 } from "@aljazmc/syntax";
+import Html from "./printer/html/index.js";
 import JavaScript, { type Options } from "./printer/javascript/index.js";
 import Markdown from "./printer/markdown.js";
 import ArrowParentheses from "./rules/arrow-parentheses.js";
@@ -17,7 +19,14 @@ import Semicolons from "./rules/semicolons.js";
 import Spacing from "./rules/spacing.js";
 import TextIndentation from "./rules/text-indentation.js";
 import TrailingCommas from "./rules/trailing-commas.js";
-import type { Javascript, Json, Rule, Rules, Shared } from "./rules.js";
+import type {
+    Html as HtmlRules,
+    Javascript,
+    Json,
+    Rule,
+    Rules,
+    Shared,
+} from "./rules.js";
 import Code from "./tokens/code.js";
 
 /** JSON has no JavaScript only rules, these keep the printer neutral. */
@@ -54,11 +63,13 @@ export default class Formatero {
     }
 
     #enabled(file: string): boolean {
-        const { enabled, javascript, json, markdown } = this.#rules;
+        const { enabled, javascript, json, markdown, html } = this.#rules;
         const language = languageOf(file);
         const section = isMarkdown(file)
             ? markdown
-            : language && (language.json ? json : javascript);
+            : isHtml(file)
+              ? html
+              : language && (language.json ? json : javascript);
         return section?.enabled ?? enabled;
     }
 
@@ -73,6 +84,7 @@ export default class Formatero {
             javascript,
             json,
             markdown,
+            html,
             includes,
             useEditorconfig,
             ...shared
@@ -93,6 +105,34 @@ export default class Formatero {
                         this.#embed(code, info),
                 }),
             }).format(source);
+            return this.#finish(printed, rules);
+        }
+
+        if (isHtml(file)) {
+            const rules = { ...shared, ...html };
+            let printed: string;
+            try {
+                printed = new Html({
+                    lineWidth: rules.lineWidth,
+                    indentWidth: rules.indentWidth,
+                    useTabs: rules.indentStyle === "tab",
+                    attributePosition: rules.attributePosition,
+                    bracketSameLine: rules.bracketSameLine,
+                    indentScriptAndStyle: rules.indentScriptAndStyle,
+                    selfCloseVoidElements: rules.selfCloseVoidElements,
+                    whitespaceSensitivity: rules.whitespaceSensitivity,
+                    trailingNewline: rules.trailingNewline,
+                    embed: (code, language, level) =>
+                        this.#script(code, language, level, rules),
+                }).format(source);
+            } catch (error) {
+                if (!(error instanceof ParseError)) throw error;
+                const lines = new Lines(source);
+                const { position } = error;
+                throw new FormatError(
+                    `${lines.line(position)}:${lines.column(position)} ${error.message}`,
+                );
+            }
             return this.#finish(printed, rules);
         }
 
@@ -177,6 +217,47 @@ export default class Formatero {
         }
     }
 
+    /**
+     * Formats the code of a script in HTML at an indentation level, with the
+     * layout of HTML and the other rules of its language, like Biome.
+     */
+    #script(
+        code: string,
+        language: "javascript" | "module" | "json",
+        level: number,
+        html: Shared & HtmlRules,
+    ): string {
+        const layout = {
+            indentStyle: html.indentStyle,
+            indentWidth: html.indentWidth,
+            lineWidth: html.lineWidth,
+        };
+        const {
+            javascript,
+            json,
+            markdown: _markdown,
+            html: _html,
+            includes: _includes,
+            useEditorconfig: _useEditorconfig,
+            ...shared
+        } = this.#rules;
+        const options =
+            language === "json"
+                ? Formatero.#options(
+                      { ...shared, ...json, ...layout, ...jsonDefaults },
+                      true,
+                      { typescript: false, jsx: false },
+                  )
+                : Formatero.#options(
+                      { ...shared, ...javascript, ...layout },
+                      false,
+                      { typescript: false, jsx: false },
+                  );
+        return new JavaScript(options)
+            .format(code, { typescript: false, jsx: false }, level)
+            .replace(/\n+$/, "");
+    }
+
     /** A file name for the language of an info string, like Biome reads it. */
     static #embedded(info: string): string | undefined {
         const language = info.split(/\s/)[0]?.toLowerCase() ?? "";
@@ -196,6 +277,7 @@ export default class Formatero {
         )
             return "embed.jsonc";
         if (/^(?:md|markdown)$/.test(language)) return "embed.md";
+        if (/^html?$/.test(language)) return "embed.html";
     }
 
     static #options(

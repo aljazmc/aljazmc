@@ -1,4 +1,6 @@
 import type { Node, Program } from "./ast.js";
+import type { Stylesheet } from "./css/ast.js";
+import CssParser from "./css/parser.js";
 import type { Root as HtmlRoot } from "./html/ast.js";
 import HtmlParser from "./html/parser.js";
 import type { Root } from "./markdown/ast.js";
@@ -8,6 +10,7 @@ import Parser from "./parser/statements.js";
 import type { Comment } from "./scanner.js";
 
 export type * from "./ast.js";
+export type * as Css from "./css/ast.js";
 export type * as Html from "./html/ast.js";
 export { tagOf } from "./html/parser.js";
 export { default as Lines } from "./lines.js";
@@ -49,6 +52,33 @@ export function isMarkdown(file: string): boolean {
 /** Whether a file is HTML, by its extension. */
 export function isHtml(file: string): boolean {
     return /\.html?$/i.test(file);
+}
+
+/** Whether a file is CSS, by its extension. */
+export function isCss(file: string): boolean {
+    return /\.css$/i.test(file);
+}
+
+/**
+ * Parses CSS into rules, at-rules, declarations and selectors, throwing a
+ * ParseError at the first error, or with `recover` leaving out items with
+ * errors and listing the errors.
+ */
+export function parseCss(
+    source: string,
+    options: { recover?: boolean } = {},
+): Stylesheet {
+    return new CssParser(
+        source,
+        undefined,
+        undefined,
+        options.recover ?? false,
+    ).parse();
+}
+
+/** Parses the component values of a range of CSS, like a `style` attribute value. */
+export function parseCssValues(source: string, start = 0, end = source.length) {
+    return CssParser.values(source, start, end);
 }
 
 /** Parses HTML like Biome, throwing a ParseError at the first error. */

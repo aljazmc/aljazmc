@@ -1,7 +1,7 @@
 # > syntax
 
 Shared, dependency-free scanner and recursive descent parser for JavaScript,
-TypeScript, JSX, JSON, Markdown and HTML, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
+TypeScript, JSX, JSON, Markdown, HTML and CSS, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
 types.
 
 ```ts
@@ -48,3 +48,21 @@ const root = parseHtml('<p class="a">Hi <b>there</b></p>\n');
 Element names keep their case, and `tag` is the known tag they match, like
 `div` for `DIV` and `feBlend` for `feBlend`. Scripts, styles and
 preformatted elements keep their content as one raw text.
+
+CSS is parsed into rules, at-rules, declarations and their component
+values, and the selectors of rules into compound selectors, combinators
+and simple selectors, like Biome reads them:
+
+```ts
+import { isCss, parseCss } from "@aljazmc/syntax";
+
+isCss("styles.css"); // true
+const sheet = parseCss("a > .b:hover { color: red !important; }\n");
+// sheet.children: a Rule, its selectors and a block with a Declaration
+// sheet.comments: every /* */ comment
+```
+
+Nested rules, `@media` queries and other at-rule preludes keep their
+values, keyframes keep theirs instead of selectors. Errors throw a
+`ParseError`, or with `parseCss(source, { recover: true })` the items
+with errors are skipped and listed in `sheet.errors`.

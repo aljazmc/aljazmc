@@ -1,12 +1,15 @@
 import { describe, expect, test } from "@jest/globals";
 import {
+    type Css,
     type Html,
+    isCss,
     isHtml,
     isMarkdown,
     language,
     type Markdown,
     ParseError,
     parse,
+    parseCss,
     parseExpression,
     parseHtml,
     parseMarkdown,
@@ -344,6 +347,83 @@ describe("syntax", () => {
                 "0 Frontmatter is only valid inside Astro files.",
             );
             expect(error('<a b="c></a>')).toBe("5 Missing closing quote");
+        });
+    });
+
+    describe("css", () => {
+        test("files are CSS by their extension", () => {
+            expect(isCss("a.css")).toBe(true);
+            expect(isCss("A.CSS")).toBe(true);
+            expect(isCss("a.scss")).toBe(false);
+        });
+
+        test("rules, at-rules, declarations and comments", () => {
+            const sheet = parseCss(
+                "/* a */\n@media screen { a > .b:hover, c { color: red !important; } }\n@import 'x.css';\n",
+            );
+            expect(sheet.comments.map((comment) => comment.value)).toEqual([
+                "/* a */",
+            ]);
+            const [media, imports] = sheet.children as Css.AtRule[];
+            expect(media?.keyword).toBe("media");
+            expect(imports?.semicolon).toBe(true);
+            const rule = media?.block?.children[0] as Css.Rule;
+            const [first, second] = rule.selectors?.children ?? [];
+            expect(
+                first?.children.map(
+                    (compound) => compound.combinator?.value ?? null,
+                ),
+            ).toEqual([null, ">"]);
+            expect(second?.children[0]?.element).toMatchObject({ name: "c" });
+            const declaration = rule.block.children[0] as Css.Declaration;
+            expect(declaration).toMatchObject({
+                property: "color",
+                value: [{ type: "Identifier", value: "red" }],
+                important: { keyword: "important" },
+            });
+        });
+
+        test("nested rules and declarations are told apart like Biome", () => {
+            const sheet = parseCss("a { b:hover { x: 1 } c: d; &.e { } }\n");
+            const block = (sheet.children[0] as Css.Rule).block;
+            expect(block.children.map((child) => child.type)).toEqual([
+                "Rule",
+                "Declaration",
+                "Rule",
+            ]);
+        });
+
+        test("values keep functions, blocks and dimensions", () => {
+            const sheet = parseCss(
+                "a { width: calc(100% - 2px); grid: [a] 1fr / auto; b: url(x.png); }\n",
+            );
+            const [width, grid, url] = (sheet.children[0] as Css.Rule).block
+                .children as Css.Declaration[];
+            expect(width?.value[0]).toMatchObject({
+                type: "Function",
+                name: "calc",
+            });
+            expect(grid?.value.map((value) => value.type)).toEqual([
+                "SimpleBlock",
+                "Dimension",
+                "Delimiter",
+                "Identifier",
+            ]);
+            expect(url?.value[0]).toMatchObject({
+                type: "Url",
+                value: { value: "x.png" },
+            });
+        });
+
+        test("errors throw, or are skipped with their items when recovering", () => {
+            expect(() => parseCss("a { color: red")).toThrow(ParseError);
+            const sheet = parseCss("a { color: }\nb { color: red; }\n", {
+                recover: true,
+            });
+            expect(sheet.errors).toHaveLength(1);
+            expect((sheet.children[1] as Css.Rule).block.children).toHaveLength(
+                1,
+            );
         });
     });
 });

@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/syntax",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "Shared, dependency-free JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS parser for @aljazmc packages.",
     "author": "aljazmc",
     "license": "MIT",

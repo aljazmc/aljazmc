@@ -24,6 +24,7 @@ import useAriaPropsForRole from "./a11y/use-aria-props-for-role.js";
 import useAriaPropsSupportedByRole from "./a11y/use-aria-props-supported-by-role.js";
 import useButtonType from "./a11y/use-button-type.js";
 import useFocusableInteractive from "./a11y/use-focusable-interactive.js";
+import useGenericFontNames from "./a11y/use-generic-font-names.js";
 import useHeadingContent from "./a11y/use-heading-content.js";
 import useHtmlLang from "./a11y/use-html-lang.js";
 import useIframeTitle from "./a11y/use-iframe-title.js";
@@ -42,8 +43,10 @@ import noArguments from "./complexity/no-arguments.js";
 import noBannedTypes from "./complexity/no-banned-types.js";
 import noCommaOperator from "./complexity/no-comma-operator.js";
 import noEmptyTypeParameters from "./complexity/no-empty-type-parameters.js";
+import noExcessiveSelectorClasses from "./complexity/no-excessive-selector-classes.js";
 import noExtraBooleanCast from "./complexity/no-extra-boolean-cast.js";
 import noFlatMapIdentity from "./complexity/no-flat-map-identity.js";
+import noImportantStyles from "./complexity/no-important-styles.js";
 import noStaticOnlyClass from "./complexity/no-static-only-class.js";
 import noThisInStatic from "./complexity/no-this-in-static.js";
 import noUselessCatch from "./complexity/no-useless-catch.js";
@@ -84,8 +87,12 @@ import noGlobalObjectCalls from "./correctness/no-global-object-calls.js";
 import noInnerDeclarations from "./correctness/no-inner-declarations.js";
 import noInvalidBuiltinInstantiation from "./correctness/no-invalid-builtin-instantiation.js";
 import noInvalidConstructorSuper from "./correctness/no-invalid-constructor-super.js";
+import noInvalidDirectionInLinearGradient from "./correctness/no-invalid-direction-in-linear-gradient.js";
+import noInvalidGridAreas from "./correctness/no-invalid-grid-areas.js";
+import noInvalidPositionAtImportRule from "./correctness/no-invalid-position-at-import-rule.js";
 import noInvalidUseBeforeDeclaration from "./correctness/no-invalid-use-before-declaration.js";
 import noJsxNamespace from "./correctness/no-jsx-namespace.js";
+import noMissingVarFunction from "./correctness/no-missing-var-function.js";
 import noNonoctalDecimalEscape from "./correctness/no-nonoctal-decimal-escape.js";
 import noPlaywrightMissingAwait from "./correctness/no-playwright-missing-await.js";
 import noPrecisionLoss from "./correctness/no-precision-loss.js";
@@ -98,6 +105,14 @@ import noSelfAssign from "./correctness/no-self-assign.js";
 import noSetterReturn from "./correctness/no-setter-return.js";
 import noStringCaseMismatch from "./correctness/no-string-case-mismatch.js";
 import noSwitchDeclarations from "./correctness/no-switch-declarations.js";
+import noUnknownFunction from "./correctness/no-unknown-function.js";
+import noUnknownMediaFeatureName from "./correctness/no-unknown-media-feature-name.js";
+import noUnknownProperty from "./correctness/no-unknown-property.js";
+import noUnknownPseudoClass from "./correctness/no-unknown-pseudo-class.js";
+import noUnknownPseudoElement from "./correctness/no-unknown-pseudo-element.js";
+import noUnknownTypeSelector from "./correctness/no-unknown-type-selector.js";
+import noUnknownUnit from "./correctness/no-unknown-unit.js";
+import noUnmatchableAnbSelector from "./correctness/no-unmatchable-anb-selector.js";
 import noUnreachable from "./correctness/no-unreachable.js";
 import noUnreachableSuper from "./correctness/no-unreachable-super.js";
 import noUnsafeFinally from "./correctness/no-unsafe-finally.js";
@@ -134,11 +149,20 @@ import noMisplacedListElements from "./nursery/no-misplaced-list-elements.js";
 import noNonScalableViewport from "./nursery/no-non-scalable-viewport.js";
 import noObsoleteAttributes from "./nursery/no-obsolete-attributes.js";
 import noObsoleteTags from "./nursery/no-obsolete-tags.js";
+import noSelfNestedLayer from "./nursery/no-self-nested-layer.js";
+import noShortTimeValues from "./nursery/no-short-time-values.js";
+import noUndeclaredCustomProperties from "./nursery/no-undeclared-custom-properties.js";
 import noUnsafeIframeSandbox from "./nursery/no-unsafe-iframe-sandbox.js";
+import noUnusedClasses from "./nursery/no-unused-classes.js";
+import noZeroLengthUnit from "./nursery/no-zero-length-unit.js";
 import useConsistentHeadingLevel from "./nursery/use-consistent-heading-level.js";
+import useConsistentLightnessNotation from "./nursery/use-consistent-lightness-notation.js";
 import useConsistentUnicodeBom from "./nursery/use-consistent-unicode-bom.js";
 import useControlLabel from "./nursery/use-control-label.js";
 import useFencedCodeLanguage from "./nursery/use-fenced-code-language.js";
+import useLayeredStyles from "./nursery/use-layered-styles.js";
+import useLogicalProperties from "./nursery/use-logical-properties.js";
+import useNamedLayer from "./nursery/use-named-layer.js";
 import useSingleTopLevelHeading from "./nursery/use-single-top-level-heading.js";
 import useTopLevelHeading from "./nursery/use-top-level-heading.js";
 import noAccumulatingSpread from "./performance/no-accumulating-spread.js";
@@ -154,10 +178,13 @@ import noDangerouslySetInnerHtmlWithChildren from "./security/no-dangerously-set
 import noGlobalEval from "./security/no-global-eval.js";
 import noScriptUrl from "./security/no-script-url.js";
 import useIframeSandbox from "./security/use-iframe-sandbox.js";
+import noDescendingSpecificity from "./style/no-descending-specificity.js";
 import noExcessiveLinesPerFile from "./style/no-excessive-lines-per-file.js";
 import noHeadElement from "./style/no-head-element.js";
+import noHexColors from "./style/no-hex-colors.js";
 import noInlineStyles from "./style/no-inline-styles.js";
 import noNonNullAssertion from "./style/no-non-null-assertion.js";
+import noValueAtRule from "./style/no-value-at-rule.js";
 import useArrayLiterals from "./style/use-array-literals.js";
 import useConst from "./style/use-const.js";
 import useExponentiationOperator from "./style/use-exponentiation-operator.js";
@@ -182,19 +209,27 @@ import noConfusingVoidType from "./suspicious/no-confusing-void-type.js";
 import noConstEnum from "./suspicious/no-const-enum.js";
 import noControlCharactersInRegex from "./suspicious/no-control-characters-in-regex.js";
 import noDebugger from "./suspicious/no-debugger.js";
+import noDeprecatedMediaType from "./suspicious/no-deprecated-media-type.js";
 import noDocumentCookie from "./suspicious/no-document-cookie.js";
 import noDocumentImportInPage from "./suspicious/no-document-import-in-page.js";
 import noDoubleEquals from "./suspicious/no-double-equals.js";
 import noDrizzleDeleteWithoutWhere from "./suspicious/no-drizzle-delete-without-where.js";
 import noDrizzleUpdateWithoutWhere from "./suspicious/no-drizzle-update-without-where.js";
+import noDuplicateAtImportRules from "./suspicious/no-duplicate-at-import-rules.js";
 import noDuplicateCase from "./suspicious/no-duplicate-case.js";
 import noDuplicateClassMembers from "./suspicious/no-duplicate-class-members.js";
+import noDuplicateCustomProperties from "./suspicious/no-duplicate-custom-properties.js";
 import noDuplicateElseIf from "./suspicious/no-duplicate-else-if.js";
 import noDuplicateEnumValues from "./suspicious/no-duplicate-enum-values.js";
+import noDuplicateFontNames from "./suspicious/no-duplicate-font-names.js";
 import noDuplicateJsxProps from "./suspicious/no-duplicate-jsx-props.js";
 import noDuplicateObjectKeys from "./suspicious/no-duplicate-object-keys.js";
 import noDuplicateParameters from "./suspicious/no-duplicate-parameters.js";
+import noDuplicateProperties from "./suspicious/no-duplicate-properties.js";
+import noDuplicateSelectors from "./suspicious/no-duplicate-selectors.js";
+import noDuplicateSelectorsKeyframeBlock from "./suspicious/no-duplicate-selectors-keyframe-block.js";
 import noDuplicateTestHooks from "./suspicious/no-duplicate-test-hooks.js";
+import noEmptyBlock from "./suspicious/no-empty-block.js";
 import noEmptyInterface from "./suspicious/no-empty-interface.js";
 import noEmptySource from "./suspicious/no-empty-source.js";
 import noExplicitAny from "./suspicious/no-explicit-any.js";
@@ -210,6 +245,7 @@ import noHeadImportInDocument from "./suspicious/no-head-import-in-document.js";
 import noIdenticalTestTitle from "./suspicious/no-identical-test-title.js";
 import noImplicitAnyLet from "./suspicious/no-implicit-any-let.js";
 import noImportAssign from "./suspicious/no-import-assign.js";
+import noImportantInKeyframe from "./suspicious/no-important-in-keyframe.js";
 import noIrregularWhitespace from "./suspicious/no-irregular-whitespace.js";
 import noLabelVar from "./suspicious/no-label-var.js";
 import noMisleadingCharacterClass from "./suspicious/no-misleading-character-class.js";
@@ -227,18 +263,21 @@ import noRedeclare from "./suspicious/no-redeclare.js";
 import noRedundantUseStrict from "./suspicious/no-redundant-use-strict.js";
 import noSelfCompare from "./suspicious/no-self-compare.js";
 import noShadowRestrictedNames from "./suspicious/no-shadow-restricted-names.js";
+import noShorthandPropertyOverrides from "./suspicious/no-shorthand-property-overrides.js";
 import noSparseArray from "./suspicious/no-sparse-array.js";
 import noSuspiciousSemicolonInJsx from "./suspicious/no-suspicious-semicolon-in-jsx.js";
 import noTemplateCurlyInString from "./suspicious/no-template-curly-in-string.js";
 import noThenProperty from "./suspicious/no-then-property.js";
 import noTsIgnore from "./suspicious/no-ts-ignore.js";
 import noUndeclaredEnvVars from "./suspicious/no-undeclared-env-vars.js";
+import noUnknownAtRules from "./suspicious/no-unknown-at-rules.js";
 import noUnsafeDeclarationMerging from "./suspicious/no-unsafe-declaration-merging.js";
 import noUnsafeNegation from "./suspicious/no-unsafe-negation.js";
 import noUselessEscapeInString from "./suspicious/no-useless-escape-in-string.js";
 import noUselessRegexBackrefs from "./suspicious/no-useless-regex-backrefs.js";
 import noWith from "./suspicious/no-with.js";
 import useAdjacentOverloadSignatures from "./suspicious/use-adjacent-overload-signatures.js";
+import useBaseline from "./suspicious/use-baseline.js";
 import useBiomeIgnoreFolder from "./suspicious/use-biome-ignore-folder.js";
 import useDefaultSwitchClauseLast from "./suspicious/use-default-switch-clause-last.js";
 import useGetterReturn from "./suspicious/use-getter-return.js";
@@ -494,4 +533,43 @@ export default [
     useIsArray,
     useIterableCallbackReturn,
     useNamespaceKeyword,
+    noHexColors,
+    noValueAtRule,
+    noEmptyBlock,
+    useNamedLayer,
+    noDuplicateSelectorsKeyframeBlock,
+    noImportantInKeyframe,
+    noImportantStyles,
+    noUnknownAtRules,
+    noDuplicateProperties,
+    noDuplicateCustomProperties,
+    noUnknownTypeSelector,
+    noDuplicateFontNames,
+    useGenericFontNames,
+    noDuplicateAtImportRules,
+    noDeprecatedMediaType,
+    noInvalidPositionAtImportRule,
+    noUnknownPseudoClass,
+    noUnknownPseudoElement,
+    noUnmatchableAnbSelector,
+    noExcessiveSelectorClasses,
+    noUnknownProperty,
+    noUnknownFunction,
+    noUnknownMediaFeatureName,
+    noUnknownUnit,
+    useLayeredStyles,
+    noSelfNestedLayer,
+    noShorthandPropertyOverrides,
+    noInvalidDirectionInLinearGradient,
+    noMissingVarFunction,
+    noShortTimeValues,
+    noZeroLengthUnit,
+    useConsistentLightnessNotation,
+    noInvalidGridAreas,
+    noUndeclaredCustomProperties,
+    noUnusedClasses,
+    noDescendingSpecificity,
+    noDuplicateSelectors,
+    useLogicalProperties,
+    useBaseline,
 ] as Rule[];

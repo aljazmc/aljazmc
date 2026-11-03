@@ -13039,6 +13039,305 @@ const biome: {
             "9:20 Unexpected style attribute.",
         ],
     },
+    {
+        rule: "a11y/useGenericFontNames",
+        file: "a.css",
+        source: "a { font-family: Arial, Helvetica; }\nb { font-family: Arial, sans-serif; }\n",
+        expected: ["1:25 Generic font family missing."],
+    },
+    {
+        rule: "complexity/noImportantStyles",
+        file: "a.css",
+        source: "a { color: red !important; }\n",
+        expected: ["1:16 Avoid the use of the !important style."],
+    },
+    {
+        rule: "complexity/noExcessiveSelectorClasses",
+        file: "a.css",
+        options: { maxClasses: 2 },
+        source: ".a.b.c { color: red; }\n.a .b { color: red; }\n",
+        expected: [
+            "1:1 Expected this selector to have no more than 2 class selectors, but found 3.",
+        ],
+    },
+    {
+        rule: "correctness/noInvalidDirectionInLinearGradient",
+        file: "a.css",
+        source: "a { background: linear-gradient(top, #fff, #000); }\nb { background: linear-gradient(to top, #fff, #000); }\n",
+        expected: ["1:33 Unexpected nonstandard direction"],
+    },
+    {
+        rule: "correctness/noInvalidGridAreas",
+        file: "a.css",
+        source: 'a { grid-template-areas: "a a" "b b b"; }\n',
+        expected: [
+            "1:26 Inconsistent cell count in grid areas are not allowed.",
+        ],
+    },
+    {
+        rule: "correctness/noInvalidPositionAtImportRule",
+        file: "a.css",
+        source: "a {}\n@import 'foo.css';\n",
+        expected: ["2:2 This @import is in the wrong position."],
+    },
+    {
+        rule: "correctness/noMissingVarFunction",
+        file: "a.css",
+        source: ":root { --color: red; }\na { color: --color; }\n",
+        expected: [
+            "2:12 CSS variables '--color' is used without the 'var()' function",
+        ],
+    },
+    {
+        rule: "correctness/noUnknownFunction",
+        file: "a.css",
+        source: "a { transform: unknown(1); }\n",
+        expected: ["1:16 Unexpected unknown function: unknown"],
+    },
+    {
+        rule: "correctness/noUnknownMediaFeatureName",
+        file: "a.css",
+        source: "@media screen and (unknown: 1px) {}\n",
+        expected: ["1:8 Unexpected unknown media feature name."],
+    },
+    {
+        rule: "correctness/noUnknownProperty",
+        file: "a.css",
+        source: "a { colr: red; -webkit-foo: 1; }\n",
+        expected: ["1:5 Unknown property is not allowed."],
+    },
+    {
+        rule: "correctness/noUnknownPseudoClass",
+        file: "a.css",
+        source: "a:unknown {}\na:hover {}\n",
+        expected: ["1:3 Unexpected unknown pseudo-class unknown."],
+    },
+    {
+        rule: "correctness/noUnknownPseudoElement",
+        file: "a.css",
+        source: "a::unknown {}\na::before {}\n",
+        expected: ["1:4 Unexpected unknown pseudo-elements: unknown"],
+    },
+    {
+        rule: "correctness/noUnknownTypeSelector",
+        file: "a.css",
+        source: "unknown {}\nx-custom {}\n",
+        expected: ["1:1 Unknown type selector is not allowed."],
+    },
+    {
+        rule: "correctness/noUnknownUnit",
+        file: "a.css",
+        source: "a { width: 10pixels; }\n",
+        expected: ["1:14 Unexpected unknown unit: pixels"],
+    },
+    {
+        rule: "correctness/noUnmatchableAnbSelector",
+        file: "a.css",
+        source: "a:nth-child(0n+0) {}\na:not(:nth-child(0)) {}\n",
+        expected: ["1:13 This selector will never match any elements."],
+    },
+    {
+        rule: "style/noDescendingSpecificity",
+        file: "a.css",
+        source: "b a {}\na {}\n",
+        expected: [
+            "2:1 Descending specificity selector found. This selector specificity is (0, 0, 1)",
+        ],
+    },
+    {
+        rule: "style/noHexColors",
+        file: "a.css",
+        source: "a { color: #fff; }\n",
+        expected: ["1:12 Unexpected hex color."],
+    },
+    {
+        rule: "suspicious/noDeprecatedMediaType",
+        file: "a.css",
+        source: "@media tv {}\n",
+        expected: ["1:8 Unexpected deprecated media type: tv"],
+    },
+    {
+        rule: "suspicious/noDuplicateAtImportRules",
+        file: "a.css",
+        source: "@import 'a.css';\n@import 'a.css';\n",
+        expected: [
+            "2:2 Each @import should be unique unless differing by media queries.",
+        ],
+    },
+    {
+        rule: "suspicious/noDuplicateCustomProperties",
+        file: "a.css",
+        source: "a { --x: 1; --x: 2; }\n",
+        expected: [
+            "1:13 Duplicate custom properties can lead to unexpected behavior and may override previous declarations unintentionally.",
+        ],
+    },
+    {
+        rule: "suspicious/noDuplicateFontNames",
+        file: "a.css",
+        source: "a { font-family: Arial, Arial, sans-serif; }\n",
+        expected: [
+            "1:25 Duplicate font names are redundant and unnecessary: Arial",
+        ],
+    },
+    {
+        rule: "suspicious/noDuplicateProperties",
+        file: "a.css",
+        source: "a { color: red; color: blue; }\n",
+        expected: [
+            "1:17 Duplicate properties can lead to unexpected behavior and may override previous declarations unintentionally.",
+        ],
+    },
+    {
+        rule: "suspicious/noDuplicateSelectors",
+        file: "a.css",
+        source: ".a {}\n.a {}\n",
+        expected: ['2:1 Duplicate selector list ".a".'],
+    },
+    {
+        rule: "suspicious/noDuplicateSelectorsKeyframeBlock",
+        file: "a.css",
+        source: "@keyframes a { from {} from {} }\n",
+        expected: [
+            "1:24 The duplicate keyframe selector is overwritten by later one.",
+        ],
+    },
+    {
+        rule: "suspicious/noEmptyBlock",
+        file: "a.css",
+        source: "a {}\nb { /* comment */ }\n",
+        expected: ["1:3 An empty block isn't allowed."],
+    },
+    {
+        rule: "suspicious/noImportantInKeyframe",
+        file: "a.css",
+        source: "@keyframes a { from { opacity: 0 !important; } }\n",
+        expected: [
+            "1:34 Unexpected !important within a keyframes declaration.",
+        ],
+    },
+    {
+        rule: "suspicious/noShorthandPropertyOverrides",
+        file: "a.css",
+        source: "a { padding-left: 10px; padding: 20px; }\n",
+        expected: [
+            "1:25 This shorthand property padding overrides the earlier padding-left declaration.",
+        ],
+    },
+    {
+        rule: "suspicious/noUnknownAtRules",
+        file: "a.css",
+        source: "@unknown foo;\n",
+        expected: ["1:2 Unexpected unknown at-rule: unknown "],
+    },
+    {
+        rule: "suspicious/noUselessEscapeInString",
+        file: "a.css",
+        source: 'a { content: "\\a\\z"; }\n',
+        expected: ["1:18 The character doesn't need to be escaped."],
+    },
+    {
+        rule: "suspicious/noIrregularWhitespace",
+        file: "a.css",
+        source: "a {\u00a0color: red; }\n",
+        expected: ["1:4 Irregular whitespace found."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.css",
+        source: "",
+        expected: ["1:1 An empty source is not allowed."],
+    },
+    {
+        rule: "nursery/noSelfNestedLayer",
+        file: "a.css",
+        source: "@layer a { @layer a {} }\n",
+        expected: ["1:19 This layer repeats the name of an enclosing layer."],
+    },
+    {
+        rule: "nursery/noShortTimeValues",
+        file: "a.css",
+        options: { minimum: 50 },
+        source: "a { transition: opacity 10ms; }\n",
+        expected: [
+            "1:25 This time is shorter than the configured minimum of 50ms.",
+        ],
+    },
+    {
+        rule: "nursery/noZeroLengthUnit",
+        file: "a.css",
+        source: "a { margin: 0px; width: calc(0px + 1px); }\n",
+        expected: ["1:14 The unit px is unnecessary on a zero length."],
+    },
+    {
+        rule: "nursery/useConsistentLightnessNotation",
+        file: "a.css",
+        source: "a { color: oklch(0.5 0.1 120); }\n",
+        expected: [
+            "1:18 This lightness is written as a number instead of a percentage.",
+        ],
+    },
+    {
+        rule: "nursery/useLayeredStyles",
+        file: "a.css",
+        source: "a {}\n@layer base { b {} }\n",
+        expected: [
+            "1:1 This style rule is defined outside of a cascade layer.",
+        ],
+    },
+    {
+        rule: "nursery/useLogicalProperties",
+        file: "a.css",
+        source: "a { margin-left: 0; float: left; }\n",
+        expected: [
+            "1:28 Use logical CSS values over physical ones.",
+            "1:5 Use logical CSS properties over physical ones.",
+        ],
+    },
+    {
+        rule: "nursery/useNamedLayer",
+        file: "a.css",
+        source: "@layer { a {} }\n",
+        expected: ["1:2 Missing cascade layer name."],
+    },
+    {
+        rule: "nursery/useConsistentUnicodeBom",
+        file: "a.css",
+        options: { bom: "always" },
+        source: "a {}\n",
+        expected: ["1:1 This file is missing a Unicode byte order mark (BOM)."],
+    },
+    {
+        rule: "style/noExcessiveLinesPerFile",
+        file: "a.css",
+        options: { maxLines: 2 },
+        source: "a {\n}\nb {\n}\n",
+        expected: [
+            "1:1 This file has too many lines (4). Maximum allowed is 2.",
+        ],
+    },
+    {
+        rule: "nursery/noUndeclaredCustomProperties",
+        file: "a.css",
+        source: "a { color: var(--missing); --here: 1; b: var(--here); }\n",
+        expected: ["1:16 The custom property --missing is not defined."],
+    },
+    {
+        rule: "nursery/noUnusedClasses",
+        file: "a.css",
+        source: ".a {}\n:global(.b) {}\n",
+        expected: [
+            "1:1 The CSS class a is not referenced in any HTML or JSX file.",
+        ],
+    },
+    {
+        rule: "suspicious/useBaseline",
+        file: "a.css",
+        source: "a { accent-color: red; }\na:has(b) {}\n",
+        expected: [
+            "1:5 CSS property accent-color isn't part of the chosen Baseline.",
+        ],
+    },
 ];
 
 describe("lintero", () => {
@@ -13289,6 +13588,34 @@ describe("lintero", () => {
             expect(lint("const = ;")).toEqual([
                 expect.stringMatching(/^1:7 parse /),
             ]);
+        });
+
+        test("CSS is linted unless disabled, like Biome the rest of a file with errors too", () => {
+            const source = "a { color: red; color: blue; }\nb { color: }\n";
+            // the declaration with an error is skipped, the block is not empty
+            expect(lint(source, "a.css")).toEqual([
+                "1:17 lint/suspicious/noDuplicateProperties Duplicate properties can lead to unexpected behavior and may override previous declarations unintentionally.",
+                expect.stringMatching(/^2:11 parse /),
+            ]);
+            expect(lint(source, "a.css", { css: { enabled: false } })).toEqual(
+                [],
+            );
+            // like Biome, styles in HTML are linted as CSS, style attributes not
+            expect(
+                lint(
+                    '<html lang="en"><head><style>\na { color: red; color: blue; }\n</style></head><body><p style="color: red; color: blue">x</p></body></html>\n',
+                    "a.html",
+                ),
+            ).toEqual([
+                "2:17 lint/suspicious/noDuplicateProperties Duplicate properties can lead to unexpected behavior and may override previous declarations unintentionally.",
+            ]);
+            // suppression comments work in CSS comments too
+            expect(
+                lint(
+                    "a {\n  /* biome-ignore lint/suspicious/noDuplicateProperties: on purpose */\n  color: red; color: blue;\n}\n",
+                    "a.css",
+                ),
+            ).toEqual([]);
         });
 
         test("JavaScript is a module unless package.json makes it CommonJS", () => {

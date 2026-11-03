@@ -6,7 +6,7 @@ export default rule<{ bom?: "always" | "never" }>({
     severity: "info",
     recommended: false,
     fix: "safe",
-    languages: ["html", "md"],
+    languages: ["css", "html", "md"],
     options: { bom: "never" },
     create: (context) => {
         const check = (node: { bom: boolean }) => {
@@ -31,6 +31,6 @@ export default rule<{ bom?: "always" | "never" }>({
                     },
                 );
         };
-        return { Root: check, HtmlRoot: check };
+        return { Root: check, HtmlRoot: check, CssStylesheet: check };
     },
 });

@@ -1,4 +1,11 @@
-import type { Comment, Html, Language, Markdown, Node } from "@aljazmc/syntax";
+import type {
+    Comment,
+    Css,
+    Html,
+    Language,
+    Markdown,
+    Node,
+} from "@aljazmc/syntax";
 import type { Fix, Report, Rules } from "../rules.js";
 import type Semantic from "./semantic.js";
 import type { Manifest, Project } from "./settings.js";
@@ -15,6 +22,13 @@ export interface Source {
     html?: Html.Root;
     /** The element containing each element and text of an HTML file. */
     htmlParents?: Map<Html.Child, Html.Element>;
+    /** The tree of CSS files, their program is empty. */
+    css?: Css.Stylesheet;
+    /** The rule or at-rule containing each item of a CSS file, the stylesheet for top level ones. */
+    cssParents?: Map<
+        Css.Item | Css.Block,
+        Css.Rule | Css.AtRule | Css.Stylesheet
+    >;
     comments: Comment[];
     /**
      * Names of the top level imports and variables of the module scripts of
@@ -75,6 +89,36 @@ export default class Context<Options extends object = object> {
     /** The tree of an HTML file. */
     get html(): Html.Root | undefined {
         return this.#source.html;
+    }
+
+    /** The tree of a CSS file. */
+    get css(): Css.Stylesheet | undefined {
+        return this.#source.css;
+    }
+
+    /** Whether CSS Modules syntax is on, like for `.module.css` files. */
+    get cssModules(): boolean {
+        return (
+            this.#source.settings.css.cssModules ??
+            /\.module\.css$/i.test(this.#source.file)
+        );
+    }
+
+    /** The rule or at-rule containing an item of a CSS file, the stylesheet at the top level. */
+    cssParent(
+        node: Css.Item | Css.Block,
+    ): Css.Rule | Css.AtRule | Css.Stylesheet | undefined {
+        return this.#source.cssParents?.get(node);
+    }
+
+    /** The rules and at-rules containing an item of a CSS file, from the closest, without the stylesheet. */
+    *cssAncestors(node: Css.Item): Generator<Css.Rule | Css.AtRule> {
+        for (
+            let current = this.cssParent(node);
+            current && current.type !== "Stylesheet";
+            current = this.cssParent(current)
+        )
+            yield current;
     }
 
     /** The element containing an element or text of an HTML file, undefined at the root. */

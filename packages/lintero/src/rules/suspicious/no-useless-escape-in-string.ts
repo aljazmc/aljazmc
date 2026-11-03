@@ -1,5 +1,9 @@
 import type { Node } from "@aljazmc/syntax";
+import { strings } from "../../analysis/css.js";
 import { rule } from "../../rules.js";
+
+/** Characters an escape changes in CSS, besides the quote of the string. */
+const css = /[\^\r\n0-9a-fA-F\\nrtuvx\u2028\u2029]/;
 
 /** Characters an escape changes, besides the quote of the string. */
 const meaningful = /[\\bfnrtvxu0-9\r\n\u2028\u2029]/;
@@ -10,7 +14,7 @@ export default rule({
     severity: "warn",
     recommended: true,
     fix: "safe",
-    languages: ["js"],
+    languages: ["css", "js"],
     create: (context) => {
         /** The first useless escape of a text, Biome reports one per literal. */
         const useless = (
@@ -42,6 +46,22 @@ export default rule({
             );
         };
         return {
+            CssStylesheet(sheet) {
+                for (const { start, raw } of strings(
+                    context.text,
+                    sheet.comments,
+                )) {
+                    const quote = raw[0] ?? "";
+                    for (let index = 1; index < raw.length; index++) {
+                        if (raw[index] !== "\\") continue;
+                        const char = raw[++index] ?? "";
+                        if (char === "" || css.test(char) || char === quote)
+                            continue;
+                        report(start + index);
+                        break;
+                    }
+                }
+            },
             StringLiteral(node) {
                 if (context.parent(node)?.type === "JSXAttribute") return;
                 const quote = node.raw[0] ?? "";

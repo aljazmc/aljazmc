@@ -2,8 +2,8 @@
 
 # lintero
 
-A simple linter for JavaScript, TypeScript, JSX, JSON, Markdown and HTML,
-with 246 rules compatible with [Biome](https://biomejs.dev) 2.6.4's, and
+A simple linter for JavaScript, TypeScript, JSX, JSON, Markdown, HTML and
+CSS, with 285 rules compatible with [Biome](https://biomejs.dev) 2.6.4's, and
 their automatic fixes. Easy to understand, easy to customize and easy to extend.
 
 ## Install
@@ -61,19 +61,21 @@ export default {
 `ignore` lists the files and folders that are never linted. The `rules`
 are:
 
-| Option                                                                                           | Default         | What it does                                                                                           |
-| ------------------------------------------------------------------------------------------------ | --------------- | ------------------------------------------------------------------------------------------------------ |
-| `enabled`                                                                                        | `true`          | Lints files at all.                                                                                    |
-| `includes`                                                                                       | `["**"]`        | Globs of the files to lint, in order. The last match decides, and `!` excludes.                        |
-| `preset`                                                                                         | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.                                              |
-| `domains`                                                                                        | `{}`            | Rules of frameworks and tools, see [Domains](#domains): `"recommended"`, `"all"` or `"none"` for each. |
-| `a11y`, `complexity`, `correctness`, `nursery`, `performance`, `security`, `style`, `suspicious` |                 | The rules of a [group](#rules), see [Groups](#groups).                                                 |
-| `javascript.enabled`                                                                             | `true`          | Lints JavaScript, TypeScript and JSX files.                                                            |
-| `javascript.globals`                                                                             | `[]`            | Global names that exist, for the rules about undeclared names.                                         |
-| `javascript.jsxRuntime`                                                                          | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.                                                  |
-| `json.enabled`                                                                                   | `true`          | Lints JSON files.                                                                                      |
-| `markdown.enabled`                                                                               | `true`          | Lints Markdown files, `.md` and `.markdown`.                                                           |
-| `html.enabled`                                                                                   | `true`          | Lints HTML files, `.html` and `.htm`, and their scripts.                                               |
+| Option                                                                                           | Default         | What it does                                                                                              |
+| ------------------------------------------------------------------------------------------------ | --------------- | --------------------------------------------------------------------------------------------------------- |
+| `enabled`                                                                                        | `true`          | Lints files at all.                                                                                       |
+| `includes`                                                                                       | `["**"]`        | Globs of the files to lint, in order. The last match decides, and `!` excludes.                           |
+| `preset`                                                                                         | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.                                                 |
+| `domains`                                                                                        | `{}`            | Rules of frameworks and tools, see [Domains](#domains): `"recommended"`, `"all"` or `"none"` for each.    |
+| `a11y`, `complexity`, `correctness`, `nursery`, `performance`, `security`, `style`, `suspicious` |                 | The rules of a [group](#rules), see [Groups](#groups).                                                    |
+| `javascript.enabled`                                                                             | `true`          | Lints JavaScript, TypeScript and JSX files.                                                               |
+| `javascript.globals`                                                                             | `[]`            | Global names that exist, for the rules about undeclared names.                                            |
+| `javascript.jsxRuntime`                                                                          | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.                                                     |
+| `json.enabled`                                                                                   | `true`          | Lints JSON files.                                                                                         |
+| `markdown.enabled`                                                                               | `true`          | Lints Markdown files, `.md` and `.markdown`.                                                              |
+| `html.enabled`                                                                                   | `true`          | Lints HTML files, `.html` and `.htm`, and their scripts.                                                  |
+| `css.enabled`                                                                                    | `true`          | Lints CSS files, `.css`, and the styles of HTML files.                                                    |
+| `css.cssModules`                                                                                 |                 | Whether CSS Modules syntax, like `:global` and `@value`, is allowed. Unset, it is in `.module.css` files. |
 
 ### Groups
 
@@ -129,13 +131,16 @@ to suppress, followed by a reason:
 ```
 
 In Markdown and HTML, suppressions are HTML comments, like
-`<!-- lintero-ignore lint/nursery/useTopLevelHeading: no title -->`.
+`<!-- lintero-ignore lint/nursery/useTopLevelHeading: no title -->`, and in
+CSS they are block comments, like
+`/* lintero-ignore lint/style/noHexColors: brand colors */`.
 
 Like Biome, lintero lints the scripts of HTML files like files of their
 language: JavaScript scripts and modules with the JavaScript rules, import
 maps and JSON scripts with the JSON rules, at their place in the file, and
-scripts of other types not at all. A suppression comment before a
-`<script>` suppresses its diagnostics too. The top level imports and
+scripts of other types not at all, and styles of any type with the CSS
+rules. A suppression comment before a `<script>` or `<style>` suppresses
+its diagnostics too. The top level imports and
 variables of module scripts may be used by the page, so no script reports
 them as unused.
 
@@ -150,7 +155,7 @@ Recommended rules run by default. The others run with
 
 ### a11y
 
-Accessibility of JSX and HTML: elements, ARIA roles and attributes, and keyboard use. 37 rules:
+Accessibility of JSX and HTML: elements, ARIA roles and attributes, and keyboard use. 38 rules:
 
 | Rule                                       | What it reports                                                                                           | Severity | Fix    | Recommended |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
@@ -178,6 +183,7 @@ Accessibility of JSX and HTML: elements, ARIA roles and attributes, and keyboard
 | `useAriaPropsSupportedByRole`              | Disallows ARIA attributes the role of an element does not support.                                        | error    |        | yes         |
 | `useButtonType`                            | Requires an explicit `type` on `button` elements, which submit forms by default.                          | error    |        | yes         |
 | `useFocusableInteractive`                  | Requires elements with interactive roles to be focusable.                                                 | error    |        | yes         |
+| `useGenericFontNames`                      | Requires a generic font family, like `sans-serif`, at the end of CSS `font` and `font-family`.            | error    |        | yes         |
 | `useHeadingContent`                        | Requires headings to have content that screen readers can announce.                                       | error    |        | yes         |
 | `useHtmlLang`                              | Requires a `lang` attribute on the `html` element.                                                        | error    |        | yes         |
 | `useIframeTitle`                           | Requires a `title` on `iframe` elements.                                                                  | error    |        | yes         |
@@ -194,7 +200,7 @@ Accessibility of JSX and HTML: elements, ARIA roles and attributes, and keyboard
 
 ### complexity
 
-Code that can be simpler, with the same result. 34 rules:
+Code that can be simpler, with the same result. 36 rules:
 
 | Rule                               | What it reports                                                                              | Severity | Fix    | Recommended |
 | ---------------------------------- | -------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
@@ -203,8 +209,10 @@ Code that can be simpler, with the same result. 34 rules:
 | `noBannedTypes`                    | Disallows the types `String`, `Number`, `Boolean`, `Function`, `Object` and `{}`.            | warn     | safe   | yes         |
 | `noCommaOperator`                  | Disallows the comma operator, outside of `for` loop updates.                                 | warn     |        | yes         |
 | `noEmptyTypeParameters`            | Disallows empty type parameter lists, like `interface A<> {}`.                               | warn     |        | yes         |
+| `noExcessiveSelectorClasses`       | Disallows CSS selectors with more classes than `maxClasses`.                                 | info     |        | no          |
 | `noExtraBooleanCast`               | Disallows `!!` and `Boolean()` where a value is converted to a boolean anyway, like in `if`. | info     | safe   | yes         |
 | `noFlatMapIdentity`                | Prefers `.flat()` to `.flatMap()` with a callback that returns its argument.                 | info     | unsafe | yes         |
+| `noImportantStyles`                | Disallows `!important` in CSS declarations.                                                  | warn     | unsafe | yes         |
 | `noStaticOnlyClass`                | Disallows classes with only static members, a module or an object does the same.             | warn     |        | yes         |
 | `noThisInStatic`                   | Disallows `this` and `super` in static methods, the class name is clearer.                   | warn     | unsafe | yes         |
 | `noUselessCatch`                   | Disallows `catch` clauses that only rethrow the error.                                       | info     | unsafe | yes         |
@@ -235,88 +243,109 @@ Code that can be simpler, with the same result. 34 rules:
 
 ### correctness
 
-Code that is certainly wrong, or does not do what it seems to. 58 rules:
+Code that is certainly wrong, or does not do what it seems to. 70 rules:
 
-| Rule                                 | What it reports                                                                                           | Severity | Fix    | Recommended     |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------- | -------- | ------ | --------------- |
-| `noChildrenProp`                     | Disallows passing children as the `children` prop, instead of nesting them.                               | error    |        | `react`         |
-| `noComponentHookFactories`           | Disallows defining components and hooks inside other functions.                                           | error    |        | `react`         |
-| `noConstantCondition`                | Disallows conditions that are always true or always false.                                                | error    |        | yes             |
-| `noConstantMathMinMaxClamp`          | Disallows `Math.min` and `Math.max` combinations that always give the same result.                        | error    | unsafe | yes             |
-| `noConstAssign`                      | Disallows assigning to `const` variables.                                                                 | error    | unsafe | yes             |
-| `noConstructorReturn`                | Disallows returning a value from a constructor.                                                           | error    |        | yes             |
-| `noDuplicateAttributes`              | Disallows HTML attributes written twice on an element.                                                    | error    |        | yes             |
-| `noEmptyCharacterClassInRegex`       | Disallows empty character classes in regular expressions, like `[]`, which match nothing.                 | error    |        | yes             |
-| `noEmptyPattern`                     | Disallows empty destructuring patterns, like `const {} = a`.                                              | error    |        | yes             |
-| `noGlobalObjectCalls`                | Disallows calling objects like `Math`, `JSON` and `Reflect` as functions.                                 | error    |        | yes             |
-| `noInnerDeclarations`                | Requires `var` and function declarations at the root of their function or file.                           | error    |        | yes             |
-| `noInvalidBuiltinInstantiation`      | Requires `new` for builtins like `Map`, and disallows it for `Symbol` and `BigInt`.                       | error    | unsafe | yes             |
-| `noInvalidConstructorSuper`          | Requires `super()` in constructors of derived classes, and disallows it in others.                        | error    |        | yes             |
-| `noInvalidUseBeforeDeclaration`      | Disallows using variables and parameters before they are declared.                                        | error    |        | yes             |
-| `noJsxNamespace`                     | Disallows namespaced JSX names, like `<a:b>`, which React does not support.                               | error    |        | `react`         |
-| `noNonoctalDecimalEscape`            | Disallows the escapes `\8` and `\9` in strings.                                                           | error    | safe   | yes             |
-| `noPlaywrightMissingAwait`           | Requires `await` on asynchronous Playwright calls, like `expect(...).toBeVisible()`.                      | error    | unsafe | `playwright`    |
-| `noPrecisionLoss`                    | Disallows number literals that cannot be represented exactly, like `9007199254740993`.                    | error    |        | yes             |
-| `noPrivateImports`                   | Disallows importing symbols marked `@private` or `@package` in JSDoc from outside their module or folder. | warn     |        | `project`       |
-| `noQwikUseVisibleTask`               | Disallows `useVisibleTask$`, which runs eagerly in the browser.                                           | error    |        | `qwik`          |
-| `noReactNativeRawText`               | Requires text in React Native to be inside a `Text` component.                                            | error    |        | `reactNative`   |
-| `noRenderReturnValue`                | Disallows using the return value of `ReactDOM.render()`.                                                  | error    |        | `react`         |
-| `noRestrictedElements`               | Disallows the HTML elements named in the `elements` option.                                               | info     |        | no              |
-| `noSelfAssign`                       | Disallows assigning a variable or property to itself.                                                     | error    |        | yes             |
-| `noSetterReturn`                     | Disallows returning a value from a setter.                                                                | error    |        | yes             |
-| `noStringCaseMismatch`               | Disallows comparing `toUpperCase()` or `toLowerCase()` with a string of the other case.                   | error    | unsafe | yes             |
-| `noSwitchDeclarations`               | Requires declarations in `case` clauses to be in a block, so other clauses cannot reach them.             | error    | safe   | yes             |
-| `noUnreachable`                      | Disallows code that can never run, like after `return`.                                                   | error    |        | yes             |
-| `noUnreachableSuper`                 | Requires constructors to call `super()` exactly once before `this`, on every path.                        | error    |        | yes             |
-| `noUnsafeFinally`                    | Disallows `return`, `throw`, `break` and `continue` in `finally`.                                         | error    |        | yes             |
-| `noUnsafeOptionalChaining`           | Disallows optional chains where `undefined` throws, like `(a?.b)()` or `new a?.b()`.                      | error    |        | yes             |
-| `noUnusedFunctionParameters`         | Disallows unused function parameters.                                                                     | warn     | unsafe | yes             |
-| `noUnusedImports`                    | Disallows unused imports.                                                                                 | warn     | unsafe | yes             |
-| `noUnusedLabels`                     | Disallows unused labels.                                                                                  | warn     | safe   | yes             |
-| `noUnusedPrivateClassMembers`        | Disallows unused private class members.                                                                   | warn     | unsafe | yes             |
-| `noUnusedVariables`                  | Disallows unused variables, functions and classes.                                                        | warn     | unsafe | yes             |
-| `noVoidElementsWithChildren`         | Disallows children on void elements, like `img` and `br`.                                                 | error    | unsafe | yes             |
-| `noVoidTypeReturn`                   | Disallows returning a value from functions whose return type is `void`.                                   | error    |        | yes             |
-| `noVueDataObjectDeclaration`         | Requires `data` in Vue components to be a function, not an object.                                        | error    | safe   | `vue`           |
-| `noVueRefAsOperand`                  | Requires `.value` to read Vue refs in expressions.                                                        | error    |        | `vue`           |
-| `noVueReservedProps`                 | Disallows props named after reserved Vue attributes, like `key` and `ref`.                                | error    |        | `vue`           |
-| `useExhaustiveDependencies`          | Requires hook dependency arrays to list exactly the values the hook uses.                                 | error    | unsafe | `react`, `next` |
-| `useHookAtTopLevel`                  | Requires hooks to be called at the top level of components and hooks, never conditionally.                | error    |        | `react`, `next` |
-| `useImageSize`                       | Requires `width` and `height` on `img` elements in Qwik, to prevent layout shifts.                        | error    |        | `qwik`          |
-| `useInlineScriptId`                  | Requires an `id` on `next/script` components with inline content.                                         | error    |        | `next`          |
-| `useIsNan`                           | Requires `Number.isNaN()` to check for `NaN`, which equals nothing, not even itself.                      | error    | unsafe | yes             |
-| `useJsxKeyInIterable`                | Requires a `key` on JSX elements created in arrays and iterators.                                         | error    |        | `react`, `qwik` |
-| `useParseIntRadix`                   | Requires a radix in `parseInt()`.                                                                         | info     | unsafe | yes             |
-| `usePlaywrightValidDescribeCallback` | Requires `test.describe` callbacks to be synchronous and take no parameters.                              | error    |        | `playwright`    |
-| `useQwikClasslist`                   | Prefers Qwik's `class` with objects and arrays to `classnames`-like utilities.                            | error    |        | `qwik`          |
-| `useQwikLoaderLocation`              | Requires `routeLoader$` and `routeAction$` to be exported from route files.                               | error    |        | `qwik`          |
-| `useQwikMethodUsage`                 | Requires Qwik hooks to be called only in `component$` and other hooks.                                    | error    |        | `qwik`          |
-| `useQwikValidLexicalScope`           | Requires values captured by `$()` closures to be serializable.                                            | error    |        | `qwik`          |
-| `useReactAsyncServerFunction`        | Requires functions with `"use server"` to be `async`.                                                     | error    | unsafe | `react`         |
-| `useReactNativePlatformComponents`   | Disallows mixing iOS and Android components in one file.                                                  | error    |        | `reactNative`   |
-| `useValidForDirection`               | Requires the update of a `for` loop to move its counter towards the end condition.                        | error    |        | yes             |
-| `useValidTypeof`                     | Requires `typeof` to be compared with valid type names, like `"string"`.                                  | error    | unsafe | yes             |
-| `useYield`                           | Requires generator functions to `yield`.                                                                  | error    |        | yes             |
+| Rule                                 | What it reports                                                                                               | Severity | Fix    | Recommended     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- | -------- | ------ | --------------- |
+| `noChildrenProp`                     | Disallows passing children as the `children` prop, instead of nesting them.                                   | error    |        | `react`         |
+| `noComponentHookFactories`           | Disallows defining components and hooks inside other functions.                                               | error    |        | `react`         |
+| `noConstAssign`                      | Disallows assigning to `const` variables.                                                                     | error    | unsafe | yes             |
+| `noConstantCondition`                | Disallows conditions that are always true or always false.                                                    | error    |        | yes             |
+| `noConstantMathMinMaxClamp`          | Disallows `Math.min` and `Math.max` combinations that always give the same result.                            | error    | unsafe | yes             |
+| `noConstructorReturn`                | Disallows returning a value from a constructor.                                                               | error    |        | yes             |
+| `noDuplicateAttributes`              | Disallows HTML attributes written twice on an element.                                                        | error    |        | yes             |
+| `noEmptyCharacterClassInRegex`       | Disallows empty character classes in regular expressions, like `[]`, which match nothing.                     | error    |        | yes             |
+| `noEmptyPattern`                     | Disallows empty destructuring patterns, like `const {} = a`.                                                  | error    |        | yes             |
+| `noGlobalObjectCalls`                | Disallows calling objects like `Math`, `JSON` and `Reflect` as functions.                                     | error    |        | yes             |
+| `noInnerDeclarations`                | Requires `var` and function declarations at the root of their function or file.                               | error    |        | yes             |
+| `noInvalidBuiltinInstantiation`      | Requires `new` for builtins like `Map`, and disallows it for `Symbol` and `BigInt`.                           | error    | unsafe | yes             |
+| `noInvalidConstructorSuper`          | Requires `super()` in constructors of derived classes, and disallows it in others.                            | error    |        | yes             |
+| `noInvalidDirectionInLinearGradient` | Disallows directions of `linear-gradient()` that are not standard, like `top` instead of `to top`.            | error    |        | yes             |
+| `noInvalidGridAreas`                 | Disallows CSS grid template areas with empty rows, rows of different sizes, or areas that are not rectangles. | error    |        | yes             |
+| `noInvalidPositionAtImportRule`      | Disallows `@import` after other CSS rules, where it is ignored.                                               | error    |        | yes             |
+| `noInvalidUseBeforeDeclaration`      | Disallows using variables and parameters before they are declared.                                            | error    |        | yes             |
+| `noJsxNamespace`                     | Disallows namespaced JSX names, like `<a:b>`, which React does not support.                                   | error    |        | `react`         |
+| `noMissingVarFunction`               | Disallows CSS custom properties used without `var()`, like `color: --a`.                                      | error    |        | yes             |
+| `noNonoctalDecimalEscape`            | Disallows the escapes `\8` and `\9` in strings.                                                               | error    | safe   | yes             |
+| `noPlaywrightMissingAwait`           | Requires `await` on asynchronous Playwright calls, like `expect(...).toBeVisible()`.                          | error    | unsafe | `playwright`    |
+| `noPrecisionLoss`                    | Disallows number literals that cannot be represented exactly, like `9007199254740993`.                        | error    |        | yes             |
+| `noPrivateImports`                   | Disallows importing symbols marked `@private` or `@package` in JSDoc from outside their module or folder.     | warn     |        | `project`       |
+| `noQwikUseVisibleTask`               | Disallows `useVisibleTask$`, which runs eagerly in the browser.                                               | error    |        | `qwik`          |
+| `noReactNativeRawText`               | Requires text in React Native to be inside a `Text` component.                                                | error    |        | `reactNative`   |
+| `noRenderReturnValue`                | Disallows using the return value of `ReactDOM.render()`.                                                      | error    |        | `react`         |
+| `noRestrictedElements`               | Disallows the HTML elements named in the `elements` option.                                                   | info     |        | no              |
+| `noSelfAssign`                       | Disallows assigning a variable or property to itself.                                                         | error    |        | yes             |
+| `noSetterReturn`                     | Disallows returning a value from a setter.                                                                    | error    |        | yes             |
+| `noStringCaseMismatch`               | Disallows comparing `toUpperCase()` or `toLowerCase()` with a string of the other case.                       | error    | unsafe | yes             |
+| `noSwitchDeclarations`               | Requires declarations in `case` clauses to be in a block, so other clauses cannot reach them.                 | error    | safe   | yes             |
+| `noUnknownFunction`                  | Disallows CSS functions that do not exist.                                                                    | error    |        | yes             |
+| `noUnknownMediaFeatureName`          | Disallows media features that do not exist, like `(max-widht: 1px)`.                                          | error    |        | yes             |
+| `noUnknownProperty`                  | Disallows CSS properties that do not exist.                                                                   | error    |        | yes             |
+| `noUnknownPseudoClass`               | Disallows CSS pseudo-classes that do not exist.                                                               | error    |        | yes             |
+| `noUnknownPseudoElement`             | Disallows CSS pseudo-elements that do not exist.                                                              | error    |        | yes             |
+| `noUnknownTypeSelector`              | Disallows type selectors of elements that do not exist in HTML, SVG and MathML.                               | error    |        | yes             |
+| `noUnknownUnit`                      | Disallows CSS units that do not exist.                                                                        | error    |        | yes             |
+| `noUnmatchableAnbSelector`           | Disallows An+B selectors that never match, like `:nth-child(0)`.                                              | error    |        | yes             |
+| `noUnreachable`                      | Disallows code that can never run, like after `return`.                                                       | error    |        | yes             |
+| `noUnreachableSuper`                 | Requires constructors to call `super()` exactly once before `this`, on every path.                            | error    |        | yes             |
+| `noUnsafeFinally`                    | Disallows `return`, `throw`, `break` and `continue` in `finally`.                                             | error    |        | yes             |
+| `noUnsafeOptionalChaining`           | Disallows optional chains where `undefined` throws, like `(a?.b)()` or `new a?.b()`.                          | error    |        | yes             |
+| `noUnusedFunctionParameters`         | Disallows unused function parameters.                                                                         | warn     | unsafe | yes             |
+| `noUnusedImports`                    | Disallows unused imports.                                                                                     | warn     | unsafe | yes             |
+| `noUnusedLabels`                     | Disallows unused labels.                                                                                      | warn     | safe   | yes             |
+| `noUnusedPrivateClassMembers`        | Disallows unused private class members.                                                                       | warn     | unsafe | yes             |
+| `noUnusedVariables`                  | Disallows unused variables, functions and classes.                                                            | warn     | unsafe | yes             |
+| `noVoidElementsWithChildren`         | Disallows children on void elements, like `img` and `br`.                                                     | error    | unsafe | yes             |
+| `noVoidTypeReturn`                   | Disallows returning a value from functions whose return type is `void`.                                       | error    |        | yes             |
+| `noVueDataObjectDeclaration`         | Requires `data` in Vue components to be a function, not an object.                                            | error    | safe   | `vue`           |
+| `noVueRefAsOperand`                  | Requires `.value` to read Vue refs in expressions.                                                            | error    |        | `vue`           |
+| `noVueReservedProps`                 | Disallows props named after reserved Vue attributes, like `key` and `ref`.                                    | error    |        | `vue`           |
+| `useExhaustiveDependencies`          | Requires hook dependency arrays to list exactly the values the hook uses.                                     | error    | unsafe | `react`, `next` |
+| `useHookAtTopLevel`                  | Requires hooks to be called at the top level of components and hooks, never conditionally.                    | error    |        | `react`, `next` |
+| `useImageSize`                       | Requires `width` and `height` on `img` elements in Qwik, to prevent layout shifts.                            | error    |        | `qwik`          |
+| `useInlineScriptId`                  | Requires an `id` on `next/script` components with inline content.                                             | error    |        | `next`          |
+| `useIsNan`                           | Requires `Number.isNaN()` to check for `NaN`, which equals nothing, not even itself.                          | error    | unsafe | yes             |
+| `useJsxKeyInIterable`                | Requires a `key` on JSX elements created in arrays and iterators.                                             | error    |        | `react`, `qwik` |
+| `useParseIntRadix`                   | Requires a radix in `parseInt()`.                                                                             | info     | unsafe | yes             |
+| `usePlaywrightValidDescribeCallback` | Requires `test.describe` callbacks to be synchronous and take no parameters.                                  | error    |        | `playwright`    |
+| `useQwikClasslist`                   | Prefers Qwik's `class` with objects and arrays to `classnames`-like utilities.                                | error    |        | `qwik`          |
+| `useQwikLoaderLocation`              | Requires `routeLoader$` and `routeAction$` to be exported from route files.                                   | error    |        | `qwik`          |
+| `useQwikMethodUsage`                 | Requires Qwik hooks to be called only in `component$` and other hooks.                                        | error    |        | `qwik`          |
+| `useQwikValidLexicalScope`           | Requires values captured by `$()` closures to be serializable.                                                | error    |        | `qwik`          |
+| `useReactAsyncServerFunction`        | Requires functions with `"use server"` to be `async`.                                                         | error    | unsafe | `react`         |
+| `useReactNativePlatformComponents`   | Disallows mixing iOS and Android components in one file.                                                      | error    |        | `reactNative`   |
+| `useValidForDirection`               | Requires the update of a `for` loop to move its counter towards the end condition.                            | error    |        | yes             |
+| `useValidTypeof`                     | Requires `typeof` to be compared with valid type names, like `"string"`.                                      | error    | unsafe | yes             |
+| `useYield`                           | Requires generator functions to `yield`.                                                                      | error    |        | yes             |
 
 ### nursery
 
 New rules, which Biome may still change. They run only when their level
-is set, presets leave them off. 12 rules, for Markdown and HTML:
+is set, presets leave them off. 21 rules, for Markdown, HTML and CSS:
 
-| Rule                        | What it reports                                                                                                 | Severity | Fix    | Recommended |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
-| `noInvalidFileInputAccept`  | Requires valid file types in the `accept` of file inputs, written like Biome writes them.                       | error    | unsafe | no          |
-| `noMisplacedListElements`   | Disallows `<li>` outside `<ul>`, `<ol>` and `<menu>`.                                                           | error    |        | no          |
-| `noNonScalableViewport`     | Disallows viewports that disable zooming with `user-scalable=no`.                                               | error    |        | no          |
-| `noObsoleteAttributes`      | Disallows HTML attributes the HTML standard made obsolete, like `align` on `<div>`.                             | warn     |        | no          |
-| `noObsoleteTags`            | Disallows HTML elements the HTML standard made obsolete, like `<center>`.                                       | warn     |        | no          |
-| `noUnsafeIframeSandbox`     | Disallows `allow-scripts` with `allow-same-origin` in iframe sandboxes, which undoes them.                      | error    |        | no          |
-| `useConsistentHeadingLevel` | Disallows headings that skip a level, like `###` after `#`.                                                     | info     |        | no          |
-| `useConsistentUnicodeBom`   | Requires, with `bom: "always"`, or disallows, by default, the byte order mark at the start of files.            | info     | safe   | no          |
-| `useControlLabel`           | Requires buttons and menu items to have an accessible label.                                                    | error    |        | no          |
-| `useFencedCodeLanguage`     | Requires a language after the opening fence of code blocks, from `allowedLanguages`, alone with `languageOnly`. | info     |        | no          |
-| `useSingleTopLevelHeading`  | Disallows more top-level headings, of `level` 1 by default, after the one that starts a document.               | info     |        | no          |
-| `useTopLevelHeading`        | Requires documents to start with a level 1 heading, after comments, unless they start with HTML or a break.     | info     |        | no          |
+| Rule                             | What it reports                                                                                                  | Severity | Fix    | Recommended |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
+| `noInvalidFileInputAccept`       | Requires valid file types in the `accept` of file inputs, written like Biome writes them.                        | error    | unsafe | no          |
+| `noMisplacedListElements`        | Disallows `<li>` outside `<ul>`, `<ol>` and `<menu>`.                                                            | error    |        | no          |
+| `noNonScalableViewport`          | Disallows viewports that disable zooming with `user-scalable=no`.                                                | error    |        | no          |
+| `noObsoleteAttributes`           | Disallows HTML attributes the HTML standard made obsolete, like `align` on `<div>`.                              | warn     |        | no          |
+| `noObsoleteTags`                 | Disallows HTML elements the HTML standard made obsolete, like `<center>`.                                        | warn     |        | no          |
+| `noSelfNestedLayer`              | Disallows CSS layers named like the layer they are nested in, which makes a sublayer.                            | warn     |        | no          |
+| `noShortTimeValues`              | Disallows CSS animation and transition times shorter than `minimum` milliseconds.                                | info     |        | no          |
+| `noUndeclaredCustomProperties`   | Disallows `var()` of CSS custom properties no stylesheet declares, also those it imports.                        | info     |        | no          |
+| `noUnsafeIframeSandbox`          | Disallows `allow-scripts` with `allow-same-origin` in iframe sandboxes, which undoes them.                       | error    |        | no          |
+| `noUnusedClasses`                | Disallows CSS classes, outside `:global()`, as no file that imports the stylesheet is known.                     | info     |        | no          |
+| `noZeroLengthUnit`               | Disallows units on zero lengths, like `0px`, outside math functions.                                             | info     | unsafe | no          |
+| `useConsistentHeadingLevel`      | Disallows headings that skip a level, like `###` after `#`.                                                      | info     |        | no          |
+| `useConsistentLightnessNotation` | Requires lightness of `oklch()`, `oklab()`, `lch()` and `lab()` as a percentage, or as a number with `notation`. | info     | safe   | no          |
+| `useConsistentUnicodeBom`        | Requires, with `bom: "always"`, or disallows, by default, the byte order mark at the start of files.             | info     | safe   | no          |
+| `useControlLabel`                | Requires buttons and menu items to have an accessible label.                                                     | error    |        | no          |
+| `useFencedCodeLanguage`          | Requires a language after the opening fence of code blocks, from `allowedLanguages`, alone with `languageOnly`.  | info     |        | no          |
+| `useLayeredStyles`               | Requires CSS rules and imports in cascade layers.                                                                | warn     |        | no          |
+| `useLogicalProperties`           | Prefers logical CSS properties and values, like `margin-inline-start` to `margin-left`.                          | warn     | unsafe | no          |
+| `useNamedLayer`                  | Disallows anonymous CSS cascade layers.                                                                          | warn     |        | no          |
+| `useSingleTopLevelHeading`       | Disallows more top-level headings, of `level` 1 by default, after the one that starts a document.                | info     |        | no          |
+| `useTopLevelHeading`             | Requires documents to start with a level 1 heading, after comments, unless they start with HTML or a break.      | info     |        | no          |
 
 ### performance
 
@@ -347,114 +376,129 @@ Code that opens the way to attacks. 6 rules:
 
 ### style
 
-A consistent way to write the same thing. 14 rules:
+A consistent way to write the same thing. 17 rules:
 
-| Rule                            | What it reports                                                                                              | Severity | Fix    | Recommended |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------- | ------ | ----------- |
-| `noExcessiveLinesPerFile`       | Disallows HTML files longer than `maxLines`, 300 by default, also without blank lines with `skipBlankLines`. | info     |        | no          |
-| `noHeadElement`                 | Prefers `next/head` to `head` elements in Next.js pages.                                                     | warn     |        | `next`      |
-| `noInlineStyles`                | Disallows the `style` attribute in HTML.                                                                     | info     | unsafe | no          |
-| `noNonNullAssertion`            | Disallows non-null assertions, like `a!.b`.                                                                  | warn     | unsafe | yes         |
-| `useArrayLiterals`              | Prefers array literals to the `Array` constructor.                                                           | info     | safe   | yes         |
-| `useConst`                      | Prefers `const` to `let` for variables assigned only once.                                                   | warn     | safe   | yes         |
-| `useExponentiationOperator`     | Prefers `**` to `Math.pow()`.                                                                                | info     | safe   | yes         |
-| `useExportType`                 | Requires `export type` for exports that are only types.                                                      | warn     | safe   | yes         |
-| `useImportType`                 | Requires `import type` for imports used only as types.                                                       | warn     | safe   | yes         |
-| `useLiteralEnumMembers`         | Requires enum members to be initialized with literals.                                                       | warn     |        | yes         |
-| `useNodejsImportProtocol`       | Requires the `node:` protocol for Node.js builtin modules, like `node:fs`.                                   | info     | unsafe | yes         |
-| `useShorthandFunctionType`      | Prefers function types to interfaces and type literals with only a call signature.                           | info     | safe   | yes         |
-| `useTemplate`                   | Prefers template literals to string concatenation.                                                           | info     | unsafe | yes         |
-| `useVueMultiWordComponentNames` | Requires Vue component names of several words, so they cannot clash with HTML elements.                      | info     |        | `vue`       |
+| Rule                            | What it reports                                                                                                      | Severity | Fix    | Recommended |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
+| `noDescendingSpecificity`       | Disallows CSS selectors after more specific ones that style the same elements.                                       | warn     |        | yes         |
+| `noExcessiveLinesPerFile`       | Disallows HTML and CSS files longer than `maxLines`, 300 by default, also without blank lines with `skipBlankLines`. | info     |        | no          |
+| `noHeadElement`                 | Prefers `next/head` to `head` elements in Next.js pages.                                                             | warn     |        | `next`      |
+| `noHexColors`                   | Disallows hex colors in CSS.                                                                                         | info     |        | no          |
+| `noInlineStyles`                | Disallows the `style` attribute in HTML.                                                                             | info     | unsafe | no          |
+| `noNonNullAssertion`            | Disallows non-null assertions, like `a!.b`.                                                                          | warn     | unsafe | yes         |
+| `noValueAtRule`                 | Disallows `@value` of CSS Modules.                                                                                   | info     |        | no          |
+| `useArrayLiterals`              | Prefers array literals to the `Array` constructor.                                                                   | info     | safe   | yes         |
+| `useConst`                      | Prefers `const` to `let` for variables assigned only once.                                                           | warn     | safe   | yes         |
+| `useExponentiationOperator`     | Prefers `**` to `Math.pow()`.                                                                                        | info     | safe   | yes         |
+| `useExportType`                 | Requires `export type` for exports that are only types.                                                              | warn     | safe   | yes         |
+| `useImportType`                 | Requires `import type` for imports used only as types.                                                               | warn     | safe   | yes         |
+| `useLiteralEnumMembers`         | Requires enum members to be initialized with literals.                                                               | warn     |        | yes         |
+| `useNodejsImportProtocol`       | Requires the `node:` protocol for Node.js builtin modules, like `node:fs`.                                           | info     | unsafe | yes         |
+| `useShorthandFunctionType`      | Prefers function types to interfaces and type literals with only a call signature.                                   | info     | safe   | yes         |
+| `useTemplate`                   | Prefers template literals to string concatenation.                                                                   | info     | unsafe | yes         |
+| `useVueMultiWordComponentNames` | Requires Vue component names of several words, so they cannot clash with HTML elements.                              | info     |        | `vue`       |
 
 ### suspicious
 
-Code that is likely a mistake. 78 rules:
+Code that is likely a mistake. 90 rules:
 
-| Rule                             | What it reports                                                                                      | Severity | Fix    | Recommended     |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------- | -------- | ------ | --------------- |
-| `noApproximativeNumericConstant` | Prefers constants like `Math.PI` to approximations like `3.14`.                                      | warn     | unsafe | yes             |
-| `noArrayIndexKey`                | Disallows array indexes as `key`, which breaks when items move.                                      | error    |        | `react`         |
-| `noAssignInExpressions`          | Disallows assignments in expressions, like `if (a = b)`.                                             | error    |        | yes             |
-| `noAsyncPromiseExecutor`         | Disallows `async` executor functions in `new Promise()`.                                             | error    |        | yes             |
-| `noBiomeFirstException`          | Requires `files.includes` in a Biome configuration to start with `**` before its exceptions.         | error    | safe   | yes             |
-| `noCatchAssign`                  | Disallows assigning to the parameter of a `catch` clause.                                            | warn     |        | yes             |
-| `noClassAssign`                  | Disallows assigning to class declarations.                                                           | error    |        | yes             |
-| `noCommentText`                  | Disallows text that looks like a comment in JSX, like `// note`, which is rendered.                  | error    | unsafe | yes             |
-| `noCompareNegZero`               | Disallows comparing with `-0`, `Object.is()` tells it apart.                                         | error    | safe   | yes             |
-| `noConfusingLabels`              | Allows labels only on loops.                                                                         | warn     |        | yes             |
-| `noConfusingVoidType`            | Allows `void` only as a return type or type argument.                                                | warn     | unsafe | yes             |
-| `noConstEnum`                    | Disallows `const enum`, which isolated module compilers like esbuild cannot compile.                 | warn     | safe   | yes             |
-| `noControlCharactersInRegex`     | Disallows control characters in regular expressions, like `\x0C`.                                    | error    |        | yes             |
-| `noDebugger`                     | Disallows `debugger` statements.                                                                     | error    | unsafe | yes             |
-| `noDocumentCookie`               | Disallows assigning to `document.cookie`, prefer the Cookie Store API.                               | warn     |        | yes             |
-| `noDocumentImportInPage`         | Allows `next/document` only in `pages/_document`.                                                    | warn     |        | `next`          |
-| `noDoubleEquals`                 | Requires `===` and `!==`, which do not coerce types.                                                 | error    | unsafe | yes             |
-| `noDrizzleDeleteWithoutWhere`    | Requires `.where()` on Drizzle `delete` queries, which otherwise delete every row.                   | error    |        | `drizzle`       |
-| `noDrizzleUpdateWithoutWhere`    | Requires `.where()` on Drizzle `update` queries, which otherwise update every row.                   | error    |        | `drizzle`       |
-| `noDuplicateCase`                | Disallows duplicate `case` labels.                                                                   | error    |        | yes             |
-| `noDuplicateClassMembers`        | Disallows duplicate class member names.                                                              | error    |        | yes             |
-| `noDuplicateElseIf`              | Disallows conditions an earlier `else if` of the same chain already covers.                          | error    |        | yes             |
-| `noDuplicateEnumValues`          | Disallows duplicate enum member values.                                                              | warn     |        | yes             |
-| `noDuplicateJsxProps`            | Disallows duplicate JSX props.                                                                       | error    |        | yes             |
-| `noDuplicateObjectKeys`          | Disallows duplicate keys in objects and JSON.                                                        | error    | unsafe | yes             |
-| `noDuplicateParameters`          | Disallows duplicate parameter names.                                                                 | error    |        | yes             |
-| `noDuplicateTestHooks`           | Disallows several hooks of the same kind, like two `beforeEach`, in one block.                       | error    |        | `test`          |
-| `noEmptyInterface`               | Disallows empty interfaces, which accept almost anything.                                            | error    | safe   | yes             |
-| `noEmptySource`                  | Disallows empty modules and Markdown files, also with only comments unless `allowComments`.          | warn     |        | no              |
-| `noExplicitAny`                  | Disallows the `any` type.                                                                            | warn     |        | yes             |
-| `noExportsInTest`                | Disallows exports from test files.                                                                   | error    |        | `test`          |
-| `noExtraNonNullAssertion`        | Disallows repeated or needless non-null assertions, like `a!!`.                                      | warn     | safe   | yes             |
-| `noFallthroughSwitchClause`      | Disallows `case` clauses that fall through to the next one.                                          | error    |        | yes             |
-| `noFocusedTests`                 | Disallows focused tests, like `test.only` and `fdescribe`, which skip the rest.                      | warn     | unsafe | `test`          |
-| `noFunctionAssign`               | Disallows assigning to function declarations.                                                        | error    |        | yes             |
-| `noGlobalAssign`                 | Disallows assigning to builtin globals, like `window` or `Object`.                                   | error    |        | yes             |
-| `noGlobalIsFinite`               | Prefers `Number.isFinite()` to the global `isFinite()`, which coerces its argument.                  | warn     | unsafe | yes             |
-| `noGlobalIsNan`                  | Prefers `Number.isNaN()` to the global `isNaN()`, which coerces its argument.                        | warn     | unsafe | yes             |
-| `noHeadImportInDocument`         | Disallows `next/head` in `pages/_document`.                                                          | warn     |        | `next`          |
-| `noIdenticalTestTitle`           | Disallows tests and suites with the same title in one block.                                         | warn     |        | `test`          |
-| `noImplicitAnyLet`               | Requires a type or a value on `let` and `var` declarations, which are `any` otherwise.               | error    |        | yes             |
-| `noImportAssign`                 | Disallows assigning to imports.                                                                      | error    |        | yes             |
-| `noIrregularWhitespace`          | Disallows irregular whitespace, like non-breaking spaces, outside of strings.                        | warn     |        | yes             |
-| `noLabelVar`                     | Disallows labels with the name of a variable.                                                        | error    |        | yes             |
-| `noMisleadingCharacterClass`     | Disallows characters made of several code points in character classes, like emoji.                   | error    | safe   | yes             |
-| `noMisleadingInstantiator`       | Disallows `new` in interfaces and `constructor` in type literals, which do not declare constructors. | error    |        | yes             |
-| `noMisrefactoredShorthandAssign` | Disallows `a += a + b`, which is likely meant to be `a += b`.                                        | error    | unsafe | yes             |
-| `noNonNullAssertedOptionalChain` | Disallows non-null assertions after optional chains, like `a?.b!`.                                   | error    |        | yes             |
-| `noOctalEscape`                  | Disallows octal escapes in strings, like `\251`.                                                     | warn     | safe   | yes             |
-| `noProto`                        | Disallows `__proto__`, prefer `Object.getPrototypeOf()` and `Object.setPrototypeOf()`.               | warn     |        | yes             |
-| `noPrototypeBuiltins`            | Prefers `Object.hasOwn()` to calling `Object.prototype` methods on objects.                          | warn     | safe   | yes             |
-| `noQuickfixBiome`                | Prefers `source.fixAll.biome` to the deprecated `quickfix.biome` in editor settings.                 | info     | safe   | yes             |
-| `noReactNativeDeepImports`       | Disallows importing React Native internals, like `react-native/Libraries/...`.                       | error    |        | `reactNative`   |
-| `noReactSpecificProps`           | Prefers `class` and `for` to the React-specific `className` and `htmlFor` in Solid and Qwik.         | warn     | safe   | `solid`, `qwik` |
-| `noReactStringRefs`              | Disallows string refs, which React deprecated.                                                       | warn     |        | `react`         |
-| `noRedeclare`                    | Disallows declaring a variable, function or type twice in the same scope.                            | error    |        | yes             |
-| `noRedundantUseStrict`           | Disallows `"use strict"` in modules and classes, which are strict already.                           | warn     | safe   | yes             |
-| `noSelfCompare`                  | Disallows comparing an expression with itself.                                                       | error    |        | yes             |
-| `noShadowRestrictedNames`        | Disallows shadowing globals like `NaN`, `Infinity` and `undefined`.                                  | error    |        | yes             |
-| `noSparseArray`                  | Disallows holes in array literals, like `[1, , 2]`.                                                  | error    | unsafe | yes             |
-| `noSuspiciousSemicolonInJsx`     | Disallows semicolons in JSX text, likely left there by mistake.                                      | warn     |        | yes             |
-| `noTemplateCurlyInString`        | Disallows `${}` placeholders in plain strings, which are not interpolated.                           | warn     |        | yes             |
-| `noThenProperty`                 | Disallows `then` properties, which make objects look like promises.                                  | error    |        | yes             |
-| `noTsIgnore`                     | Prefers `@ts-expect-error` to `@ts-ignore`.                                                          | warn     | safe   | yes             |
-| `noUndeclaredEnvVars`            | Requires environment variables to be listed in `turbo.json`.                                         | warn     |        | `turborepo`     |
-| `noUnsafeDeclarationMerging`     | Disallows merging a class and an interface, which TypeScript does not check.                         | error    |        | yes             |
-| `noUnsafeNegation`               | Disallows negating the left side of `in` and `instanceof`, like `!a in b`.                           | error    | unsafe | yes             |
-| `noUselessEscapeInString`        | Disallows escapes in strings that change nothing, like `\a`.                                         | warn     | safe   | yes             |
-| `noUselessRegexBackrefs`         | Disallows backreferences in regular expressions that always match an empty string.                   | warn     |        | yes             |
-| `noWith`                         | Disallows `with` statements.                                                                         | error    |        | yes             |
-| `useAdjacentOverloadSignatures`  | Requires overload signatures of a function to be next to each other.                                 | warn     |        | yes             |
-| `useBiomeIgnoreFolder`           | Prefers `!folder` to `!folder/**` to ignore folders in a Biome configuration.                        | warn     | safe   | yes             |
-| `useDefaultSwitchClauseLast`     | Requires `default` to be the last clause of a `switch`.                                              | warn     |        | yes             |
-| `useGetterReturn`                | Requires getters to return a value.                                                                  | error    |        | yes             |
-| `useGoogleFontDisplay`           | Requires a `display` parameter in Google Fonts URLs.                                                 | warn     |        | yes             |
-| `useIsArray`                     | Prefers `Array.isArray()` to `instanceof Array`.                                                     | warn     | unsafe | yes             |
-| `useIterableCallbackReturn`      | Requires callbacks of `map`, `filter` and similar to return a value, and of `forEach` not to.        | error    |        | yes             |
-| `useNamespaceKeyword`            | Prefers `namespace` to the outdated `module` keyword for TypeScript namespaces.                      | error    | safe   | yes             |
+| Rule                                | What it reports                                                                                                   | Severity | Fix    | Recommended     |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------- | ------ | --------------- |
+| `noApproximativeNumericConstant`    | Prefers constants like `Math.PI` to approximations like `3.14`.                                                   | warn     | unsafe | yes             |
+| `noArrayIndexKey`                   | Disallows array indexes as `key`, which breaks when items move.                                                   | error    |        | `react`         |
+| `noAssignInExpressions`             | Disallows assignments in expressions, like `if (a = b)`.                                                          | error    |        | yes             |
+| `noAsyncPromiseExecutor`            | Disallows `async` executor functions in `new Promise()`.                                                          | error    |        | yes             |
+| `noBiomeFirstException`             | Requires `files.includes` in a Biome configuration to start with `**` before its exceptions.                      | error    | safe   | yes             |
+| `noCatchAssign`                     | Disallows assigning to the parameter of a `catch` clause.                                                         | warn     |        | yes             |
+| `noClassAssign`                     | Disallows assigning to class declarations.                                                                        | error    |        | yes             |
+| `noCommentText`                     | Disallows text that looks like a comment in JSX, like `// note`, which is rendered.                               | error    | unsafe | yes             |
+| `noCompareNegZero`                  | Disallows comparing with `-0`, `Object.is()` tells it apart.                                                      | error    | safe   | yes             |
+| `noConfusingLabels`                 | Allows labels only on loops.                                                                                      | warn     |        | yes             |
+| `noConfusingVoidType`               | Allows `void` only as a return type or type argument.                                                             | warn     | unsafe | yes             |
+| `noConstEnum`                       | Disallows `const enum`, which isolated module compilers like esbuild cannot compile.                              | warn     | safe   | yes             |
+| `noControlCharactersInRegex`        | Disallows control characters in regular expressions, like `\x0C`.                                                 | error    |        | yes             |
+| `noDebugger`                        | Disallows `debugger` statements.                                                                                  | error    | unsafe | yes             |
+| `noDeprecatedMediaType`             | Disallows deprecated media types, like `tv` and `handheld`.                                                       | warn     |        | yes             |
+| `noDocumentCookie`                  | Disallows assigning to `document.cookie`, prefer the Cookie Store API.                                            | warn     |        | yes             |
+| `noDocumentImportInPage`            | Allows `next/document` only in `pages/_document`.                                                                 | warn     |        | `next`          |
+| `noDoubleEquals`                    | Requires `===` and `!==`, which do not coerce types.                                                              | error    | unsafe | yes             |
+| `noDrizzleDeleteWithoutWhere`       | Requires `.where()` on Drizzle `delete` queries, which otherwise delete every row.                                | error    |        | `drizzle`       |
+| `noDrizzleUpdateWithoutWhere`       | Requires `.where()` on Drizzle `update` queries, which otherwise update every row.                                | error    |        | `drizzle`       |
+| `noDuplicateAtImportRules`          | Disallows importing a stylesheet twice with the same media queries.                                               | error    |        | yes             |
+| `noDuplicateCase`                   | Disallows duplicate `case` labels.                                                                                | error    |        | yes             |
+| `noDuplicateClassMembers`           | Disallows duplicate class member names.                                                                           | error    |        | yes             |
+| `noDuplicateCustomProperties`       | Disallows CSS custom properties declared twice in a block.                                                        | error    |        | yes             |
+| `noDuplicateElseIf`                 | Disallows conditions an earlier `else if` of the same chain already covers.                                       | error    |        | yes             |
+| `noDuplicateEnumValues`             | Disallows duplicate enum member values.                                                                           | warn     |        | yes             |
+| `noDuplicateFontNames`              | Disallows font names written twice in CSS `font` and `font-family`.                                               | error    |        | yes             |
+| `noDuplicateJsxProps`               | Disallows duplicate JSX props.                                                                                    | error    |        | yes             |
+| `noDuplicateObjectKeys`             | Disallows duplicate keys in objects and JSON.                                                                     | error    | unsafe | yes             |
+| `noDuplicateParameters`             | Disallows duplicate parameter names.                                                                              | error    |        | yes             |
+| `noDuplicateProperties`             | Disallows CSS properties declared twice in a block.                                                               | error    |        | yes             |
+| `noDuplicateSelectors`              | Disallows CSS rules with the selectors of an earlier rule.                                                        | warn     |        | no              |
+| `noDuplicateSelectorsKeyframeBlock` | Disallows keyframe selectors written twice in `@keyframes`.                                                       | error    |        | yes             |
+| `noDuplicateTestHooks`              | Disallows several hooks of the same kind, like two `beforeEach`, in one block.                                    | error    |        | `test`          |
+| `noEmptyBlock`                      | Disallows empty CSS blocks.                                                                                       | warn     |        | yes             |
+| `noEmptyInterface`                  | Disallows empty interfaces, which accept almost anything.                                                         | error    | safe   | yes             |
+| `noEmptySource`                     | Disallows empty modules, Markdown and CSS files, also with only comments unless `allowComments`.                  | warn     |        | no              |
+| `noExplicitAny`                     | Disallows the `any` type.                                                                                         | warn     |        | yes             |
+| `noExportsInTest`                   | Disallows exports from test files.                                                                                | error    |        | `test`          |
+| `noExtraNonNullAssertion`           | Disallows repeated or needless non-null assertions, like `a!!`.                                                   | warn     | safe   | yes             |
+| `noFallthroughSwitchClause`         | Disallows `case` clauses that fall through to the next one.                                                       | error    |        | yes             |
+| `noFocusedTests`                    | Disallows focused tests, like `test.only` and `fdescribe`, which skip the rest.                                   | warn     | unsafe | `test`          |
+| `noFunctionAssign`                  | Disallows assigning to function declarations.                                                                     | error    |        | yes             |
+| `noGlobalAssign`                    | Disallows assigning to builtin globals, like `window` or `Object`.                                                | error    |        | yes             |
+| `noGlobalIsFinite`                  | Prefers `Number.isFinite()` to the global `isFinite()`, which coerces its argument.                               | warn     | unsafe | yes             |
+| `noGlobalIsNan`                     | Prefers `Number.isNaN()` to the global `isNaN()`, which coerces its argument.                                     | warn     | unsafe | yes             |
+| `noHeadImportInDocument`            | Disallows `next/head` in `pages/_document`.                                                                       | warn     |        | `next`          |
+| `noIdenticalTestTitle`              | Disallows tests and suites with the same title in one block.                                                      | warn     |        | `test`          |
+| `noImplicitAnyLet`                  | Requires a type or a value on `let` and `var` declarations, which are `any` otherwise.                            | error    |        | yes             |
+| `noImportAssign`                    | Disallows assigning to imports.                                                                                   | error    |        | yes             |
+| `noImportantInKeyframe`             | Disallows `!important` in `@keyframes`, where browsers ignore it.                                                 | error    |        | yes             |
+| `noIrregularWhitespace`             | Disallows irregular whitespace, like non-breaking spaces, outside of strings and comments, in JavaScript and CSS. | warn     |        | yes             |
+| `noLabelVar`                        | Disallows labels with the name of a variable.                                                                     | error    |        | yes             |
+| `noMisleadingCharacterClass`        | Disallows characters made of several code points in character classes, like emoji.                                | error    | safe   | yes             |
+| `noMisleadingInstantiator`          | Disallows `new` in interfaces and `constructor` in type literals, which do not declare constructors.              | error    |        | yes             |
+| `noMisrefactoredShorthandAssign`    | Disallows `a += a + b`, which is likely meant to be `a += b`.                                                     | error    | unsafe | yes             |
+| `noNonNullAssertedOptionalChain`    | Disallows non-null assertions after optional chains, like `a?.b!`.                                                | error    |        | yes             |
+| `noOctalEscape`                     | Disallows octal escapes in strings, like `\251`.                                                                  | warn     | safe   | yes             |
+| `noProto`                           | Disallows `__proto__`, prefer `Object.getPrototypeOf()` and `Object.setPrototypeOf()`.                            | warn     |        | yes             |
+| `noPrototypeBuiltins`               | Prefers `Object.hasOwn()` to calling `Object.prototype` methods on objects.                                       | warn     | safe   | yes             |
+| `noQuickfixBiome`                   | Prefers `source.fixAll.biome` to the deprecated `quickfix.biome` in editor settings.                              | info     | safe   | yes             |
+| `noReactNativeDeepImports`          | Disallows importing React Native internals, like `react-native/Libraries/...`.                                    | error    |        | `reactNative`   |
+| `noReactSpecificProps`              | Prefers `class` and `for` to the React-specific `className` and `htmlFor` in Solid and Qwik.                      | warn     | safe   | `solid`, `qwik` |
+| `noReactStringRefs`                 | Disallows string refs, which React deprecated.                                                                    | warn     |        | `react`         |
+| `noRedeclare`                       | Disallows declaring a variable, function or type twice in the same scope.                                         | error    |        | yes             |
+| `noRedundantUseStrict`              | Disallows `"use strict"` in modules and classes, which are strict already.                                        | warn     | safe   | yes             |
+| `noSelfCompare`                     | Disallows comparing an expression with itself.                                                                    | error    |        | yes             |
+| `noShadowRestrictedNames`           | Disallows shadowing globals like `NaN`, `Infinity` and `undefined`.                                               | error    |        | yes             |
+| `noShorthandPropertyOverrides`      | Disallows CSS shorthand properties that override earlier longhand ones.                                           | error    |        | yes             |
+| `noSparseArray`                     | Disallows holes in array literals, like `[1, , 2]`.                                                               | error    | unsafe | yes             |
+| `noSuspiciousSemicolonInJsx`        | Disallows semicolons in JSX text, likely left there by mistake.                                                   | warn     |        | yes             |
+| `noTemplateCurlyInString`           | Disallows `${}` placeholders in plain strings, which are not interpolated.                                        | warn     |        | yes             |
+| `noThenProperty`                    | Disallows `then` properties, which make objects look like promises.                                               | error    |        | yes             |
+| `noTsIgnore`                        | Prefers `@ts-expect-error` to `@ts-ignore`.                                                                       | warn     | safe   | yes             |
+| `noUndeclaredEnvVars`               | Requires environment variables to be listed in `turbo.json`.                                                      | warn     |        | `turborepo`     |
+| `noUnknownAtRules`                  | Disallows CSS at-rules that do not exist.                                                                         | error    |        | yes             |
+| `noUnsafeDeclarationMerging`        | Disallows merging a class and an interface, which TypeScript does not check.                                      | error    |        | yes             |
+| `noUnsafeNegation`                  | Disallows negating the left side of `in` and `instanceof`, like `!a in b`.                                        | error    | unsafe | yes             |
+| `noUselessEscapeInString`           | Disallows escapes in JavaScript and CSS strings that change nothing, like `\a` in JavaScript.                     | warn     | safe   | yes             |
+| `noUselessRegexBackrefs`            | Disallows backreferences in regular expressions that always match an empty string.                                | warn     |        | yes             |
+| `noWith`                            | Disallows `with` statements.                                                                                      | error    |        | yes             |
+| `useAdjacentOverloadSignatures`     | Requires overload signatures of a function to be next to each other.                                              | warn     |        | yes             |
+| `useBaseline`                       | Disallows CSS features that are not Baseline `available`, widely by default.                                      | warn     |        | no              |
+| `useBiomeIgnoreFolder`              | Prefers `!folder` to `!folder/**` to ignore folders in a Biome configuration.                                     | warn     | safe   | yes             |
+| `useDefaultSwitchClauseLast`        | Requires `default` to be the last clause of a `switch`.                                                           | warn     |        | yes             |
+| `useGetterReturn`                   | Requires getters to return a value.                                                                               | error    |        | yes             |
+| `useGoogleFontDisplay`              | Requires a `display` parameter in Google Fonts URLs.                                                              | warn     |        | yes             |
+| `useIsArray`                        | Prefers `Array.isArray()` to `instanceof Array`.                                                                  | warn     | unsafe | yes             |
+| `useIterableCallbackReturn`         | Requires callbacks of `map`, `filter` and similar to return a value, and of `forEach` not to.                     | error    |        | yes             |
+| `useNamespaceKeyword`               | Prefers `namespace` to the outdated `module` keyword for TypeScript namespaces.                                   | error    | safe   | yes             |
 ## How it works
 
 ```
 source
-├─> @aljazmc/syntax   parses it into a syntax tree, of JavaScript, Markdown or HTML
+├─> @aljazmc/syntax   parses it into a syntax tree, of JavaScript, Markdown, HTML or CSS
 ├─> src/analysis      finds scopes, references and control flow, and the rules that run
 └─> src/rules         visit the tree in one traversal, reporting problems and fixes
 ```
@@ -464,9 +508,10 @@ source
 - `src/analysis/settings.ts` resolves presets, domains, groups and rules to the rules that run.
 - `src/analysis/semantic.ts` finds scopes, bindings and references, and tells types from values.
 - `src/analysis/flow.ts` works out how statements complete, for unreachable code, fallthrough and returns.
-- `src/rules` has one file per rule, visiting the nodes it checks in a single traversal shared by all rules, of the JavaScript, the Markdown or the HTML tree. HTML files lint their scripts again as files of their language.
+- `src/rules` has one file per rule, visiting the nodes it checks in a single traversal shared by all rules, of the JavaScript, the Markdown, the HTML or the CSS tree. HTML files lint their scripts and styles again as files of their language. CSS files with syntax errors are linted without the rules and declarations that have them, like Biome lints them.
 - `src/analysis/suppressions.ts` reads suppression comments, and reports unused and malformed ones, also those limited to instances like `useExhaustiveDependencies(a)`.
 - `src/analysis/aria.ts` knows ARIA roles and attributes and the roles of elements, `src/analysis/roles.ts` the ARIA roles Biome generates from the ARIA specifications, and `src/analysis/regex.ts` parses regular expression literals.
+- `src/analysis/css.ts`, `css-semantic.ts`, `css-keywords.ts` and `css-baseline.ts` walk CSS values and selectors, resolve nested selectors with their specificity, and hold Biome's lists of known properties, pseudo classes, functions, units and Baseline features.
 - `src/analysis/html.ts` reads HTML attributes and ARIA roles of HTML elements the way Biome's HTML rules do.
 - `src/analysis/globals.ts`, `jsx.ts`, `nodes.ts`, `react.ts`, `tests.ts` and `vue.ts` are helpers the rules share: global names, JSX, nodes, and calls of React, test frameworks and Vue.
 

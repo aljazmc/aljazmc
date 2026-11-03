@@ -1,4 +1,11 @@
-import type { Html, Markdown, Node, NodeOf, NodeType } from "@aljazmc/syntax";
+import type {
+    Css,
+    Html,
+    Markdown,
+    Node,
+    NodeOf,
+    NodeType,
+} from "@aljazmc/syntax";
 import type Context from "./analysis/context.js";
 
 /** "on" uses the rule's default severity. */
@@ -76,10 +83,15 @@ export interface Rules {
     json: { enabled: boolean };
     markdown: { enabled: boolean };
     html: { enabled: boolean };
+    css: {
+        enabled: boolean;
+        /** Like Biome's `css.parser.cssModules`, CSS Modules syntax; unset, `.module.css` files have it. */
+        cssModules?: boolean;
+    };
 }
 
 /** The languages a rule applies to, "js" covers TypeScript and JSX too. */
-export type Language = "html" | "js" | "json" | "jsx" | "md" | "ts";
+export type Language = "css" | "html" | "js" | "json" | "jsx" | "md" | "ts";
 
 /** A text change, replacing source from start to end. */
 export interface Edit {
@@ -120,12 +132,25 @@ type HtmlVisitor = {
     "HtmlElement:exit"?: (node: Html.Element) => void;
 };
 
-/** Handlers called on entering, or with `:exit` on leaving, nodes of a type, Markdown ones in Markdown files and HTML ones in HTML files. */
+/** Handlers of CSS files, for the stylesheet and its rules, at-rules and declarations at any depth. */
+type CssVisitor = {
+    CssStylesheet?: (node: Css.Stylesheet) => void;
+    "CssStylesheet:exit"?: (node: Css.Stylesheet) => void;
+    CssRule?: (node: Css.Rule) => void;
+    "CssRule:exit"?: (node: Css.Rule) => void;
+    CssAtRule?: (node: Css.AtRule) => void;
+    "CssAtRule:exit"?: (node: Css.AtRule) => void;
+    CssDeclaration?: (node: Css.Declaration) => void;
+    CssBlock?: (node: Css.Block) => void;
+};
+
+/** Handlers called on entering, or with `:exit` on leaving, nodes of a type, Markdown ones in Markdown files, HTML ones in HTML files and CSS ones in CSS files. */
 export type Visitor = Enter &
     Leave &
     MarkdownEnter &
     MarkdownLeave &
-    HtmlVisitor & { "*"?: (node: Node) => void };
+    HtmlVisitor &
+    CssVisitor & { "*"?: (node: Node) => void };
 
 export interface Rule<Options extends object = object> {
     name: string;

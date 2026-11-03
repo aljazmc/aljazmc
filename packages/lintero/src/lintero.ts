@@ -1,7 +1,9 @@
 import { Includes } from "@aljazmc/config";
 import {
     type Comment,
+    type Css,
     type Html,
+    isCss,
     isHtml,
     isMarkdown,
     type Language,
@@ -12,6 +14,7 @@ import {
     type Parsed,
     ParseError,
     parse,
+    parseCss,
     parseExpression,
     parseHtml,
     parseMarkdown,
@@ -70,6 +73,8 @@ export default class Lintero {
     /** Whether the settings lint a file at all. */
     lints(file: string): boolean {
         if (!this.#settings.enabled) return false;
+        if (isCss(file))
+            return this.#settings.css.enabled && this.#includes.matches(file);
         if (isHtml(file))
             return this.#settings.html.enabled && this.#includes.matches(file);
         if (isMarkdown(file))
@@ -88,14 +93,15 @@ export default class Lintero {
 
     lint(text: string, file: string): Diagnostic[] {
         if (!this.lints(file)) return [];
+        const css = isCss(file);
         const html = isHtml(file);
         const markdown = !html && isMarkdown(file);
         const language =
-            markdown || html
+            markdown || html || css
                 ? { json: false, typescript: false, jsx: false }
                 : languageOf(file);
         if (!language) return [];
-        return this.#lint(text, file, language, markdown, html);
+        return this.#lint(text, file, language, markdown, html, undefined, css);
     }
 
     #lint(
@@ -105,6 +111,7 @@ export default class Lintero {
         markdown: boolean,
         html: boolean,
         embeddedBindings?: ReadonlySet<string>,
+        css = false,
     ): Diagnostic[] {
         const lines = new Lines(text);
         const diagnostic = (
@@ -127,8 +134,27 @@ export default class Lintero {
         let parsed: Parsed;
         let root: Markdown.Root | undefined;
         let htmlRoot: Html.Root | undefined;
+        let sheet: Css.Stylesheet | undefined;
         try {
-            if (html) {
+            if (css) {
+                // like Biome, rules run on what parses, errors are reported too
+                sheet = parseCss(text, { recover: true });
+                parsed = {
+                    program: {
+                        type: "Program",
+                        start: 0,
+                        end: text.length,
+                        body: [],
+                        directives: [],
+                    },
+                    comments: sheet.comments.map(({ start, end, value }) => ({
+                        type: "Block" as const,
+                        value,
+                        start,
+                        end,
+                    })),
+                };
+            } else if (html) {
                 htmlRoot = parseHtml(text);
                 parsed = {
                     program: {
@@ -186,6 +212,10 @@ export default class Lintero {
                 html: htmlRoot,
                 htmlParents: Lintero.#htmlParents(htmlRoot),
             }),
+            ...(sheet && {
+                css: sheet,
+                cssParents: Lintero.#cssParents(sheet),
+            }),
             comments: parsed.comments,
             ...(embeddedBindings && { embeddedBindings }),
             settings: this.#settings,
@@ -194,7 +224,10 @@ export default class Lintero {
             parents: new Map(),
         };
         const suppressions = new Suppressions(parsed.comments, lines, text);
-        const diagnostics: Diagnostic[] = [];
+        const diagnostics: Diagnostic[] = (sheet?.errors ?? []).map(
+            ({ position, message }) =>
+                diagnostic(position, position, "parse", "error", message),
+        );
 
         for (const { active, context } of this.#run(source)) {
             const { rule, severity, fix } = active;
@@ -302,23 +335,31 @@ export default class Lintero {
                 if (child.type !== "Element") continue;
                 collect(child.children);
                 const content = child.children[0];
-                if (child.tag === "script" && content?.type === "Text")
+                // like Biome, styles of any type are CSS
+                if (
+                    (child.tag === "script" || child.tag === "style") &&
+                    content?.type === "Text"
+                )
                     scripts.push({ element: child, content });
             }
         };
         collect(root.children);
-        const embedded = Lintero.#embeddedBindings(scripts);
+        const embedded = Lintero.#embeddedBindings(
+            scripts.filter(({ element }) => element.tag === "script"),
+        );
 
         const diagnostics: Diagnostic[] = [];
         for (const { element, content } of scripts) {
-            const kind = Lintero.#scriptKind(element);
+            const css = element.tag === "style";
+            const kind = css ? "css" : Lintero.#scriptKind(element);
             if (!kind) continue;
             const json = kind === "json";
-            if (
-                !(json ? this.#settings.json : this.#settings.javascript)
-                    .enabled
-            )
-                continue;
+            const enabled = css
+                ? this.#settings.css
+                : json
+                  ? this.#settings.json
+                  : this.#settings.javascript;
+            if (!enabled.enabled) continue;
             const offset = content.start;
             const local = new Lines(content.value);
             for (const diagnostic of this.#lint(
@@ -327,7 +368,8 @@ export default class Lintero {
                 { json, typescript: false, jsx: false },
                 false,
                 false,
-                embedded,
+                css ? undefined : embedded,
+                css,
             )) {
                 const start = diagnostic.start + offset;
                 const line = lines.line(start);
@@ -461,6 +503,32 @@ export default class Lintero {
         return undefined;
     }
 
+    static #cssParents(
+        sheet: Css.Stylesheet,
+    ): Map<Css.Item | Css.Block, Css.Rule | Css.AtRule | Css.Stylesheet> {
+        const parents = new Map<
+            Css.Item | Css.Block,
+            Css.Rule | Css.AtRule | Css.Stylesheet
+        >();
+        const link = (
+            items: Css.Item[],
+            parent: Css.Rule | Css.AtRule | Css.Stylesheet,
+        ) => {
+            for (const item of items) {
+                parents.set(item, parent);
+                if (
+                    (item.type === "Rule" || item.type === "AtRule") &&
+                    item.block
+                ) {
+                    parents.set(item.block, item);
+                    link(item.block.children, item);
+                }
+            }
+        };
+        link(sheet.children, sheet);
+        return parents;
+    }
+
     static #htmlParents(root: Html.Root): Map<Html.Child, Html.Element> {
         const parents = new Map<Html.Child, Html.Element>();
         const link = (element: Html.Element) => {
@@ -495,6 +563,7 @@ export default class Lintero {
                     source.language,
                     !!source.markdown,
                     !!source.html,
+                    !!source.css,
                 ),
             )
             .map((active) => {
@@ -515,6 +584,35 @@ export default class Lintero {
             });
 
         if (runs.length === 0) return runs;
+
+        const sheet = source.css;
+        if (sheet) {
+            const handle = (key: string, node: unknown) => {
+                for (const handler of (key.endsWith(":exit")
+                    ? leave.get(key.slice(0, -5))
+                    : enter.get(key)) ?? [])
+                    handler(node as Node);
+            };
+            const visit = (items: Css.Item[]) => {
+                for (const item of items)
+                    if (item.type === "Declaration")
+                        handle("CssDeclaration", item);
+                    else if (item.type === "Rule" || item.type === "AtRule") {
+                        const key =
+                            item.type === "Rule" ? "CssRule" : "CssAtRule";
+                        handle(key, item);
+                        if (item.block) {
+                            handle("CssBlock", item.block);
+                            visit(item.block.children);
+                        }
+                        handle(`${key}:exit`, item);
+                    }
+            };
+            handle("CssStylesheet", sheet);
+            visit(sheet.children);
+            handle("CssStylesheet:exit", sheet);
+            return runs;
+        }
 
         const html = source.html;
         if (html) {
@@ -646,7 +744,9 @@ export default class Lintero {
         language: Language,
         markdown: boolean,
         html: boolean,
+        css: boolean,
     ): boolean {
+        if (css) return rule.languages.includes("css");
         if (html) return rule.languages.includes("html");
         if (markdown) return rule.languages.includes("md");
         if (language.json) return rule.languages.includes("json");

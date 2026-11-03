@@ -1,4 +1,5 @@
 import type { Html } from "@aljazmc/syntax";
+import { strings } from "../../analysis/css.js";
 import { rule } from "../../rules.js";
 
 /** The ranges of an HTML file that are tokens with their own text, not trivia. */
@@ -31,13 +32,11 @@ export default rule<{ maxLines?: number; skipBlankLines?: boolean }>({
     severity: "info",
     recommended: false,
     fix: "none",
-    languages: ["html"],
+    languages: ["css", "html"],
     options: { maxLines: 300, skipBlankLines: false },
-    create: (context) => ({
-        HtmlRoot(root) {
+    create: (context) => {
+        const check = (ranges: [number, number][], comments: Set<number>) => {
             const text = context.text;
-            const ranges = tokens(root);
-            const comments = new Set(root.comments.map(({ start }) => start));
             const skip = context.options.skipBlankLines ?? false;
             // like Biome, the line breaks in the trivia before each token count, those before the end of the file not
             let lines = 1;
@@ -76,6 +75,29 @@ export default rule<{ maxLines?: number; skipBlankLines?: boolean }>({
                 { start: first ?? 0, end: text.length },
                 `This file has too many lines (${lines}). Maximum allowed is ${max}.`,
             );
-        },
-    }),
+        };
+        return {
+            HtmlRoot(root) {
+                check(
+                    tokens(root),
+                    new Set(root.comments.map(({ start }) => start)),
+                );
+            },
+            CssStylesheet(sheet) {
+                // strings are tokens, their line breaks do not count
+                const ranges: [number, number][] = [
+                    ...sheet.comments.map(
+                        ({ start, end }): [number, number] => [start, end],
+                    ),
+                    ...strings(context.text, sheet.comments).map(
+                        ({ start, end }): [number, number] => [start, end],
+                    ),
+                ].sort((a, b) => a[0] - b[0]);
+                check(
+                    ranges,
+                    new Set(sheet.comments.map(({ start }) => start)),
+                );
+            },
+        };
+    },
 });

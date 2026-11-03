@@ -20,6 +20,9 @@ const rules: Rules = {
     html: {
         enabled: true,
     },
+    css: {
+        enabled: true,
+    },
 };
 
 export default {

@@ -20,7 +20,7 @@ export default rule<{ allowComments?: boolean }>({
     severity: "warn",
     recommended: false,
     fix: "none",
-    languages: ["js", "md"],
+    languages: ["css", "js", "md"],
     options: { allowComments: false },
     create: (context) => ({
         Program(node) {
@@ -45,6 +45,13 @@ export default rule<{ allowComments?: boolean }>({
                 /^(?:[ \t]*<!--[\s\S]*?-->)*/.exec(context.text)?.[0].length ??
                 0;
             context.report({ start, end: node.end }, message);
+        },
+        CssStylesheet(node) {
+            if (node.children.length > 0) return;
+            if (context.options.allowComments && node.comments.length > 0)
+                return;
+            const start = context.skip(node.bom ? 1 : 0);
+            context.report({ start, end: start }, message);
         },
     }),
 });

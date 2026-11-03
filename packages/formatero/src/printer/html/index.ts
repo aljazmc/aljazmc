@@ -41,12 +41,12 @@ export interface HtmlOptions {
     whitespaceSensitivity: "css" | "ignore" | "strict";
     trailingNewline: boolean;
     /**
-     * Formats the code of a script at an indentation level, `json` for import
-     * maps and JSON, undefined to keep it as written.
+     * Formats the code of a script or style at an indentation level, `json`
+     * for import maps and JSON, undefined to keep it as written.
      */
     embed?: (
         code: string,
-        language: "javascript" | "module" | "json",
+        language: "javascript" | "module" | "json" | "css",
         level: number,
     ) => string | undefined;
 }
@@ -1213,7 +1213,12 @@ export default class Html {
             tag === "style" ||
             PRESERVES_CONTENT.has(tag ?? "");
         const script =
-            tag === "script" ? this.#scriptLanguage(element) : undefined;
+            tag === "script"
+                ? this.#scriptLanguage(element)
+                : tag === "style"
+                  ? // like Biome, styles of any type are CSS
+                    ("css" as const)
+                  : undefined;
         const embedded =
             script !== undefined && this.#options.embed !== undefined;
 

@@ -37,6 +37,9 @@ const rules: Rules = {
         selfCloseVoidElements: "never",
         whitespaceSensitivity: "css",
     },
+    css: {
+        quoteStyle: "double",
+    },
     markdown: {
         proseWrap: "preserve",
         formatEmbeds: true,

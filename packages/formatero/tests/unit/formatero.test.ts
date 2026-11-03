@@ -771,6 +771,90 @@ const biome: {
         expected:
             "<head>\n    <script>\n        let a = 1;\n    </script>\n    <style></style>\n</head>\n",
     },
+    {
+        name: "css: declarations are lower-cased and normalized, values keep their case",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "A{COLOR:RED;Background:#FFF;margin:-0.50PX +.5em 1.0E3px 0010.0px;content:'a\"b'}\n",
+        expected:
+            "A {\n    color: RED;\n    background: #fff;\n    margin: -0.5px +0.5em 1e3px 0010px;\n    content: 'a\"b';\n}\n",
+    },
+    {
+        name: "css: selector lists break, combinators and pseudo classes are spaced",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "A:HOVER::BEFORE,DIV#Id.Cls[HREF=x i],a:NOT(.b,.c)>B~C+D{}\n.a:nth-child( 2n+1 ){color:red}\n",
+        expected:
+            'A:hover::before,\nDIV#Id.Cls[HREF="x" i],\na:not(.b, .c) > B ~ C + D {\n}\n.a:nth-child(2n + 1) {\n    color: red;\n}\n',
+    },
+    {
+        name: "css: comma separated values with several parts get one line each",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a{transition:opacity .3s ease,transform .3s ease;will-change:transform,opacity;font:12px/30px Arial,sans-serif}\n",
+        expected:
+            "a {\n    transition:\n        opacity 0.3s ease,\n        transform 0.3s ease;\n    will-change: transform, opacity;\n    font:\n        12px / 30px Arial,\n        sans-serif;\n}\n",
+    },
+    {
+        name: "css: long values fill lines and functions break their arguments",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: 'a{font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%), url(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png);width: calc(100% - var(--sidebar-width-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) - var(--gutter-bbbbbbbbbbbbbb))}\n',
+        expected:
+            'a {\n    font-family:\n        ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",\n        Roboto, "Helvetica Neue", Arial;\n    mask-image:\n        linear-gradient(\n            to right,\n            transparent 0%,\n            black 10%,\n            black 90%,\n            transparent 100%\n        ),\n        url(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png);\n    width: calc(\n        100% -\n        var(--sidebar-width-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) -\n        var(--gutter-bbbbbbbbbbbbbb)\n    );\n}\n',
+    },
+    {
+        name: "css: at-rule preludes are spaced like their queries",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: '@MEDIA SCREEN AND (MAX-WIDTH:100PX) , PRINT{a{b:c}}\n@import url("foo.css") screen and (orientation:landscape);\n@supports (display:grid) and (not (display:inline-grid)){a{b:c}}\n@layer a,b;\n@charset "utf-8";\n',
+        expected:
+            '@media SCREEN AND (max-width: 100px), PRINT {\n    a {\n        b: c;\n    }\n}\n@import url("foo.css") screen and (orientation: landscape);\n@supports (display: grid) and (not (display: inline-grid)) {\n    a {\n        b: c;\n    }\n}\n@layer a, b;\n@charset "utf-8";\n',
+    },
+    {
+        name: "css: keyframes, font faces and nested rules",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: '@keyframes FOO{FROM{a:b}50%{a:c}TO{a:d}}\n@font-face{font-family:"Foo";src:url(a.woff2)format("woff2"),url(a.woff) format("woff")}\n.a{color:red;&:hover{color:blue}>.b{margin:0}}\n',
+        expected:
+            '@keyframes FOO {\n    from {\n        a: b;\n    }\n    50% {\n        a: c;\n    }\n    to {\n        a: d;\n    }\n}\n@font-face {\n    font-family: "Foo";\n    src:\n        url(a.woff2) format("woff2"),\n        url(a.woff) format("woff");\n}\n.a {\n    color: red;\n    &:hover {\n        color: blue;\n    }\n    > .b {\n        margin: 0;\n    }\n}\n',
+    },
+    {
+        name: "css: comments and blank lines stay, empty declarations go",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "/* header */\n\n\na { /* inside */\n  color: red; /* trailing */\n  ;;\n\n\n  margin: 0;\n}\n\n/* footer */\n",
+        expected:
+            "/* header */\n\na {\n    /* inside */\n    color: red; /* trailing */\n\n    margin: 0;\n}\n\n/* footer */\n",
+    },
+    {
+        name: "css: custom properties keep their values",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a{--Foo:a  b,c;--empty:;--n: .5PX;w:var(--a,)}\n",
+        expected:
+            "a {\n    --Foo: a b, c;\n    --empty: ;\n    --n: 0.5px;\n    w: var(--a,);\n}\n",
+    },
+    {
+        name: "css: quotes follow the quote style, @charset keeps its quotes",
+        file: "a.css",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            css: { quoteStyle: "single" },
+        },
+        input: '@charset "utf-8";\na{content:"a";b:"it\'s"}\n[a="b"]{}\n',
+        expected:
+            "@charset \"utf-8\";\na {\n    content: 'a';\n    b: \"it's\";\n}\n[a='b'] {\n}\n",
+    },
+    {
+        name: "css: biome-ignore keeps a rule as written",
+        file: "a.css",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "/* biome-ignore format: keep */\na  {  color :  red }\nb  {  color :  red }\n",
+        expected:
+            "/* biome-ignore format: keep */\na  {  color :  red }\nb {\n    color: red;\n}\n",
+    },
 ];
 
 describe("formatero", () => {
@@ -878,7 +962,28 @@ describe("formatero", () => {
             expect(format("* a\n", "README.markdown")).toBe("- a\n");
         });
 
-        test("HTML is formatted when enabled, .htm too, keeping styles as written", () => {
+        test("CSS fences in Markdown are formatted", () => {
+            expect(format("```css\na{color:red}\n```\n", "a.md")).toBe(
+                "```css\na {\n    color: red;\n}\n```\n",
+            );
+        });
+
+        test("CSS is formatted unless disabled, errors stop it like Biome", () => {
+            expect(format("a{color:red}\n", "a.css")).toBe(
+                "a {\n    color: red;\n}\n",
+            );
+            expect(
+                format("a{color:red}\n", "a.CSS", { css: { enabled: false } }),
+            ).toBe("a{color:red}\n");
+            expect(() => format("a{color:red\n", "a.css")).toThrow(FormatError);
+            expect(() =>
+                format("<style>a{color:red</style>\n", "a.html", {
+                    html: { enabled: true },
+                }),
+            ).toThrow(FormatError);
+        });
+
+        test("HTML is formatted when enabled, .htm too, styles as CSS", () => {
             const messy = "<DIV>x</DIV>\n";
             expect(format(messy, "a.html")).toBe(messy);
             expect(format(messy, "a.html", { html: { enabled: true } })).toBe(
@@ -887,12 +992,12 @@ describe("formatero", () => {
             expect(format(messy, "a.HTM", { html: { enabled: true } })).toBe(
                 "<div>x</div>\n",
             );
-            // formatero has no CSS formatter, Biome formats styles as CSS
+            // like Biome, styles are formatted as CSS at the level of the element
             expect(
                 format("<style>\na{color:red}\n</style>\n", "a.html", {
                     html: { enabled: true },
                 }),
-            ).toBe("<style>\na{color:red}\n</style>\n");
+            ).toBe("<style>\na {\n    color: red;\n}\n</style>\n");
             // like Biome, HTML ends with a newline unless HTML says otherwise
             expect(
                 format("<p></p>", "a.html", {

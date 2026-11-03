@@ -1,6 +1,7 @@
 import { EOL } from "node:os";
 import { Includes } from "@aljazmc/config";
 import {
+    isCss,
     isHtml,
     isMarkdown,
     Lines,
@@ -8,6 +9,7 @@ import {
     ParseError,
     parse,
 } from "@aljazmc/syntax";
+import Css from "./printer/css.js";
 import Html from "./printer/html/index.js";
 import JavaScript, { type Options } from "./printer/javascript/index.js";
 import Markdown from "./printer/markdown.js";
@@ -20,6 +22,7 @@ import Spacing from "./rules/spacing.js";
 import TextIndentation from "./rules/text-indentation.js";
 import TrailingCommas from "./rules/trailing-commas.js";
 import type {
+    Css as CssRules,
     Html as HtmlRules,
     Javascript,
     Json,
@@ -63,13 +66,15 @@ export default class Formatero {
     }
 
     #enabled(file: string): boolean {
-        const { enabled, javascript, json, markdown, html } = this.#rules;
+        const { enabled, javascript, json, markdown, html, css } = this.#rules;
         const language = languageOf(file);
         const section = isMarkdown(file)
             ? markdown
             : isHtml(file)
               ? html
-              : language && (language.json ? json : javascript);
+              : isCss(file)
+                ? css
+                : language && (language.json ? json : javascript);
         return section?.enabled ?? enabled;
     }
 
@@ -85,11 +90,33 @@ export default class Formatero {
             json,
             markdown,
             html,
+            css,
             includes,
             useEditorconfig,
             ...shared
         } = this.#rules;
         const language = languageOf(file);
+
+        if (isCss(file)) {
+            const rules = { ...shared, ...css };
+            let printed: string;
+            try {
+                printed = Formatero.#css(rules).format(source);
+            } catch (error) {
+                if (
+                    error instanceof Error &&
+                    error.message.startsWith("Comment would be lost")
+                )
+                    throw new FormatError(error.message);
+                if (!(error instanceof ParseError)) throw error;
+                const lines = new Lines(source);
+                const { position } = error;
+                throw new FormatError(
+                    `${lines.line(position)}:${lines.column(position)} ${error.message}`,
+                );
+            }
+            return this.#finish(printed, rules);
+        }
 
         if (isMarkdown(file)) {
             const rules = { ...shared, ...markdown };
@@ -223,7 +250,7 @@ export default class Formatero {
      */
     #script(
         code: string,
-        language: "javascript" | "module" | "json",
+        language: "javascript" | "module" | "json" | "css",
         level: number,
         html: Shared & HtmlRules,
     ): string {
@@ -235,12 +262,26 @@ export default class Formatero {
         const {
             javascript,
             json,
+            css,
             markdown: _markdown,
             html: _html,
             includes: _includes,
             useEditorconfig: _useEditorconfig,
             ...shared
         } = this.#rules;
+        if (language === "css")
+            try {
+                return Formatero.#css({ ...shared, ...css, ...layout })
+                    .format(code, level)
+                    .replace(/\n+$/, "");
+            } catch (error) {
+                if (
+                    error instanceof Error &&
+                    error.message.startsWith("Comment would be lost")
+                )
+                    throw new FormatError(error.message);
+                throw error;
+            }
         const options =
             language === "json"
                 ? Formatero.#options(
@@ -256,6 +297,17 @@ export default class Formatero {
         return new JavaScript(options)
             .format(code, { typescript: false, jsx: false }, level)
             .replace(/\n+$/, "");
+    }
+
+    /** The CSS printer for rules. */
+    static #css(rules: Shared & Omit<CssRules, keyof Shared>): Css {
+        return new Css({
+            lineWidth: rules.lineWidth,
+            indentWidth: rules.indentWidth,
+            useTabs: rules.indentStyle === "tab",
+            quote: rules.quoteStyle === "single" ? "'" : '"',
+            delimiterSpacing: rules.delimiterSpacing,
+        });
     }
 
     /** A file name for the language of an info string, like Biome reads it. */
@@ -278,6 +330,7 @@ export default class Formatero {
             return "embed.jsonc";
         if (/^(?:md|markdown)$/.test(language)) return "embed.md";
         if (/^html?$/.test(language)) return "embed.html";
+        if (language === "css") return "embed.css";
     }
 
     static #options(

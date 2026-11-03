@@ -41,6 +41,11 @@ export interface Html extends Shared {
     whitespaceSensitivity: "css" | "ignore" | "strict";
 }
 
+export interface Css extends Shared {
+    /** The preferred quote of strings, `@charset` keeps its quotes. */
+    quoteStyle: Quote;
+}
+
 export interface Markdown extends Shared {
     /** Keeps the line breaks of paragraphs, wraps them at the line width, or joins them. */
     proseWrap: "always" | "never" | "preserve";
@@ -57,6 +62,7 @@ export interface Rules extends Shared {
     javascript: Partial<Shared> & Omit<Javascript, keyof Shared>;
     json: Partial<Shared> & Omit<Json, keyof Shared>;
     html: Partial<Shared> & Omit<Html, keyof Shared>;
+    css: Partial<Shared> & Omit<Css, keyof Shared>;
     markdown: Partial<Shared> & Omit<Markdown, keyof Shared>;
 }
 

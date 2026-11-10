@@ -2,8 +2,8 @@
 
 # lintero
 
-A simple linter for JavaScript, TypeScript, JSX, JSON, Markdown, HTML and
-CSS, with 287 rules compatible with [Biome](https://biomejs.dev) 2.6.6's, and
+A simple linter for CSS, HTML, JavaScript, JSON, JSX, Markdown and
+TypeScript, with 287 rules compatible with [Biome](https://biomejs.dev) 2.6.6's, and
 their automatic fixes. Easy to understand, easy to customize and easy to extend.
 
 ## Install
@@ -68,7 +68,7 @@ are:
 | `preset`                                                                                         | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.                                                 |
 | `domains`                                                                                        | `{}`            | Rules of frameworks and tools, see [Domains](#domains): `"recommended"`, `"all"` or `"none"` for each.    |
 | `a11y`, `complexity`, `correctness`, `nursery`, `performance`, `security`, `style`, `suspicious` |                 | The rules of a [group](#rules), see [Groups](#groups).                                                    |
-| `javascript.enabled`                                                                             | `true`          | Lints JavaScript, TypeScript and JSX files.                                                               |
+| `javascript.enabled`                                                                             | `true`          | Lints JavaScript, JSX and TypeScript files.                                                               |
 | `javascript.globals`                                                                             | `[]`            | Global names that exist, for the rules about undeclared names.                                            |
 | `javascript.jsxRuntime`                                                                          | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.                                                     |
 | `json.enabled`                                                                                   | `true`          | Lints JSON files.                                                                                         |

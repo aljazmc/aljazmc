@@ -16,10 +16,10 @@ of them are published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
 
 | Package                         | What it does                                                                                             | npm                                                                    |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [formatero](packages/formatero) | Formats JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS, with options compatible with Biome's. | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
-| [lintero](packages/lintero)     | Lints JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS with 285 rules compatible with Biome's.  | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
+| [formatero](packages/formatero) | Formats CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript, with options compatible with Biome's. | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
+| [lintero](packages/lintero)     | Lints CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript with 287 rules compatible with Biome's.  | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
 | [monorepo](packages/monorepo)   | Versions each package on its own by conventional commits, and moves the tags a rebase left behind.       | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
-| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, TypeScript and JSX, compiled with esbuild.                           | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
+| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, JSX and TypeScript, compiled with esbuild.                           | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
 
 The packages share code, published for its types and bundled by esbuild
 into the packages that use it:
@@ -27,7 +27,7 @@ into the packages that use it:
 | Shared code                      | What it does                                                                 |
 | -------------------------------- | ---------------------------------------------------------------------------- |
 | [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs.            |
-| [@aljazmc/syntax](shared/syntax) | Parses JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS into trees. |
+| [@aljazmc/syntax](shared/syntax) | Parses CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript into trees. |
 
 ## Requirements
 

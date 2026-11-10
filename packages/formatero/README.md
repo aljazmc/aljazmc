@@ -2,8 +2,8 @@
 
 # formatero
 
-A simple formatter for JavaScript, TypeScript, JSX, JSON, Markdown, HTML
-and CSS, with options and defaults compatible with
+A simple formatter for CSS, HTML, JavaScript, JSON, JSX, Markdown
+and TypeScript, with options and defaults compatible with
 [Biome](https://biomejs.dev) 2.6.6's formatter. Easy to understand, easy
 to customize and easy to extend.
 
@@ -83,7 +83,7 @@ language only.
 | `bracketSpacing`    | `true`   |                                    | Spaces inside braces: `{ a }` instead of `{a}`.                                                                                                                                                                                                                  |
 | `delimiterSpacing`  | `false`  |                                    | Spaces inside parentheses, brackets, type arguments and template interpolations, and after `!`, and inside the parentheses and brackets of CSS.                                                                                                                  |
 
-### JavaScript, TypeScript and JSX
+### JavaScript, JSX and TypeScript
 
 These options are set in the `javascript` section.
 
@@ -112,7 +112,7 @@ These options are set in the `markdown` section.
 | Option         | Default      | Values                              | What it does                                                                                                                                      |
 | -------------- | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `proseWrap`    | `"preserve"` | `"preserve"`, `"always"`, `"never"` | Keeps the line breaks of paragraphs, wraps paragraphs at the line width, or puts each on one line, also inside emphasis. Hard breaks always stay. |
-| `formatEmbeds` | `true`       |                                     | Formats fenced code in JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS, unless it does not parse. Code in other languages stays.        |
+| `formatEmbeds` | `true`       |                                     | Formats fenced code in CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript, unless it does not parse. Code in other languages stays.        |
 
 Like Biome, formatero writes headings with `#`, list items with `-`, and
 `*` or `)` for the next list beside them, numbers lists like their first

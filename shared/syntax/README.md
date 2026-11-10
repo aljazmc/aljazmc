@@ -1,7 +1,7 @@
 # > syntax
 
-Shared, dependency-free scanner and recursive descent parser for JavaScript,
-TypeScript, JSX, JSON, Markdown, HTML and CSS, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
+Shared, dependency-free scanner and recursive descent parser for CSS,
+HTML, JavaScript, JSON, JSX, Markdown and TypeScript, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
 types.
 
 ```ts

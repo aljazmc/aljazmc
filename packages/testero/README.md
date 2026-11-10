@@ -3,7 +3,7 @@
 # testero
 
 A simple, [Jest](https://jestjs.io)-like test runner for JavaScript,
-TypeScript and JSX, compiling tests with [esbuild](https://esbuild.github.io).
+JSX and TypeScript, compiling tests with [esbuild](https://esbuild.github.io).
 Easy to understand, easy to customize and easy to extend.
 
 ## Install
@@ -28,7 +28,7 @@ testero --help             # show every option
 
 ## Writing tests
 
-Test files are written in JavaScript, TypeScript or JSX, with the same
+Test files are written in JavaScript, JSX or TypeScript, with the same
 globals as Jest:
 
 ```ts

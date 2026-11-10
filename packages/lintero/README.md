@@ -3,7 +3,7 @@
 # lintero
 
 A simple linter for JavaScript, TypeScript, JSX, JSON, Markdown, HTML and
-CSS, with 285 rules compatible with [Biome](https://biomejs.dev) 2.6.4's, and
+CSS, with 287 rules compatible with [Biome](https://biomejs.dev) 2.6.6's, and
 their automatic fixes. Easy to understand, easy to customize and easy to extend.
 
 ## Install
@@ -321,31 +321,33 @@ Code that is certainly wrong, or does not do what it seems to. 70 rules:
 ### nursery
 
 New rules, which Biome may still change. They run only when their level
-is set, presets leave them off. 21 rules, for Markdown, HTML and CSS:
+is set, presets leave them off. 23 rules, for JavaScript, Markdown, HTML and CSS:
 
-| Rule                             | What it reports                                                                                                  | Severity | Fix    | Recommended |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
-| `noInvalidFileInputAccept`       | Requires valid file types in the `accept` of file inputs, written like Biome writes them.                        | error    | unsafe | no          |
-| `noMisplacedListElements`        | Disallows `<li>` outside `<ul>`, `<ol>` and `<menu>`.                                                            | error    |        | no          |
-| `noNonScalableViewport`          | Disallows viewports that disable zooming with `user-scalable=no`.                                                | error    |        | no          |
-| `noObsoleteAttributes`           | Disallows HTML attributes the HTML standard made obsolete, like `align` on `<div>`.                              | warn     |        | no          |
-| `noObsoleteTags`                 | Disallows HTML elements the HTML standard made obsolete, like `<center>`.                                        | warn     |        | no          |
-| `noSelfNestedLayer`              | Disallows CSS layers named like the layer they are nested in, which makes a sublayer.                            | warn     |        | no          |
-| `noShortTimeValues`              | Disallows CSS animation and transition times shorter than `minimum` milliseconds.                                | info     |        | no          |
-| `noUndeclaredCustomProperties`   | Disallows `var()` of CSS custom properties no stylesheet declares, also those it imports.                        | info     |        | no          |
-| `noUnsafeIframeSandbox`          | Disallows `allow-scripts` with `allow-same-origin` in iframe sandboxes, which undoes them.                       | error    |        | no          |
-| `noUnusedClasses`                | Disallows CSS classes, outside `:global()`, as no file that imports the stylesheet is known.                     | info     |        | no          |
-| `noZeroLengthUnit`               | Disallows units on zero lengths, like `0px`, outside math functions.                                             | info     | unsafe | no          |
-| `useConsistentHeadingLevel`      | Disallows headings that skip a level, like `###` after `#`.                                                      | info     |        | no          |
-| `useConsistentLightnessNotation` | Requires lightness of `oklch()`, `oklab()`, `lch()` and `lab()` as a percentage, or as a number with `notation`. | info     | safe   | no          |
-| `useConsistentUnicodeBom`        | Requires, with `bom: "always"`, or disallows, by default, the byte order mark at the start of files.             | info     | safe   | no          |
-| `useControlLabel`                | Requires buttons and menu items to have an accessible label.                                                     | error    |        | no          |
-| `useFencedCodeLanguage`          | Requires a language after the opening fence of code blocks, from `allowedLanguages`, alone with `languageOnly`.  | info     |        | no          |
-| `useLayeredStyles`               | Requires CSS rules and imports in cascade layers.                                                                | warn     |        | no          |
-| `useLogicalProperties`           | Prefers logical CSS properties and values, like `margin-inline-start` to `margin-left`.                          | warn     | unsafe | no          |
-| `useNamedLayer`                  | Disallows anonymous CSS cascade layers.                                                                          | warn     |        | no          |
-| `useSingleTopLevelHeading`       | Disallows more top-level headings, of `level` 1 by default, after the one that starts a document.                | info     |        | no          |
-| `useTopLevelHeading`             | Requires documents to start with a level 1 heading, after comments, unless they start with HTML or a break.      | info     |        | no          |
+| Rule                                     | What it reports                                                                                                                                      | Severity | Fix    | Recommended |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------- |
+| `noExcessiveNestedBlocks`                | Disallows `if`, `switch`, `try` and loops, and CSS blocks, nested more than `max` levels, 4 by default.                                              | warn     |        | no          |
+| `noInvalidFileInputAccept`               | Requires valid file types in the `accept` of file inputs, written like Biome writes them.                                                            | error    | unsafe | no          |
+| `noMisplacedListElements`                | Disallows `<li>` outside `<ul>`, `<ol>` and `<menu>`.                                                                                                | error    |        | no          |
+| `noNonScalableViewport`                  | Disallows viewports that disable zooming with `user-scalable=no`.                                                                                    | error    |        | no          |
+| `noObsoleteAttributes`                   | Disallows HTML attributes the HTML standard made obsolete, like `align` on `<div>`.                                                                  | warn     |        | no          |
+| `noObsoleteTags`                         | Disallows HTML elements the HTML standard made obsolete, like `<center>`.                                                                            | warn     |        | no          |
+| `noPseudoElementInFunctionalPseudoClass` | Disallows pseudo-elements in `:is()`, `:where()`, `:not()` and `:has()`, which browsers drop.                                                        | error    |        | no          |
+| `noSelfNestedLayer`                      | Disallows CSS layers named like the layer they are nested in, which makes a sublayer.                                                                | warn     |        | no          |
+| `noShortTimeValues`                      | Disallows CSS animation and transition times shorter than `minimum` milliseconds.                                                                    | info     |        | no          |
+| `noUndeclaredCustomProperties`           | Disallows `var()` of CSS custom properties no stylesheet declares, also those it imports.                                                            | info     |        | no          |
+| `noUnsafeIframeSandbox`                  | Disallows `allow-scripts` with `allow-same-origin` in iframe sandboxes, which undoes them.                                                           | error    |        | no          |
+| `noUnusedClasses`                        | Disallows CSS classes, outside `:global()`, as no file that imports the stylesheet is known.                                                         | info     |        | no          |
+| `noZeroLengthUnit`                       | Disallows units on zero lengths, like `0px`, outside math functions.                                                                                 | info     | unsafe | no          |
+| `useConsistentHeadingLevel`              | Disallows headings that skip a level, like `###` after `#`.                                                                                          | info     |        | no          |
+| `useConsistentLightnessNotation`         | Requires lightness of `oklch()`, `oklab()`, `lch()` and `lab()` as a percentage, or as a number with `notation`.                                     | info     | safe   | no          |
+| `useConsistentUnicodeBom`                | Requires, with `bom: "always"`, or disallows, by default, the byte order mark at the start of files.                                                 | info     | safe   | no          |
+| `useControlLabel`                        | Requires buttons and menu items to have an accessible label.                                                                                         | error    |        | no          |
+| `useFencedCodeLanguage`                  | Requires a language after the opening fence of code blocks, from `allowedLanguages`, alone with `languageOnly`.                                      | info     |        | no          |
+| `useLayeredStyles`                       | Requires CSS rules and imports in cascade layers.                                                                                                    | warn     |        | no          |
+| `useLogicalProperties`                   | Prefers logical CSS properties and values, like `margin-inline-start` to `margin-left`, and `margin-block` and `margin-inline` to `margin: 1px 2px`. | warn     | unsafe | no          |
+| `useNamedLayer`                          | Disallows anonymous CSS cascade layers.                                                                                                              | warn     |        | no          |
+| `useSingleTopLevelHeading`               | Disallows more top-level headings, of `level` 1 by default, after the one that starts a document.                                                    | info     |        | no          |
+| `useTopLevelHeading`                     | Requires documents to start with a level 1 heading, after comments, unless they start with HTML or a break.                                          | info     |        | no          |
 
 ### performance
 

@@ -23,7 +23,11 @@ export default rule({
             const font = property === "font";
             if (!font && property !== "font-family") return;
             const parent = context.cssParent(node);
-            if (parent?.type === "AtRule" && parent.keyword === "font-face")
+            if (
+                parent?.type === "AtRule" &&
+                (parent.keyword === "font-face" ||
+                    parent.keyword === "font-palette-values")
+            )
                 return;
             const components = fontComponents(node.value);
             const values = components.filter(

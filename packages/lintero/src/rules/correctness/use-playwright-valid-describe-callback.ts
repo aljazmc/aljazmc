@@ -16,17 +16,22 @@ export default rule({
                 node.callee.type === "CallExpression"
             )
                 return;
-            const callback = node.arguments[1];
-            const message = !callback
-                ? "Describe requires a callback function."
-                : callback.type !== "ArrowFunctionExpression" &&
-                    callback.type !== "FunctionExpression"
-                  ? "Describe callback must be a function."
-                  : callback.async
-                    ? "Describe callback should not be async."
-                    : callback.params.length > 0
-                      ? "Describe callback should not have parameters."
-                      : undefined;
+            // The callback is the last argument: `describe(title, callback)`,
+            // `describe(title, details, callback)` or `describe(callback)`.
+            const callback = node.arguments.at(-1);
+            const isFunction =
+                callback?.type === "ArrowFunctionExpression" ||
+                callback?.type === "FunctionExpression";
+            const message =
+                !callback || (node.arguments.length === 1 && !isFunction)
+                    ? "Describe requires a callback function."
+                    : !isFunction
+                      ? "Describe callback must be a function."
+                      : callback.async
+                        ? "Describe callback should not be async."
+                        : callback.params.length > 0
+                          ? "Describe callback should not have parameters."
+                          : undefined;
             if (message) context.report(node, message);
         },
     }),

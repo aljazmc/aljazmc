@@ -1,6 +1,6 @@
 /**
  * ARIA roles like Biome's metadata, generated from the WAI-ARIA 1.3, DPUB-ARIA
- * 1.1 and Graphics ARIA 1.0 data of Biome 2.6.4. For each concrete role: its
+ * 1.1 and Graphics ARIA 1.0 data of Biome 2.6.6. For each concrete role: its
  * inherited abstract roles, its required, prohibited and supported attributes
  * without `aria-`, and the HTML elements it is based on or related to, like
  * `input[type=checkbox]`.

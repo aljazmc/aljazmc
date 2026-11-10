@@ -144,11 +144,13 @@ import useReactNativePlatformComponents from "./correctness/use-react-native-pla
 import useValidForDirection from "./correctness/use-valid-for-direction.js";
 import useValidTypeof from "./correctness/use-valid-typeof.js";
 import useYield from "./correctness/use-yield.js";
+import noExcessiveNestedBlocks from "./nursery/no-excessive-nested-blocks.js";
 import noInvalidFileInputAccept from "./nursery/no-invalid-file-input-accept.js";
 import noMisplacedListElements from "./nursery/no-misplaced-list-elements.js";
 import noNonScalableViewport from "./nursery/no-non-scalable-viewport.js";
 import noObsoleteAttributes from "./nursery/no-obsolete-attributes.js";
 import noObsoleteTags from "./nursery/no-obsolete-tags.js";
+import noPseudoElementInFunctionalPseudoClass from "./nursery/no-pseudo-element-in-functional-pseudo-class.js";
 import noSelfNestedLayer from "./nursery/no-self-nested-layer.js";
 import noShortTimeValues from "./nursery/no-short-time-values.js";
 import noUndeclaredCustomProperties from "./nursery/no-undeclared-custom-properties.js";
@@ -572,4 +574,6 @@ export default [
     noDuplicateSelectors,
     useLogicalProperties,
     useBaseline,
+    noPseudoElementInFunctionalPseudoClass,
+    noExcessiveNestedBlocks,
 ] as Rule[];

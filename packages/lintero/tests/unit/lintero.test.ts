@@ -2963,6 +2963,18 @@ const biome: {
     },
     {
         rule: "complexity/useMathMinMax",
+        file: "a.ts",
+        source: 'const s = "x";\nconst r1 = s > b ? s : b;\nconst r2 = `a` > b ? `a` : b;\nconst r3 = ["foo", "bar"].reduce((a, b) => a > b ? a : b);\nconst r4 = [1, 2].reduce((a, b) => a > b ? a : b);\nconst words = ["x", "y"];\nconst r5 = words.reduce((a, b) => a > b ? a : b);\nconst r6 = [1, 2].reduce((a, b) => a > b ? a : b, "");\nconst r7 = [new Date(), new Date()].reduce((a, b) => a < b ? a : b);\nconst r8 = [s, 2].reduce((a, b) => a < b ? a : b);\nconst r9 = tag`a` > b ? tag`a` : b;\nconst nums = ["x"];\nnums.push("y");\nconst r10 = nums.reduce((a, b) => a > b ? a : b);\nconst r11 = ["a"].reduce((a, b, c) => c > b ? c : b);\nconst r12 = ["a"].reduce(function (a, b) { return a > b ? a : b; }, 0);\nfunction f(x: string, y: number, z = "a") { return [x > y ? x : y, z > y ? z : y, y > 1 ? y : 1]; }\nconst r13 = (q as string) > 1 ? (q as string) : 1;\nconst r14 = q! > 1 ? q! : 1;\nconst r15 = BigInt(1) > b ? BigInt(1) : b;\nlet t: string;\nconst r16 = t > 1 ? t : 1;\n',
+        expected: [
+            "11:12 This ternary is selecting the larger of the same two operands, which can be simplified.",
+            "14:35 This ternary is selecting the larger of the same two operands, which can be simplified.",
+            "17:83 This ternary is selecting the larger of the same two operands, which can be simplified.",
+            "19:13 This ternary is selecting the larger of the same two operands, which can be simplified.",
+            "5:36 This ternary is selecting the larger of the same two operands, which can be simplified.",
+        ],
+    },
+    {
+        rule: "complexity/useMathMinMax",
         file: "a.js",
         source: "height > 50 ? 50 : height;\n",
         expected: [
@@ -3009,7 +3021,6 @@ const biome: {
             "1:1 This ternary is selecting the smaller of the same two operands, which can be simplified.",
             "21:5 This ternary is selecting the smaller of the same two operands, which can be simplified.",
             "22:1 This ternary is selecting the smaller of the same two operands, which can be simplified.",
-            "24:1 This ternary is selecting the smaller of the same two operands, which can be simplified.",
             "2:1 This ternary is selecting the larger of the same two operands, which can be simplified.",
             "3:1 This ternary is selecting the smaller of the same two operands, which can be simplified.",
             "4:1 This ternary is selecting the larger of the same two operands, which can be simplified.",
@@ -6347,15 +6358,18 @@ const biome: {
     {
         rule: "correctness/usePlaywrightValidDescribeCallback",
         file: "a.js",
-        source: 'test.describe("a", async () => {});\ntest.describe("a", (x) => {});\ntest.describe("a", async (x) => {});\ntest.describe("a", async function () {});\ntest.describe.only("a", async () => {});\ntest.describe.serial("a", async () => {});\ntest.describe.parallel.only("a", async () => {});\ntest.describe("a", () => { return 1; });\ntest.describe("a", () => 1);\ntest.describe("a");\ntest.describe("a", f);\ndescribe("a", async () => {});\ntest.describe.skip("a", (x) => {});\ntest.describe(async () => {});\ntest.describe("a", { tag: "x" }, async () => {});\ntest.describe.configure({ mode: "serial" });\n',
+        source: 'test.describe("a", async () => {});\ntest.describe("a", (x) => {});\ntest.describe("a", async (x) => {});\ntest.describe("a", async function () {});\ntest.describe.only("a", async () => {});\ntest.describe.serial("a", async () => {});\ntest.describe.parallel.only("a", async () => {});\ntest.describe("a", () => { return 1; });\ntest.describe("a", () => 1);\ntest.describe("a");\ntest.describe("a", f);\ndescribe("a", async () => {});\ntest.describe.skip("a", (x) => {});\ntest.describe(async () => {});\ntest.describe("a", { tag: "x" }, async () => {});\ntest.describe.configure({ mode: "serial" });\ntest.describe(() => {});\ntest.describe("a", { tag: "x" }, () => {});\ntest.describe();\ntest.describe(f);\ntest.describe("a", "b", f);\n',
         expected: [
             "10:1 Describe requires a callback function.",
             "11:1 Describe callback must be a function.",
             "12:1 Describe callback should not be async.",
             "13:1 Describe callback should not have parameters.",
-            "14:1 Describe requires a callback function.",
-            "15:1 Describe callback must be a function.",
+            "14:1 Describe callback should not be async.",
+            "15:1 Describe callback should not be async.",
+            "19:1 Describe requires a callback function.",
             "1:1 Describe callback should not be async.",
+            "20:1 Describe requires a callback function.",
+            "21:1 Describe callback must be a function.",
             "2:1 Describe callback should not have parameters.",
             "3:1 Describe callback should not be async.",
             "4:1 Describe callback should not be async.",
@@ -13046,6 +13060,12 @@ const biome: {
         expected: ["1:25 Generic font family missing."],
     },
     {
+        rule: "a11y/useGenericFontNames",
+        file: "a.css",
+        source: "@font-palette-values --palette {\n  font-family: Bixa;\n  override-colors: 0 red;\n}\na { font-family: Arial; }\n",
+        expected: ["5:18 Generic font family missing."],
+    },
+    {
         rule: "complexity/noImportantStyles",
         file: "a.css",
         source: "a { color: red !important; }\n",
@@ -13288,6 +13308,39 @@ const biome: {
     {
         rule: "nursery/useLogicalProperties",
         file: "a.css",
+        source: "p { margin: 1px 2px; }\np { padding: 1px 2px 3px; }\np { inset: 1px 2px 3px 4px; }\np { margin: 1px 2px 1px 2px; }\np { margin: 1px; }\np { margin: var(--a) 2px; }\np { margin: calc(var(--a) * 2) 2px; }\np { margin: inherit 2px; }\np { margin: default 2px; }\np { margin: 1px 2px !important; }\np { border-color: red blue; scroll-margin: 1px 2px; scroll-padding: 1px 2px; border-width: 1px 2px; border-style: solid none }\np { margin: 1px 2px 3px 4px 5px; }\np { margin-block-start: 1px; margin-block-end: 2px; }\np { margin-block-end: 2px; margin-block-start: 1px; }\np { margin-block-start: 1px; color: red; margin-block-end: 1px; }\np { margin-block-start: 1px; margin: 0; margin-block-end: 1px; }\np { margin-block-start: 1px; margin-top: 0; margin-block-end: 1px; }\np { margin-block-start: 1px; margin-left: 0; margin-block-end: 1px; }\np { margin-block-start: 1px; all: unset; margin-block-end: 1px; }\np { margin-block-start: 1px; a { color: red } margin-block-end: 1px; }\np { margin-block-start: 1px; margin-block-end: 1px !important; }\np { margin-block-start: 1px; margin-block-end: 1px; margin-block-end: 2px; }\np { border-block-start: 1px solid; border-block-end: 2px solid; }\np { border-block-start: 1px solid; border-block-end: 1px solid; }\np { margin-block-start: 1px /* c */; margin-block-end: 1px; }\np { margin-block-start: var(--x); margin-block-end: 1px; }\np { margin-block-start: inherit; margin-block-end: 1px; }\np { margin-inline-start: 1px; border-inline-start-width: 2px; margin-inline-end: 1px; }\np { border-block-start-width: 1px; border-block-start: 0; border-block-end-width: 1px; }\np { MARGIN-BLOCK-START: 1px; margin-block-end: 2px; }\np { margin: 1px, 2px; }\np {\n  margin-block-start: 1px;\n  margin-block-end: 2px;\n}\np {\n  margin: 1px 2px\n}\np {\n  margin-inline-start: 1px !important;\n  color: red;\n  margin-inline-end: 1px !important;\n}\n",
+        expected: [
+            "10:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "11:101 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "11:29 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "11:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "11:53 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "11:78 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "13:5 These logical longhands can be combined into a shorthand.",
+            "14:5 These logical longhands can be combined into a shorthand.",
+            "15:5 These logical longhands can be combined into a shorthand.",
+            "17:30 Use logical CSS properties over physical ones.",
+            "18:30 Use logical CSS properties over physical ones.",
+            "18:5 These logical longhands can be combined into a shorthand.",
+            "1:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "24:5 These logical longhands can be combined into a shorthand.",
+            "28:5 These logical longhands can be combined into a shorthand.",
+            "2:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "30:5 These logical longhands can be combined into a shorthand.",
+            "31:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "33:3 These logical longhands can be combined into a shorthand.",
+            "37:3 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "3:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "40:3 These logical longhands can be combined into a shorthand.",
+            "4:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "6:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "7:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+            "9:5 Use logical CSS longhands instead of a multi-value physical shorthand.",
+        ],
+    },
+    {
+        rule: "nursery/useLogicalProperties",
+        file: "a.css",
         source: "a { margin-left: 0; float: left; }\n",
         expected: [
             "1:28 Use logical CSS values over physical ones.",
@@ -13336,6 +13389,90 @@ const biome: {
         source: "a { accent-color: red; }\na:has(b) {}\n",
         expected: [
             "1:5 CSS property accent-color isn't part of the chosen Baseline.",
+        ],
+    },
+    {
+        rule: "nursery/noPseudoElementInFunctionalPseudoClass",
+        file: "a.css",
+        source: '.card:is(.featured::before) { content: ""; }\nli:not(::marker) { color: red; }\n.card:is(.featured, .pinned)::before { content: ""; }\nli:not(.done)::marker { color: red; }\na:where(:before, :AFTER, :first-line, :first-letter, :hover) {}\na:has(> ::after) {}\na:matches(::before) {}\na:IS(::before) {}\na:is(:not(::before)) {}\na:is(:host(::before)) {}\na:is(::slotted(span)) {}\na:is(:nth-child(2 of ::before)) {}\na:is(::part(x)) {}\n::slotted(:is(::before)) {}\na { &:is(::before) { color: red } }\na:-webkit-any(::before) {}\n',
+        expected: [
+            "11:6 This pseudo-element can't be used inside :is().",
+            "13:6 This pseudo-element can't be used inside :is().",
+            "14:15 This pseudo-element can't be used inside :is().",
+            "15:10 This pseudo-element can't be used inside :is().",
+            "1:19 This pseudo-element can't be used inside :is().",
+            "2:8 This pseudo-element can't be used inside :not().",
+            "5:18 This pseudo-element can't be used inside :where().",
+            "5:26 This pseudo-element can't be used inside :where().",
+            "5:39 This pseudo-element can't be used inside :where().",
+            "5:9 This pseudo-element can't be used inside :where().",
+            "6:9 This pseudo-element can't be used inside :has().",
+            "7:11 This pseudo-element can't be used inside :matches().",
+            "8:6 This pseudo-element can't be used inside :IS().",
+            "9:11 This pseudo-element can't be used inside :not().",
+        ],
+    },
+    {
+        rule: "nursery/noExcessiveNestedBlocks",
+        file: "a.js",
+        source: "function foo() {\n    for (const item of items) {\n        if (item.enabled) {\n            while (item.next()) {\n                try {\n                    if (item.done) {\n                        for (;;) { break; }\n                    }\n                } catch {}\n            }\n        }\n    }\n}\nif (a) {\n    if (b) {\n        if (c) {\n            if (d) {\n            } else if (e) {\n            } else if (f) {\n                switch (x) { default: do {} while (0); }\n            }\n        }\n    }\n}\nif (a) { if (b) { if (c) { if (d) { const f = () => { if (g) {} }; do {} while (0); for (k in o) {} } } } }\nclass A { m() { if (a) { if (b) { if (c) { if (d) { if (e) {} } } } } } static { if (a) { if (b) { if (c) { if (d) { if (e) {} } } } } } }\nif (a) { if (b) { if (c) { if (d) {} else { if (e) {} } } } }\nif (a) { if (b) { if (c) { if (d) {} else if (q) { if (e) {} } } } }\nif (a) { if (b) { if (c) { if (d) { x = function () { if (e) {} }; label: { if (z) {} } } } } }\nif (a) { if (b) { if (c) { for await (const x of y) { try { if (e) {} } finally {} } } } }\n",
+        expected: [
+            "20:17 This block is nested too deeply.",
+            "25:68 This block is nested too deeply.",
+            "25:85 This block is nested too deeply.",
+            "26:118 This block is nested too deeply.",
+            "26:53 This block is nested too deeply.",
+            "27:45 This block is nested too deeply.",
+            "28:52 This block is nested too deeply.",
+            "29:77 This block is nested too deeply.",
+            "30:55 This block is nested too deeply.",
+            "6:21 This block is nested too deeply.",
+        ],
+    },
+    {
+        rule: "nursery/noExcessiveNestedBlocks",
+        file: "a.js",
+        options: { max: 2 },
+        source: "function foo() {\n    for (const item of items) {\n        if (item.enabled) {\n            while (item.next()) {\n                try {\n                    if (item.done) {\n                        for (;;) { break; }\n                    }\n                } catch {}\n            }\n        }\n    }\n}\nif (a) {\n    if (b) {\n        if (c) {\n            if (d) {\n            } else if (e) {\n            } else if (f) {\n                switch (x) { default: do {} while (0); }\n            }\n        }\n    }\n}\nif (a) { if (b) { if (c) { if (d) { const f = () => { if (g) {} }; do {} while (0); for (k in o) {} } } } }\nclass A { m() { if (a) { if (b) { if (c) { if (d) { if (e) {} } } } } } static { if (a) { if (b) { if (c) { if (d) { if (e) {} } } } } } }\nif (a) { if (b) { if (c) { if (d) {} else { if (e) {} } } } }\nif (a) { if (b) { if (c) { if (d) {} else if (q) { if (e) {} } } } }\nif (a) { if (b) { if (c) { if (d) { x = function () { if (e) {} }; label: { if (z) {} } } } } }\nif (a) { if (b) { if (c) { for await (const x of y) { try { if (e) {} } finally {} } } } }\n",
+        expected: [
+            "16:9 This block is nested too deeply.",
+            "25:19 This block is nested too deeply.",
+            "26:100 This block is nested too deeply.",
+            "26:35 This block is nested too deeply.",
+            "27:19 This block is nested too deeply.",
+            "28:19 This block is nested too deeply.",
+            "29:19 This block is nested too deeply.",
+            "30:19 This block is nested too deeply.",
+            "4:13 This block is nested too deeply.",
+        ],
+    },
+    {
+        rule: "nursery/noExcessiveNestedBlocks",
+        file: "a.css",
+        source: ".a { .b { .c { .d { .e { .f { color: red; .g { color: blue; } } } } } } }\n.a { .b { .c { .d { .e { color: red; } } } } }\n@media (width >= 600px) { .a { .b { .c { .d { .e { color: red; } } } } } }\n.a { @media print { .b { .c { .d { .e { color: red; } } } } } }\n.a { .b { .c { .d { @media print { color: red; } } } } }\n.a { .b { .c { .d { .e /* x */ { .f { color: red; } } } } } }\n@keyframes k { from { color: red; } }\n.a { .b { .c { .d { @layer x { .e { color: red; } } } } } }\n@supports (display: grid) { @media print { .a { .b { .c { .d { color: red; } } } } } }\n.a { .b { .c { .d { @font-face { src: url(x); } } } } }\n.a { .b { .c { .d { .e, .f { color: red; } } } } }\n",
+        expected: [
+            "1:26 This block is nested too deeply.",
+            "4:36 This block is nested too deeply.",
+            "6:34 This block is nested too deeply.",
+            "8:32 This block is nested too deeply.",
+        ],
+    },
+    {
+        rule: "nursery/noExcessiveNestedBlocks",
+        file: "a.css",
+        options: { max: 1, ignoreAtRules: ["MEDIA"] },
+        source: ".a { .b { .c { .d { .e { .f { color: red; .g { color: blue; } } } } } } }\n.a { .b { .c { .d { .e { color: red; } } } } }\n@media (width >= 600px) { .a { .b { .c { .d { .e { color: red; } } } } } }\n.a { @media print { .b { .c { .d { .e { color: red; } } } } } }\n.a { .b { .c { .d { @media print { color: red; } } } } }\n.a { .b { .c { .d { .e /* x */ { .f { color: red; } } } } } }\n@keyframes k { from { color: red; } }\n.a { .b { .c { .d { @layer x { .e { color: red; } } } } } }\n@supports (display: grid) { @media print { .a { .b { .c { .d { color: red; } } } } } }\n.a { .b { .c { .d { @font-face { src: url(x); } } } } }\n.a { .b { .c { .d { .e, .f { color: red; } } } } }\n",
+        expected: [
+            "10:11 This block is nested too deeply.",
+            "11:11 This block is nested too deeply.",
+            "1:11 This block is nested too deeply.",
+            "2:11 This block is nested too deeply.",
+            "3:37 This block is nested too deeply.",
+            "4:26 This block is nested too deeply.",
+            "5:11 This block is nested too deeply.",
+            "6:11 This block is nested too deeply.",
+            "8:11 This block is nested too deeply.",
+            "9:54 This block is nested too deeply.",
         ],
     },
 ];
@@ -13806,6 +13943,20 @@ describe("lintero", () => {
             );
             expect(lintero.fix(source, "a.js", true)).toBe(
                 "const a = 1;\nif (a === 2) {}\n",
+            );
+        });
+
+        test("useLogicalProperties splits physical shorthands and combines logical longhands like Biome", () => {
+            const lintero = new Lintero(
+                settings(only("nursery/useLogicalProperties")),
+            );
+            const source =
+                "p { margin: 1px 2px; }\np { padding: 1px 2px 3px; }\np { inset: 1px 2px 3px 4px; }\np { margin: 1px 2px 1px 2px; }\np { margin: 1px; }\np { margin: var(--a) 2px; }\np { margin: calc(var(--a) * 2) 2px; }\np { margin: inherit 2px; }\np { margin: default 2px; }\np { margin: 1px 2px !important; }\np { border-color: red blue; scroll-margin: 1px 2px; scroll-padding: 1px 2px; border-width: 1px 2px; border-style: solid none }\np { margin: 1px 2px 3px 4px 5px; }\np { margin-block-start: 1px; margin-block-end: 2px; }\np { margin-block-end: 2px; margin-block-start: 1px; }\np { margin-block-start: 1px; color: red; margin-block-end: 1px; }\np { margin-block-start: 1px; margin: 0; margin-block-end: 1px; }\np { margin-block-start: 1px; margin-top: 0; margin-block-end: 1px; }\np { margin-block-start: 1px; margin-left: 0; margin-block-end: 1px; }\np { margin-block-start: 1px; all: unset; margin-block-end: 1px; }\np { margin-block-start: 1px; a { color: red } margin-block-end: 1px; }\np { margin-block-start: 1px; margin-block-end: 1px !important; }\np { margin-block-start: 1px; margin-block-end: 1px; margin-block-end: 2px; }\np { border-block-start: 1px solid; border-block-end: 2px solid; }\np { border-block-start: 1px solid; border-block-end: 1px solid; }\np { margin-block-start: 1px /* c */; margin-block-end: 1px; }\np { margin-block-start: var(--x); margin-block-end: 1px; }\np { margin-block-start: inherit; margin-block-end: 1px; }\np { margin-inline-start: 1px; border-inline-start-width: 2px; margin-inline-end: 1px; }\np { border-block-start-width: 1px; border-block-start: 0; border-block-end-width: 1px; }\np { MARGIN-BLOCK-START: 1px; margin-block-end: 2px; }\np { margin: 1px, 2px; }\np {\n  margin-block-start: 1px;\n  margin-block-end: 2px;\n}\np {\n  margin: 1px 2px\n}\np {\n  margin-inline-start: 1px !important;\n  color: red;\n  margin-inline-end: 1px !important;\n}\n";
+            let fixed = source;
+            for (let pass = 0; pass < 5; pass++)
+                fixed = lintero.fix(fixed, "a.css", true);
+            expect(fixed).toBe(
+                "p { margin-block: 1px; margin-inline: 2px; }\np { padding-block: 1px 3px; padding-inline: 2px; }\np { inset-block: 1px 3px; inset-inline: 4px 2px; }\np { margin-block: 1px; margin-inline: 2px; }\np { margin: 1px; }\np { margin: var(--a) 2px; }\np { margin: calc(var(--a) * 2) 2px; }\np { margin: inherit 2px; }\np { margin-block: default; margin-inline: 2px; }\np { margin-block: 1px !important; margin-inline: 2px !important; }\np { border-block-color: red; border-inline-color: blue; scroll-margin-block: 1px; scroll-margin-inline: 2px; scroll-padding-block: 1px; scroll-padding-inline: 2px; border-block-width: 1px; border-inline-width: 2px; border-block-style: solid; border-inline-style: none }\np { margin: 1px 2px 3px 4px 5px; }\np { margin-block: 1px 2px; }\np { margin-block: 1px 2px; }\np { margin-block: 1px; color: red; }\np { margin-block-start: 1px; margin: 0; margin-block-end: 1px; }\np { margin-block-start: 1px; margin-block-start: 0; margin-block-end: 1px; }\np { margin-block: 1px; margin-inline-start: 0; }\np { margin-block-start: 1px; all: unset; margin-block-end: 1px; }\np { margin-block-start: 1px; a { color: red } margin-block-end: 1px; }\np { margin-block-start: 1px; margin-block-end: 1px !important; }\np { margin-block-start: 1px; margin-block-end: 1px; margin-block-end: 2px; }\np { border-block-start: 1px solid; border-block-end: 2px solid; }\np { border-block: 1px solid; }\np { margin-block-start: 1px /* c */; margin-block-end: 1px; }\np { margin-block-start: var(--x); margin-block-end: 1px; }\np { margin-block-start: inherit; margin-block-end: 1px; }\np { margin-inline: 1px; border-inline-start-width: 2px; }\np { border-block-start-width: 1px; border-block-start: 0; border-block-end-width: 1px; }\np { margin-block: 1px 2px; }\np { margin-block: 1px 2px; margin-inline: ,; }\np {\n  margin-block: 1px 2px;\n}\np {\n  margin-block: 1px; margin-inline: 2px\n}\np {\n  margin-inline: 1px !important;\n  color: red;\n}\n",
             );
         });
 

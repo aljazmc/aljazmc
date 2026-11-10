@@ -1,4 +1,4 @@
-/** Tag names Biome 2.6.4 knows, SVG ones in camel case like `feBlend`. */
+/** Tag names Biome 2.6.6 knows, SVG ones in camel case like `feBlend`. */
 export const tagNames: ReadonlySet<string> = new Set([
     "a",
     "abbr",

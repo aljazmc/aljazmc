@@ -417,7 +417,7 @@ const biome: {
         rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
         input: "[link]( http://example.com  \"title\" ) [b](u 'single')\n[ref]: http://example.com  'Title'\n  [a]: http://x\n\n\n[b]: http://y\n\n<http://auto.link> ![image](src.png)\n",
         expected:
-            '[link](http://example.com "title") [b](u "single")\n[ref]: http://example.com \'Title\'\n[a]: http://x\n\n\n[b]: http://y\n\n<http://auto.link> ![image](src.png)\n',
+            '[link](http://example.com "title") [b](u "single")\n[ref]: http://example.com \'Title\'\n[a]: http://x\n\n[b]: http://y\n\n<http://auto.link> ![image](src.png)\n',
     },
     {
         name: "lines inside links and code keep their indentation",
@@ -425,23 +425,22 @@ const biome: {
         rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
         input: "see [the\n  docs](http://x) now\n- item [with\n    link](x) and `code\n  span`\n",
         expected:
-            "see [the\n  docs](http://x) now\n- item [with\n    link](x) and `code\n  span`\n",
+            "see [the\n  docs](http://x) now\n\n- item [with\n    link](x) and `code\n  span`\n",
     },
     {
-        name: "blank lines between blocks stay, but one after headings and around breaks",
+        name: "blank lines between blocks collapse into one, except after comments",
         file: "a.md",
         rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
         input: "# A\n\n\n\nb\n\n\n\nc\n\n\n- list\n\n\n\npara\n\n\n<!-- c -->\n\n\n\n---\n",
-        expected:
-            "# A\n\nb\n\n\n\nc\n\n\n- list\n\n\n\npara\n\n\n<!-- c -->\n\n\n\n---\n",
+        expected: "# A\n\nb\n\nc\n\n- list\n\npara\n\n<!-- c -->\n\n\n\n---\n",
     },
     {
-        name: "blank lines before a list stay after quotes, tables and html blocks",
+        name: "one blank line before a list after quotes, tables and html blocks",
         file: "a.md",
         rules: { indentStyle: "space", indentWidth: 4, lineWidth: 80 },
         input: "> A note.\n\n- one\n- two\n\n| T |\n| - |\n| V |\n\n\n- Hello\n\n<div>\nx\n</div>\n\n- a\n\n> q\n- b\n",
         expected:
-            "> A note.\n\n- one\n- two\n\n| T   |\n| --- |\n| V   |\n\n\n- Hello\n\n<div>\nx\n</div>\n\n- a\n\n> q\n- b\n",
+            "> A note.\n\n- one\n- two\n\n| T   |\n| --- |\n| V   |\n\n- Hello\n\n<div>\nx\n</div>\n\n- a\n\n> q\n- b\n",
     },
     {
         name: "html blocks and comments stay as written",
@@ -855,6 +854,89 @@ const biome: {
         expected:
             "/* biome-ignore format: keep */\na  {  color :  red }\nb {\n    color: red;\n}\n",
     },
+    {
+        name: "blocks that interrupt a paragraph get a blank line, HTML blocks do not",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "para\n# heading\npara\n```\ncode\n```\npara\n- item\n\npara\n> quote\n\npara\n<div>x</div>\n",
+        expected:
+            "para\n\n# heading\n\npara\n\n```\ncode\n```\npara\n\n- item\n\npara\n\n> quote\n\npara\n<div>x</div>\n",
+    },
+    {
+        name: "consecutive blank lines collapse into one, no blank line after a definition before a list",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a\n\n\n\nb\n\n\n- list\n\n\n\npara\n\n\n\n    code\n\n\n\n[a]: b\n\n\n- c\n",
+        expected: "a\n\nb\n\n- list\n\npara\n\n    code\n\n[a]: b\n- c\n",
+    },
+    {
+        name: "emphasis wraps like the text around it",
+        file: "a.md",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            markdown: { proseWrap: "always" },
+        },
+        input: "a *very long emphasized text that goes over the line width of eighty characters for sure* b\nsome **strong\ntext** and ~~strike\nthrough~~\n",
+        expected:
+            "a _very long emphasized text that goes over the line width of eighty characters\nfor sure_ b some **strong text** and ~~strike through~~\n",
+    },
+    {
+        name: "emphasis joins its lines like the text around it",
+        file: "a.md",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            markdown: { proseWrap: "never" },
+        },
+        input: "some **strong\ntext** and _em\nphasis_ and ~~strike\nthrough~~\n",
+        expected:
+            "some **strong text** and _em phasis_ and ~~strike through~~\n",
+    },
+    {
+        name: "parentheses that end an optional chain stay before a non-null assertion",
+        file: "a.ts",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "(a?.b)!.c;\n(a?.b)!();\nnew (a?.b)!();\n((a?.b)!).c;\n(a?.b)?.c;\n(a?.b).c = 1;\n(a?.b)`t`;\nf((a?.[0])!.b);\n",
+        expected:
+            "(a?.b)!.c;\n(a?.b)!();\nnew (a?.b)!();\n(a?.b)!.c;\na?.b?.c;\n(a?.b).c = 1;\n(a?.b)`t`;\nf((a?.[0])!.b);\n",
+    },
+    {
+        name: "quotes keep the indentation before their markers, unless a paragraph continues in them",
+        file: "a.md",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "  > q\n\n  > a\n  >\n  > - b\n  > - c\n\n  > d\n  > e\n\n > f\n>  g\n\n  > h  \n  i\n\n> j\n  k\n",
+        expected:
+            "  > q\n\n  > a\n  >\n  > - b\n> - c\n\n> d\n> e\n\n > f\n>  g\n\n  > h  \ni\n\n> j k\n",
+    },
+    {
+        name: "wrapped prose puts inlines of several lines on lines of their own, and joins code spans",
+        file: "a.md",
+        rules: {
+            indentStyle: "space",
+            indentWidth: 4,
+            markdown: { proseWrap: "always" },
+        },
+        input: "aa [b\nc](u) d *e  \nf* g `h\n  i` j\n\n[*em in\nlink*](u) z\n",
+        expected:
+            "aa\n[b\nc](u)\nd\n_e  \nf_\ng `h   i` j\n\n[*em in\nlink*](u)\nz\n",
+    },
+    {
+        name: "the parameters of arrows break with their return type, those of function types do not",
+        file: "a.ts",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "const f = (a: string): {\n    b: 1;\n} => x;\nconst g = async (a: string): Promise<{\n    b: 1;\n}> => x;\ntype F = (a: string) => {\n    b: 1;\n};\nfoo((a: string): {\n    b: 1;\n} => x);\n",
+        expected:
+            "const f = (\n    a: string,\n): {\n    b: 1;\n} => x;\nconst g = async (\n    a: string,\n): Promise<{\n    b: 1;\n}> => x;\ntype F = (a: string) => {\n    b: 1;\n};\nfoo(\n    (\n        a: string,\n    ): {\n        b: 1;\n    } => x,\n);\n",
+    },
+    {
+        name: "generic arrows keep the space after the equals sign",
+        file: "a.ts",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "const f = <T,>(a: T) => a;\nconst g = <T,>(a: T) => (b: T) => a;\n",
+        expected:
+            "const f = <T>(a: T) => a;\nconst g =\n    <T>(a: T) =>\n    (b: T) =>\n        a;\n",
+    },
 ];
 
 describe("formatero", () => {
@@ -1090,6 +1172,41 @@ describe("formatero", () => {
                 lineEnding: "crlf",
                 trailingNewline: false,
             });
+        });
+
+        test("section globs match like Biome's", () => {
+            const matches = (glob: string, file: string) =>
+                new EditorConfig(`[${glob}]\nindent_size = 7\n`).rules(file)
+                    .indentWidth === 7;
+            // a bracket expression in braces, and nested braces
+            expect(matches("{[ab],c}.json", "a.json")).toBe(true);
+            expect(matches("{[ab],c}.json", "b.json")).toBe(true);
+            expect(matches("{[ab],c}.json", "c.json")).toBe(true);
+            expect(matches("{[ab],c}.json", "d.json")).toBe(false);
+            expect(matches("{*.{js,json},biome.jsonc}", "a.json")).toBe(true);
+            expect(matches("{*.{js,json},biome.jsonc}", "biome.jsonc")).toBe(
+                true,
+            );
+            expect(matches("{*.{js,json},biome.jsonc}", "a.ts")).toBe(false);
+            // a single unmatched brace makes every brace literal
+            expect(matches("{a,b}}.json", "{a,b}}.json")).toBe(true);
+            expect(matches("{a,b}}.json", "a}.json")).toBe(false);
+            expect(matches("{a,{b,c}", "a")).toBe(false);
+            // braces without a comma are literal, numeric ranges are not
+            expect(matches("{a}.js", "{a}.js")).toBe(true);
+            expect(matches("{a}.js", "a.js")).toBe(false);
+            expect(matches("{1..3}.js", "2.js")).toBe(true);
+            expect(matches("{1..3}.js", "4.js")).toBe(false);
+            // `*` and `?` stay in a folder, globs with `/` start at the root
+            expect(matches("a?c.js", "a/c.js")).toBe(false);
+            expect(matches("[!ab].js", "c.js")).toBe(true);
+            expect(matches("src/*.js", "src/a.js")).toBe(true);
+            expect(matches("src/*.js", "src/x/a.js")).toBe(false);
+            expect(matches("src/*.js", "x/src/a.js")).toBe(false);
+            expect(matches("src/**/*.js", "src/x/a.js")).toBe(true);
+            expect(matches("/root.js", "root.js")).toBe(true);
+            expect(matches("/root.js", "x/root.js")).toBe(false);
+            expect(matches("\\*.js", "a.js")).toBe(false);
         });
 
         test("later sections win, braces list alternatives", () => {

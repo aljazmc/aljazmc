@@ -69,7 +69,7 @@ export default class Functions extends Section {
             node.id ? this.print(node.id) : "",
             this.print(node.typeParameters),
             group([
-                this.#shouldGroupParameters(node, returnType)
+                this.shouldGroupParameters(node, returnType)
                     ? group(parameters)
                     : parameters,
                 returnType,
@@ -108,7 +108,7 @@ export default class Functions extends Section {
             group([
                 breakParameters
                     ? group(parameters, { shouldBreak: true })
-                    : this.#shouldGroupParameters(node, returnType)
+                    : this.shouldGroupParameters(node, returnType)
                       ? group(parameters)
                       : parameters,
                 returnType,
@@ -122,7 +122,8 @@ export default class Functions extends Section {
         return node.returnType ? [": ", this.print(node.returnType)] : "";
     }
 
-    #shouldGroupParameters(
+    /** Whether parameters break on their own, before a return type that breaks. */
+    shouldGroupParameters(
         node: {
             params: Node[];
             typeParameters: NodeOf<"TSTypeParameterDeclaration"> | null;
@@ -366,14 +367,8 @@ export default class Functions extends Section {
                 this.print(node.typeParameters),
                 this.parameters(node, expandArg),
             ];
-            parts.push(
-                group([
-                    this.#shouldGroupParameters(node, returnType)
-                        ? group(parameters)
-                        : parameters,
-                    returnType,
-                ]),
-            );
+            // like Biome, the parameters of arrows break with their return type
+            parts.push(group([parameters, returnType]));
         }
 
         const dangling = this.printer.dangling(node, {

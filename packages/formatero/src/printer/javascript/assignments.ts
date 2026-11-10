@@ -77,7 +77,13 @@ export default class Assignments extends Section {
             case "chain-tail":
                 return [group(left), operator, indent([line, rightDoc])];
             case "chain-tail-arrow-chain":
-                return [group(left), operator, group(rightDoc)];
+                // a chain breaks before itself, a single arrow with type parameters does not
+                return [
+                    group(left),
+                    operator,
+                    right && Assignments.#arrowChain(right) ? "" : " ",
+                    group(rightDoc),
+                ];
             case "only-left":
                 return left;
         }

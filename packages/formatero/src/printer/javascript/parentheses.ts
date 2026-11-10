@@ -162,10 +162,7 @@ export default class Parentheses {
                 if (
                     node.parenthesized &&
                     this.#optionalChain(node) &&
-                    ((parent.type === "CallExpression" &&
-                        parent.callee === node) ||
-                        (parent.type === "MemberExpression" &&
-                            parent.object === node))
+                    this.#continuesChain(node)
                 )
                     return true;
                 if (parent.type === "NewExpression" && parent.callee === node)
@@ -506,9 +503,43 @@ export default class Parentheses {
         return false;
     }
 
+    /**
+     * Whether removing the parentheses around an optional chain would join it
+     * to what continues it, through `!` and type arguments, which do not end
+     * a chain: `(a?.b)!.c` would short-circuit more as `a?.b!.c`, and
+     * `new (a?.b)!()` would not parse.
+     */
+    #continuesChain(node: Node): boolean {
+        let element = node;
+        let parent: Node | undefined;
+        for (const ancestor of this.#printer.ancestors()) {
+            parent = ancestor;
+            if (
+                ancestor.type !== "TSNonNullExpression" &&
+                ancestor.type !== "TSInstantiationExpression"
+            )
+                break;
+            element = ancestor;
+        }
+        switch (parent?.type) {
+            case "CallExpression":
+                return parent.callee === element && !parent.optional;
+            case "MemberExpression":
+                return parent.object === element && !parent.optional;
+            case "NewExpression":
+                return parent.callee === element;
+            case "TaggedTemplateExpression":
+                return parent.tag === element;
+            default:
+                return false;
+        }
+    }
+
     #optionalChain(node: Node): boolean {
         let current: Node = node;
         for (;;) {
+            // parentheses inside end the chain, they stay or go on their own
+            if (current !== node && current.parenthesized) return false;
             if (
                 (current.type === "CallExpression" ||
                     current.type === "MemberExpression") &&

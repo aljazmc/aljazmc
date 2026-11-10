@@ -495,10 +495,15 @@ export default class TypeScript extends Section {
 
     #functionType(node: NodeOf<"TSConstructorType" | "TSFunctionType">): Doc {
         const functions = this.printer.section(Functions);
+        const returnType = this.print(node.returnType);
+        // like Biome, a single parameter may stay before a return type that breaks
         const signature: Doc = [
-            functions.parameters(node),
+            node.type === "TSFunctionType" &&
+            functions.shouldGroupParameters(node, returnType)
+                ? group(functions.parameters(node))
+                : functions.parameters(node),
             " => ",
-            this.print(node.returnType),
+            returnType,
         ];
         if (node.type === "TSFunctionType")
             return [this.print(node.typeParameters), group(signature)];

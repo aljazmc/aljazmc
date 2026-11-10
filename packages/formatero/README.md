@@ -4,7 +4,7 @@
 
 A simple formatter for JavaScript, TypeScript, JSX, JSON, Markdown, HTML
 and CSS, with options and defaults compatible with
-[Biome](https://biomejs.dev) 2.6.4's formatter. Easy to understand, easy
+[Biome](https://biomejs.dev) 2.6.6's formatter. Easy to understand, easy
 to customize and easy to extend.
 
 ## Install
@@ -109,16 +109,19 @@ These options are set in the `json` section.
 
 These options are set in the `markdown` section.
 
-| Option         | Default      | Values                              | What it does                                                                                                                               |
-| -------------- | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `proseWrap`    | `"preserve"` | `"preserve"`, `"always"`, `"never"` | Keeps the line breaks of paragraphs, wraps paragraphs at the line width, or puts each on one line. Hard breaks always stay.                |
-| `formatEmbeds` | `true`       |                                     | Formats fenced code in JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS, unless it does not parse. Code in other languages stays. |
+| Option         | Default      | Values                              | What it does                                                                                                                                      |
+| -------------- | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proseWrap`    | `"preserve"` | `"preserve"`, `"always"`, `"never"` | Keeps the line breaks of paragraphs, wraps paragraphs at the line width, or puts each on one line, also inside emphasis. Hard breaks always stay. |
+| `formatEmbeds` | `true`       |                                     | Formats fenced code in JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS, unless it does not parse. Code in other languages stays.        |
 
 Like Biome, formatero writes headings with `#`, list items with `-`, and
 `*` or `)` for the next list beside them, numbers lists like their first
 items, italics with `_` and bold with `**`, thematic breaks as `---` and
-fences with backticks. It aligns tables and code spans, and keeps blank
-lines between blocks, but one after headings and around thematic breaks.
+fences with backticks. It aligns tables and code spans, and keeps one
+blank line between blocks, also before a heading, a fence, a list or a
+quote that interrupts a paragraph, and all of them after an HTML comment.
+Quotes keep the indentation before their `>`, unless a paragraph in them
+continues on another line.
 
 ### HTML
 
@@ -171,7 +174,10 @@ instead.
 With `useEditorconfig: true`, formatero reads `.editorconfig` from the
 current directory. Its `indent_style`, `indent_size`, `end_of_line` and
 `insert_final_newline` override the defaults, and `formatero.config.ts`
-overrides them in turn.
+overrides them in turn. Section globs match like Biome's: `*` and `?`
+stay in a folder, `**` crosses folders, `[ab]`, `{a,b}` and `{1..3}`
+match alternatives, and a single unmatched brace makes every brace
+literal.
 
 ## How it works
 

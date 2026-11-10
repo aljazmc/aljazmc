@@ -30,11 +30,20 @@ const LITERAL = "\u0000";
 /** Blank lines of quotes, written `> ` or `>` in the source. */
 const BLANK = "\u0001";
 const BLANK_TIGHT = "\u0002";
+/** Starts lazy lines of quotes, which do not get the `>` of their quotes. */
+const LAZY = "\u0004";
+/** Stands for the content of an inline, to find the markers around it. */
+const HOLE = "\u0003";
+
+/** What an inline's content is rendered from, see `#inline`. */
+type Content = (children: Md.Inline[], ancestors: Md.Inline[]) => string;
 
 /** Formats Markdown like Biome: keeps the text, normalizes markers, fences, tables and spacing. */
 export default class Markdown {
     readonly #options: Options;
     #source: string[] = [];
+    /** How many list items the blocks being printed are in. */
+    #items = 0;
 
     constructor(options: Options) {
         this.#options = options;
@@ -49,7 +58,10 @@ export default class Markdown {
             if (root.children.length > 0) lines.push("");
         }
         lines.push(...this.#blocks(root.children, "root", 0));
-        const text = lines.join("\n").replaceAll(LITERAL, "");
+        const text = lines
+            .join("\n")
+            .replaceAll(LITERAL, "")
+            .replaceAll(LAZY, "");
         return `${root.bom ? "﻿" : ""}${text}${text ? "\n" : ""}`;
     }
 
@@ -126,9 +138,27 @@ export default class Markdown {
         if (previous.type === "ThematicBreak" || next.type === "ThematicBreak")
             return 1;
         if (previous.type === "Heading") return 1;
-        if (previous.type === "List") return next.type === "List" ? 1 : blank;
+        if (previous.type === "List")
+            return next.type === "List" ? 1 : Math.min(blank, 1);
         if (Markdown.#fenced(previous) && next.type === "List") return 1;
-        return blank;
+        // a block that interrupts a paragraph, other than HTML, gets a blank line
+        if (blank === 0)
+            return previous.type === "Paragraph" && next.type !== "HtmlBlock"
+                ? 1
+                : 0;
+        // like Biome, only some blocks keep a blank line before a list
+        if (next.type === "List")
+            return [
+                "CodeBlock",
+                "HtmlBlock",
+                "Paragraph",
+                "Table",
+                "BlockQuote",
+            ].includes(previous.type)
+                ? 1
+                : 0;
+        // consecutive blank lines collapse into one
+        return 1;
     }
 
     static #fenced(block: Md.Block): boolean {
@@ -166,7 +196,7 @@ export default class Markdown {
             case "Definition":
                 return this.#definition(block, width);
             case "BlockQuote":
-                return this.#quote(block, width);
+                return this.#quote(block, width, container);
             case "List":
                 return this.#list(block, width, sibling);
             case "Table":
@@ -222,14 +252,31 @@ export default class Markdown {
         width: number,
         item?: Md.ListItem,
     ): string[] {
-        if (container === "quote" && this.#options.proseWrap === "preserve")
-            return this.#inlines(paragraph.children, paragraph.text, [])
+        if (container === "quote" && this.#options.proseWrap === "preserve") {
+            // like Biome, an indented lazy line joins the line before it,
+            // or stays lazy in list items and after a hard break
+            const lines: string[] = [];
+            for (const [index, line] of this.#inlines(
+                paragraph.children,
+                paragraph.text,
+                [],
+            )
                 .split("\n")
-                .map((line, index) =>
-                    index === 0
-                        ? line
-                        : `${paragraph.indents[index] ?? ""}${line}`,
-                );
+                .entries()) {
+                const indent = paragraph.indents[index] ?? "";
+                const lazy = index > 0 && paragraph.lazy[index];
+                if (lazy && indent !== "" && this.#items > 0)
+                    lines.push(
+                        `${LITERAL}${LAZY}${this.#source[paragraph.line + index - 1] ?? ""}`,
+                    );
+                else if (lazy && /(?: {2,}|\\)$/.test(lines.at(-1) ?? ""))
+                    lines.push(`${LITERAL}${LAZY}${line}`);
+                else if (lazy && indent !== "")
+                    lines.push(`${lines.pop()} ${line}`);
+                else lines.push(index === 0 ? line : `${indent}${line}`);
+            }
+            return lines;
+        }
         return this.#prose(
             paragraph.children,
             paragraph.text,
@@ -249,6 +296,13 @@ export default class Markdown {
                         : Number.POSITIVE_INFINITY,
                 ),
             },
+            container !== "quote",
+            paragraph.indents.map(
+                (_, index) =>
+                    /^[ \t]*/.exec(
+                        this.#source[paragraph.line + index - 1] ?? "",
+                    )?.[0] ?? "",
+            ),
         );
     }
 
@@ -287,14 +341,18 @@ export default class Markdown {
         );
     }
 
-    #quote(quote: Md.BlockQuote, width: number): string[] {
+    #quote(
+        quote: Md.BlockQuote,
+        width: number,
+        container: Container,
+    ): string[] {
         const lines = this.#blocks(quote.children, "quote", width + 2);
         const first = quote.children[0];
         const last = quote.children.at(-1);
         // quote-only lines before and after the content stay
         const leading = first ? first.line - quote.line : 0;
         const trailing = last ? quote.endLine - last.endLine : 0;
-        return [
+        const printed = [
             ...Array.from({ length: leading }, (_, index) =>
                 this.#blank(quote.line + index),
             ),
@@ -303,12 +361,76 @@ export default class Markdown {
                 this.#blank((last?.endLine ?? 0) + 1 + index),
             ),
         ].map((line) =>
-            line === "" || line === BLANK_TIGHT
-                ? ">"
-                : line === BLANK
-                  ? "> "
-                  : `> ${line}`,
+            line.startsWith(`${LITERAL}${LAZY}`)
+                ? line
+                : line === "" || line === BLANK_TIGHT
+                  ? ">"
+                  : line === BLANK
+                    ? "> "
+                    : `> ${line}`,
         );
+        return container === "root"
+            ? this.#quoteIndents(quote, printed)
+            : printed;
+    }
+
+    /**
+     * Like Biome, a quote keeps the indentation before the `>` of the lines
+     * whose prefix it prints from the source. A paragraph that continues on
+     * another line of the quote makes it print every prefix anew, without
+     * indentation, as do wrapped prose after the first line and list items
+     * after the first of their list.
+     */
+    #quoteIndents(quote: Md.BlockQuote, printed: string[]): string[] {
+        const indent = (line: number) =>
+            /^([ \t]*)>/.exec(this.#source[line - 1] ?? "")?.[1] ?? "";
+        const preserve = this.#options.proseWrap === "preserve";
+        if (preserve && this.#continued(quote.children, false)) return printed;
+        const generated = new Set<number>();
+        const visit = (blocks: Md.Block[], nested: boolean) => {
+            for (const block of blocks)
+                if (block.type === "BlockQuote") visit(block.children, nested);
+                else if (block.type === "List")
+                    for (const [index, item] of block.children.entries()) {
+                        if (index > 0 || nested) generated.add(item.line);
+                        visit(item.children, true);
+                    }
+        };
+        visit(quote.children, false);
+        const lineByLine =
+            preserve && printed.length === quote.endLine - quote.line + 1;
+        return printed.map((line, index) =>
+            index === 0 || (lineByLine && !generated.has(quote.line + index))
+                ? `${indent(quote.line + index)}${line}`
+                : line,
+        );
+    }
+
+    /**
+     * Whether a paragraph continues on a line, not after a hard break, whose
+     * text follows its `>` directly, or on an indented lazy line outside list
+     * items.
+     */
+    #continued(blocks: Md.Block[], item: boolean): boolean {
+        return blocks.some((block) => {
+            if (block.type === "BlockQuote")
+                return this.#continued(block.children, item);
+            if (block.type === "List")
+                return block.children.some((child) =>
+                    this.#continued(child.children, true),
+                );
+            if (block.type !== "Paragraph") return false;
+            for (let line = block.line + 1; line <= block.endLine; line++) {
+                if (/(?: {2,}|\\)$/.test(this.#source[line - 2] ?? ""))
+                    continue;
+                const source = this.#source[line - 1] ?? "";
+                const text = source.replace(/^(?:[ \t]*>[ \t]?)*/, "");
+                if (text.trim() === "") continue;
+                const lazy = !/^[ \t]*>/.test(source);
+                if (!/^[ \t]/.test(text) || (lazy && !item)) return true;
+            }
+            return false;
+        });
     }
 
     /** A blank line of a quote, `> ` when its source line ends with a space after `>`. */
@@ -361,7 +483,9 @@ export default class Markdown {
     #item(item: Md.ListItem, marker: string, width: number): string[] {
         const spaces = Math.max(item.spaces, 1);
         const align = marker.length + spaces;
+        this.#items++;
         const lines = this.#blocks(item.children, "item", width + align, item);
+        this.#items--;
         const first = item.children[0];
         if (first?.type === "ThematicBreak" && marker === "-") lines[0] = "***";
         if (item.checked !== null && first?.type === "Paragraph")
@@ -475,6 +599,10 @@ export default class Markdown {
         breaks: boolean,
         indents: string[] = [],
         outdent?: Outdent,
+        /** Whether the text of emphasis wraps like the text around it, like Biome outside quotes. */
+        emphasis = true,
+        /** The whitespace that starts each line in the source, which code spans keep when joined. */
+        spaces: string[] = [],
     ): string[] {
         const tokens: Token[] = [];
         let word = "";
@@ -482,42 +610,97 @@ export default class Markdown {
             if (word) tokens.push({ kind: "word", text: word });
             word = "";
         };
-        for (const [index, inline] of inlines.entries()) {
-            if (inline.type === "Text") {
-                for (const part of inline.raw.split(/([\t\n\f\r ]+)/)) {
-                    if (part === "") continue;
-                    if (/^[\t\n\f\r ]+$/.test(part)) {
-                        finish();
-                        tokens.push({ kind: "space" });
-                    } else word += part;
+        const wrap = this.#options.proseWrap;
+        const tokenize = (inlines: Md.Inline[], ancestors: Md.Inline[]) => {
+            for (const [index, inline] of inlines.entries()) {
+                if (inline.type === "Text") {
+                    for (const part of inline.raw.split(/([\t\n\f\r ]+)/)) {
+                        if (part === "") continue;
+                        if (/^[\t\n\f\r ]+$/.test(part)) {
+                            finish();
+                            tokens.push({ kind: "space" });
+                        } else word += part;
+                    }
+                } else if (
+                    inline.type === "Break" &&
+                    inline.hard &&
+                    ancestors.length > 0
+                ) {
+                    // like Biome, a hard break keeps the emphasis around it whole
+                    word += inline.raw;
+                } else if (inline.type === "Break") {
+                    finish();
+                    tokens.push(
+                        inline.hard && breaks
+                            ? { kind: "hard", raw: inline.raw }
+                            : {
+                                  kind: "soft",
+                                  line:
+                                      text.slice(0, inline.end).split("\n")
+                                          .length - 1,
+                              },
+                    );
+                } else if (
+                    inline.type === "Code" &&
+                    wrap !== "preserve" &&
+                    inline.raw.includes("\n")
+                ) {
+                    // like Biome, wrapped prose joins the lines of code spans
+                    let line =
+                        text.slice(0, inline.start).split("\n").length - 1;
+                    word += Markdown.#code(
+                        inline.raw.replace(
+                            /\r?\n/g,
+                            () => ` ${spaces[++line] ?? ""}`,
+                        ),
+                    );
+                } else {
+                    // like Biome, the text of emphasis wraps like the text around it
+                    if (
+                        emphasis &&
+                        wrap !== "preserve" &&
+                        ["Emphasis", "Strong", "Strikethrough"].includes(
+                            inline.type,
+                        )
+                    ) {
+                        let content: [Md.Inline[], Md.Inline[]] | undefined;
+                        const markers = this.#inline(
+                            inline,
+                            text,
+                            inlines,
+                            index,
+                            ancestors,
+                            (children, ancestors) => {
+                                content = [children, ancestors];
+                                return HOLE;
+                            },
+                        ).split(HOLE);
+                        if (content && markers.length === 2) {
+                            word += markers[0];
+                            tokenize(...content);
+                            word += markers[1];
+                            continue;
+                        }
+                    }
+                    // lines inside links, code and HTML keep their indentation
+                    let line =
+                        text.slice(0, inline.start).split("\n").length - 1;
+                    word += this.#inline(
+                        inline,
+                        text,
+                        inlines,
+                        index,
+                        ancestors,
+                    ).replace(/\n/g, () => `\n${indents[++line] ?? ""}`);
                 }
-            } else if (inline.type === "Break") {
-                finish();
-                tokens.push(
-                    inline.hard && breaks
-                        ? { kind: "hard", raw: inline.raw }
-                        : {
-                              kind: "soft",
-                              line:
-                                  text.slice(0, inline.end).split("\n").length -
-                                  1,
-                          },
-                );
-            } else {
-                // lines inside links, code and HTML keep their indentation
-                let line = text.slice(0, inline.start).split("\n").length - 1;
-                word += this.#inline(inline, text, inlines, index, []).replace(
-                    /\n/g,
-                    () => `\n${indents[++line] ?? ""}`,
-                );
             }
-        }
+        };
+        tokenize(inlines, []);
         finish();
 
         // the words of each line, ended by a hard break or not
         const lines: { words: string[]; hard: string }[] = [];
         let line: string[] = [];
-        const wrap = this.#options.proseWrap;
         const end = (hard = "") => {
             lines.push({ words: line, hard });
             line = [];
@@ -577,13 +760,18 @@ export default class Markdown {
         return segments.flatMap(({ words, hard }) => {
             const filled: string[] = [];
             let current = "";
+            // like Biome, always puts a word of several lines on lines of its own
+            let alone = false;
             for (const word of words) {
                 const [first = "", ...rest] = word.split("\n");
+                const lines = wrap === "always" && rest.length > 0;
                 if (
                     wrap === "always" &&
                     current &&
-                    Markdown.width(current) + 1 + Markdown.width(first) >
-                        available
+                    (alone ||
+                        lines ||
+                        Markdown.width(current) + 1 + Markdown.width(first) >
+                            available)
                 ) {
                     filled.push(current);
                     current = first;
@@ -593,6 +781,7 @@ export default class Markdown {
                     filled.push(current);
                     current = line;
                 }
+                alone = lines;
             }
             filled.push(current + hard);
             return filled;
@@ -618,19 +807,26 @@ export default class Markdown {
         siblings: Md.Inline[],
         index: number,
         ancestors: Md.Inline[],
+        content?: Content,
     ): string {
         const inner = (children: Md.Inline[]) =>
-            this.#inlines(children, text, [...ancestors, inline]);
+            content
+                ? content(children, [...ancestors, inline])
+                : this.#inlines(children, text, [...ancestors, inline]);
         switch (inline.type) {
-            case "Code":
-                return inline.raw.includes("\n") ||
+            case "Code": {
+                if (
                     ancestors.some(
                         (ancestor) =>
                             ancestor.type === "Link" ||
                             ancestor.type === "Image",
                     )
+                )
+                    return inline.raw;
+                return inline.raw.includes("\n")
                     ? inline.raw
                     : Markdown.#code(inline.raw);
+            }
             case "Text":
             case "Autolink":
             case "Html":
@@ -650,7 +846,14 @@ export default class Markdown {
                 return `**${content}**`;
             }
             case "Emphasis":
-                return this.#emphasis(inline, text, siblings, index, ancestors);
+                return this.#emphasis(
+                    inline,
+                    text,
+                    siblings,
+                    index,
+                    ancestors,
+                    content,
+                );
             case "Link":
             case "Image": {
                 const content = inner(inline.children);
@@ -672,16 +875,28 @@ export default class Markdown {
         siblings: Md.Inline[],
         index: number,
         ancestors: Md.Inline[],
+        content?: Content,
     ): string {
-        const inner = (children: Md.Inline[]) =>
-            this.#inlines(children, text, [...ancestors, emphasis]);
+        const inner = (
+            children: Md.Inline[],
+            within: Md.Inline[] = [emphasis],
+        ) =>
+            content
+                ? content(children, [...ancestors, ...within])
+                : this.#inlines(children, text, [...ancestors, ...within]);
         const original = emphasis.delimiter;
         const parent = ancestors.at(-1);
         if (
             ancestors.some(
                 (ancestor) => ancestor.type === "Image" && ancestor.reference,
             ) ||
-            (parent?.type === "Link" && parent.reference)
+            (parent?.type === "Link" && parent.reference) ||
+            // like Biome, emphasis of several lines in a link keeps its delimiter
+            (ancestors.some(
+                (ancestor) =>
+                    ancestor.type === "Link" || ancestor.type === "Image",
+            ) &&
+                text.slice(emphasis.start, emphasis.end).includes("\n"))
         )
             return `${original}${inner(emphasis.children)}${original}`;
 
@@ -704,7 +919,7 @@ export default class Markdown {
             only?.type === "Strong" &&
             only.delimiter === "**"
         )
-            return `**_${this.#inlines(only.children, text, [...ancestors, emphasis, only])}_**`;
+            return `**_${inner(only.children, [emphasis, only])}_**`;
 
         let target = ancestors.some((ancestor) => ancestor.type === "Emphasis")
             ? "*"

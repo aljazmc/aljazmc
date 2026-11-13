@@ -81,7 +81,7 @@ export function parseCssValues(source: string, start = 0, end = source.length) {
     return CssParser.values(source, start, end);
 }
 
-/** Parses HTML like Biome, throwing a ParseError at the first error. */
+/** Parses HTML, throwing a ParseError at the first error. */
 export function parseHtml(source: string): HtmlRoot {
     return new HtmlParser(source).parse();
 }

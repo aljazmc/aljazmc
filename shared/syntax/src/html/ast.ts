@@ -58,8 +58,8 @@ export interface AttributeValue extends Base<"AttributeValue"> {
 }
 
 /**
- * A run of text, without the whitespace around it, which is trivia like in
- * Biome. A blank line ends a text, the next one starts after it.
+ * A run of text, without the whitespace around it, which is trivia. A
+ * blank line ends a text, the next one starts after it.
  */
 export interface Text extends Base<"Text"> {
     /** The text as written, character references are not decoded. */

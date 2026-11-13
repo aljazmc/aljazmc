@@ -621,7 +621,7 @@ export default class Blocks {
                 }
             }
 
-            // like Biome, a table when the header has a pipe, before setext headings
+            // a table when the header has a pipe, before setext headings
             if (
                 this.#gfm &&
                 container.kind === "Paragraph" &&

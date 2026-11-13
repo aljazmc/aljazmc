@@ -96,7 +96,7 @@ export default class Parser {
             this.#index = start;
             const from = this.#peek().start;
             this.#skipItem();
-            // like Biome, what was skipped is still an item, a block with it is not empty
+            // what was skipped is still an item, a block with it is not empty
             return {
                 type: "Empty",
                 start: from,
@@ -214,7 +214,7 @@ export default class Parser {
     #isDeclaration(): boolean {
         const token = this.#peek();
         if (token.type !== "ident") {
-            // like Biome, IE hacks like `*zoom` are declarations
+            // IE hacks like `*zoom` are declarations
             if (
                 token.type === "delim" &&
                 /^[*_]$/.test(token.value) &&
@@ -431,7 +431,7 @@ export default class Parser {
         const { start, end, value } = token;
         switch (token.type) {
             case "ident":
-                // like Biome, whitespace may come between the name of a function and its parenthesis
+                // whitespace may come between the name of a function and its parenthesis
                 if (
                     this.#declarationValue &&
                     !/^(?:and|or|not)$/i.test(value) &&
@@ -976,7 +976,7 @@ class SelectorParser {
         this.#position++;
         const element = this.#char() === ":";
         if (element) this.#position++;
-        // like Biome, comments and whitespace may follow the colons
+        // comments and whitespace may follow the colons
         this.#trivia();
         if (!this.#isNameStart()) this.#error("Expected a pseudo name");
         const name = this.#name();

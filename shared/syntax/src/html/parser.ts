@@ -54,7 +54,7 @@ export function tagOf(name: string): string | null {
 }
 
 /**
- * Parses HTML like Biome: elements are closed explicitly, only void ones may
+ * Parses HTML: elements are closed explicitly, only void ones may
  * have no closing tag, and whitespace and comments are trivia between nodes.
  */
 export default class Parser {
@@ -71,7 +71,7 @@ export default class Parser {
         const bom = source.startsWith("\uFEFF");
         if (bom) this.#position = 1;
 
-        // like Biome, only Astro files have front matter
+        // only Astro files have front matter
         if (source.startsWith("---", this.#position))
             this.#error("Frontmatter is only valid inside Astro files.");
         this.#trivia();
@@ -110,7 +110,7 @@ export default class Parser {
             if (!source.startsWith("<!--", this.#position)) return;
             const start = this.#position;
             const close = source.indexOf("-->", start + 4);
-            // like Biome, an unterminated comment runs to the end of the file
+            // an unterminated comment runs to the end of the file
             this.#position = close < 0 ? source.length : close + 3;
             this.#comments.push({
                 type: "Comment",
@@ -423,7 +423,7 @@ export default class Parser {
                 ? source.slice(from, this.#position)
                 : null;
         };
-        // like Biome, any `<!` declaration starting the file is read like a doctype
+        // any `<!` declaration starting the file is read like a doctype
         const keyword = word() ?? "";
         const name = word();
         const literal = word();

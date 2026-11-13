@@ -369,7 +369,7 @@ export default class Tokenizer {
                 continue;
             }
             if (char === "(") {
-                // like Biome, `url(var(--a))` is a function with a function in it
+                // `url(var(--a))` is a function with a function in it
                 this.#position = start + name.length + 1;
                 return {
                     type: "function",

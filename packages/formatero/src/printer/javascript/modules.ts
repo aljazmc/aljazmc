@@ -76,7 +76,10 @@ export default class Modules extends Section {
 
     #exportNamed(node: NodeOf<"ExportNamedDeclaration">): Doc {
         const parts: Doc[] = [this.#decoratorsBeforeExport(node), "export"];
-        const dangling = this.printer.dangling(node);
+        // the comments in empty braces print inside them
+        const dangling = this.printer.dangling(node, {
+            filter: (comment) => !this.#inBraces(comment),
+        });
         if (dangling !== "") parts.push(" ", dangling, hardline);
 
         if (node.declaration) {
@@ -140,7 +143,13 @@ export default class Modules extends Section {
     }
 
     #specifiers(node: WithSpecifiers, prefix: string): Doc {
-        if (node.specifiers.length === 0) return [prefix, "{}"];
+        if (node.specifiers.length === 0)
+            return [
+                prefix,
+                this.printer.enclosed(node, "{", "}", (comment) =>
+                    this.#inBraces(comment),
+                ),
+            ];
 
         const standalone: Doc[] = [];
         const grouped: Doc[] = [];
@@ -181,6 +190,13 @@ export default class Modules extends Section {
             } else parts.push("{", space, ...grouped, space, "}");
         }
         return parts;
+    }
+
+    /** Whether a comment is right before a `}`, inside the braces of names. */
+    #inBraces(comment: { end: number }): boolean {
+        return /^(?:\s|\/\/[^\n]*|\/\*[\s\S]*?\*\/)*\}/.test(
+            this.printer.source.slice(comment.end),
+        );
     }
 
     /** Import attributes break like an object: `with { type: "json" }`. */

@@ -272,6 +272,34 @@ export default class Printer {
         return join(literalline, comment.value.split("\n"));
     }
 
+    /**
+     * Brackets with the dangling comments between them, like `(/* c *\/)`. A
+     * line comment would hide the closing bracket, so then the comments go on
+     * lines of their own, indented.
+     */
+    enclosed(
+        node: Node,
+        open: string,
+        close: string,
+        filter?: (comment: Attached) => boolean,
+    ): Doc {
+        const comments = (node.comments ?? []).filter(
+            (comment) =>
+                comment.placement === "dangling" &&
+                (!filter || filter(comment)),
+        );
+        if (comments.length === 0) return [open, close];
+        const options = filter ? { filter } : {};
+        if (comments.every((comment) => comment.type === "Block"))
+            return [open, this.dangling(node, options), close];
+        return [
+            open,
+            this.dangling(node, { ...options, indented: true }),
+            hardline,
+            close,
+        ];
+    }
+
     /** Prints dangling comments, optionally indented on their own lines. */
     dangling(
         node: Node,

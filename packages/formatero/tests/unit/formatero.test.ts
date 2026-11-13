@@ -1,6 +1,7 @@
 import Config from "@aljazmc/config";
 import defaults from "../../src/config.ts";
 import EditorConfig from "../../src/editorconfig.ts";
+import { formatFiles } from "../../src/files.ts";
 import Formatero, { FormatError } from "../../src/formatero.ts";
 import {
     conditionalGroup,
@@ -1269,6 +1270,183 @@ describe("formatero", () => {
         test("text files are reindented line by line, a tab is one level", () => {
             expect(format("a:\n  b:\n\t\tc\n", "a.yml")).toBe(
                 "a:\n    b:\n        c\n",
+            );
+        });
+    });
+
+    describe("regressions", () => {
+        /** Formats, and checks that formatting the output changes nothing. */
+        const stable = (source: string, file = "a.ts", rules: object = {}) => {
+            const once = format(source, file, rules);
+            expect(format(once, file, rules)).toBe(once);
+            return once;
+        };
+
+        test("line comments in empty brackets get lines of their own, not hiding the bracket", () => {
+            expect(stable("const f = ( // C\n) => 1;\n")).toBe(
+                "const f = (\n    // C\n) => 1;\n",
+            );
+            expect(stable("function g( // C\n) {}\n")).toBe(
+                "function g(\n    // C\n) {}\n",
+            );
+            expect(stable("class A {\n    m( // C\n    ) {}\n}\n")).toBe(
+                "class A {\n    m(\n        // C\n    ) {}\n}\n",
+            );
+            expect(stable("x = <div>{ // C\n}</div>;\n", "a.tsx")).toBe(
+                "x = (\n    <div>\n        {\n            // C\n        }\n    </div>\n);\n",
+            );
+            // block comments stay inline
+            expect(stable("const f = (/* C */) => 1;\n")).toBe(
+                "const f = (/* C */) => 1;\n",
+            );
+            expect(stable("x = <div>{/* C */}</div>;\n", "a.tsx")).toBe(
+                "x = <div>{/* C */}</div>;\n",
+            );
+        });
+
+        test("comments before the semicolon of break and continue are kept", () => {
+            expect(
+                stable(
+                    "for (;;) {\n    continue /* C */;\n    break /* D */;\n}\n",
+                ),
+            ).toBe(
+                "for (;;) {\n    continue /* C */;\n    break /* D */;\n}\n",
+            );
+            expect(
+                stable("a: for (;;) {\n    continue a // C\n    ;\n}\n"),
+            ).toBe("a: for (;;) {\n    continue a; // C\n}\n");
+        });
+
+        test("a comment that would be lost in an HTML script fails the file, not the run", () => {
+            const html = { html: { enabled: true } };
+            expect(() =>
+                format(
+                    "<script>\nfunction f() { return new /* C */.target; }\n</script>\n",
+                    "a.html",
+                    html,
+                ),
+            ).toThrow(FormatError);
+            const log: string[] = [];
+            const saved: string[] = [];
+            const passed = formatFiles(
+                [
+                    { file: "a.js", path: "/a.js", text: "let  a\n" },
+                    { file: "b.js", path: "/b.js", text: "b\n" },
+                    { file: "c.js", path: "/c.js", text: "let  c\n" },
+                ],
+                (text, file) => {
+                    if (file === "b.js") throw new TypeError("a bug");
+                    return format(text, file);
+                },
+                {
+                    write: true,
+                    log: (line) => log.push(line),
+                    save: (path) => saved.push(path),
+                },
+            );
+            expect(passed).toBe(false);
+            expect(saved).toEqual(["/a.js", "/c.js"]);
+            expect(log[0]).toBe("formatted: a.js");
+            expect(log[1]).toMatch(
+                /^error: b\.js: formatero failed, please report it: TypeError: a bug/,
+            );
+            expect(log[2]).toBe("formatted: c.js");
+        });
+
+        test("Markdown lines that would start a block once unindented join the line before", () => {
+            for (const proseWrap of ["preserve", "always"]) {
+                const markdown = { markdown: { proseWrap } };
+                const md = (source: string) => stable(source, "a.md", markdown);
+                expect(md("Text:\n\t- a\n\t- b\n")).toBe("Text: - a - b\n");
+                expect(md("Text\n    # not a heading\n")).toBe(
+                    "Text # not a heading\n",
+                );
+                expect(md("Text\n    > not a quote\n")).toBe(
+                    "Text > not a quote\n",
+                );
+                expect(md("Text\n    1. not a list\n")).toBe(
+                    "Text 1. not a list\n",
+                );
+                expect(md("Text\n    ---\n")).toBe("Text ---\n");
+            }
+            // only 1 starts an ordered list that interrupts a paragraph
+            expect(stable("Text\n2. stays a line\n", "a.md")).toBe(
+                "Text\n2. stays a line\n",
+            );
+            // wrapping never starts a line with a list marker
+            expect(
+                stable("aaaaaaaaaa bbbbbbbb - cc dd\n", "a.md", {
+                    lineWidth: 20,
+                    markdown: { proseWrap: "always" },
+                }),
+            ).toBe("aaaaaaaaaa bbbbbbbb -\ncc dd\n");
+        });
+
+        test("comments in unions, module names and mapped types stay where they are", () => {
+            expect(stable('type T =\n    | "a"\n    // B\n    | "b";\n')).toBe(
+                'type T =\n    | "a"\n    // B\n    | "b";\n',
+            );
+            expect(stable('import {\n    a,\n    // b,\n} from "x";\n')).toBe(
+                'import {\n    a,\n    // b,\n} from "x";\n',
+            );
+            expect(stable('import { // C\n} from "x";\n')).toBe(
+                'import {\n    // C\n} from "x";\n',
+            );
+            expect(
+                stable(
+                    "type A = {\n    // before the key\n    [K in keyof T]:\n        // before the type\n        T[K];\n};\n",
+                ),
+            ).toBe(
+                "type A = {\n    // before the key\n    [K in keyof T]: // before the type\n    T[K];\n};\n",
+            );
+            expect(stable("type B = { /* c */ [K in keyof T]: T[K] };\n")).toBe(
+                "type B = { /* c */ [K in keyof T]: T[K] };\n",
+            );
+        });
+
+        test("comments in parentheses that are not printed go where they print", () => {
+            expect(
+                stable(
+                    "x = ((0x30/* 0 */ <= c) && (c <= 0x39/* 9 */)) || d;\n",
+                ),
+            ).toBe("x = (0x30 /* 0 */ <= c && c <= 0x39) /* 9 */ || d;\n");
+            expect(stable("x = a && (( // empty\n b && c) || d);\n")).toBe(
+                "x =\n    a && // empty\n    ((b && c) || d);\n",
+            );
+            // comments on lines of their own stay
+            expect(
+                stable(
+                    "f = (p) => !(\n    /* start */\n    (a > b)\n    /* stop */\n);\n",
+                ),
+            ).toBe(
+                "f = (p) =>\n    !(\n        /* start */\n        (a > b)\n        /* stop */\n    );\n",
+            );
+        });
+
+        test("line comments before bodies, catch clauses and values move like Biome moves them", () => {
+            expect(
+                stable(
+                    "interface A // C\n{\n    a: string;\n}\nfunction f(): number // D\n{\n    return 1;\n}\n",
+                ),
+            ).toBe(
+                "interface A {\n    // C\n    a: string;\n}\nfunction f(): number {\n    // D\n    return 1;\n}\n",
+            );
+            expect(
+                stable(
+                    "interface VirtualFileSystem\n    extends // Synchronous API\n        Pick<A, B> {}\n",
+                ),
+            ).toBe(
+                "interface VirtualFileSystem // Synchronous API\n    extends Pick<A, B> {}\n",
+            );
+            expect(
+                stable("try {\n    a();\n} // C\ncatch {\n    b();\n}\n"),
+            ).toBe("try {\n    a();\n} catch {\n    // C\n    b();\n}\n");
+            expect(
+                stable(
+                    'const file = // C\n    long === "." ? "package.json" : `${root}/package.json/and/more/text/here`;\n',
+                ),
+            ).toBe(
+                'const file =\n    // C\n    long === "." ? "package.json" : `${root}/package.json/and/more/text/here`;\n',
             );
         });
     });

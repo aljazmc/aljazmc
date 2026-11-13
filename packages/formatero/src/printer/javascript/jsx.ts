@@ -417,7 +417,10 @@ export default class Jsx extends Section {
     #container(node: NodeOf<"JSXExpressionContainer">): Doc {
         const { expression } = node;
         if (!expression)
-            return ["{", this.printer.dangling(node), lineSuffixBoundary, "}"];
+            // a line comment would hide the `}`, it gets lines of its own
+            return node.comments?.some((comment) => comment.type === "Line")
+                ? this.printer.enclosed(node, "{", "}")
+                : ["{", this.printer.dangling(node), lineSuffixBoundary, "}"];
         const parent = this.printer.parent();
         const inline =
             !this.printer.hasComment(expression) &&

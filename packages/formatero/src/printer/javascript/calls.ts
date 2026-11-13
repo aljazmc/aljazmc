@@ -136,7 +136,7 @@ export default class Calls extends Section {
                 !this.printer.hasDangling(node)
             )
                 return "()";
-            return ["(", this.printer.dangling(node), ")"];
+            return this.printer.enclosed(node, "(", ")");
         }
 
         if (this.#hookWithDependencies(args))

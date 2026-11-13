@@ -550,11 +550,26 @@ export default class TypeScript extends Section {
             value === "+" || value === "-" ? value + keyword : keyword;
         const spacing = this.options.bracketSpacing ? line : softline;
         const constraintStart = this.print(node.constraint);
+        // comments before the `[` print there, the others before the `}`
+        const opening =
+            /^\{(?:\s|\/\/[^\n]*|\/\*[\s\S]*?\*\/|[+-]?readonly\b)*/.exec(
+                this.printer.source.slice(node.start),
+            )?.[0] ?? "";
+        const bracket = node.start + opening.length;
+        const before = (comment: { end: number }) => comment.end <= bracket;
+        const head = this.printer.dangling(node, { filter: before });
+        const lines = node.comments?.some(
+            (comment) =>
+                comment.placement === "dangling" &&
+                before(comment) &&
+                comment.type === "Line",
+        );
         return group(
             [
                 "{",
                 indent([
                     spacing,
+                    head === "" ? "" : [head, lines ? hardline : " "],
                     group([
                         node.readonly
                             ? [modifier(node.readonly, "readonly"), " "]
@@ -573,7 +588,9 @@ export default class TypeScript extends Section {
                     ]),
                     this.options.semicolons ? ifBreak(";") : "",
                 ]),
-                this.printer.dangling(node),
+                this.printer.dangling(node, {
+                    filter: (comment) => !before(comment),
+                }),
                 spacing,
                 "}",
             ],

@@ -15,6 +15,44 @@ interface Context {
 
 /** Attaches comments to the nodes around them, after Prettier's attach algorithm. */
 export default class Comments {
+    /**
+     * Nodes whose first child may be in grouping parentheses at their start,
+     * and whose last child at their end: they have no parentheses of their own
+     * there, unlike calls, arrow functions and statements.
+     */
+    static readonly #opens = new Set([
+        "AssignmentExpression",
+        "BinaryExpression",
+        "CallExpression",
+        "ConditionalExpression",
+        "LogicalExpression",
+        "MemberExpression",
+        "SequenceExpression",
+        "TaggedTemplateExpression",
+        "TSAsExpression",
+        "TSNonNullExpression",
+        "TSSatisfiesExpression",
+    ]);
+    static readonly #closes = new Set([
+        "ArrowFunctionExpression",
+        "AssignmentExpression",
+        "AwaitExpression",
+        "BinaryExpression",
+        "ConditionalExpression",
+        "LogicalExpression",
+        "SequenceExpression",
+        "SpreadElement",
+        "UnaryExpression",
+    ]);
+
+    /** Whether text is only parentheses of a kind, with whitespace and comments. */
+    static #parentheses(text: string, kind: "(" | ")"): boolean {
+        const bare = text.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, "");
+        return (
+            bare.includes(kind) && new RegExp(`^[\\s\\${kind}]*$`).test(bare)
+        );
+    }
+
     /** Nodes that cannot hold comments, their comments go to neighbours. */
     static readonly #detached = new Set(["EmptyStatement", "TemplateElement"]);
 
@@ -107,6 +145,7 @@ export default class Comments {
         let enclosing = root;
         let preceding: Node | undefined;
         let following: Node | undefined;
+        const path: Node[] = [root];
 
         for (;;) {
             let inner: Node | undefined;
@@ -123,6 +162,42 @@ export default class Comments {
             }
             if (!inner) break;
             enclosing = inner;
+            path.push(inner);
+        }
+
+        // a comment just inside grouping parentheses, on the line of the
+        // code before it, goes where the printer puts it: outside of them,
+        // around the node they wrap; one on a line of its own stays
+        const ownLine = /(?:^|\n)[^\S\n]*$/.test(
+            this.#source.slice(0, comment.start),
+        );
+        for (;;) {
+            const parent = path.at(-2);
+            if (!parent || ownLine) break;
+            const opening =
+                !preceding &&
+                following !== undefined &&
+                Comments.#opens.has(enclosing.type) &&
+                Comments.#parentheses(
+                    this.#source.slice(enclosing.start, comment.start),
+                    "(",
+                );
+            const closing =
+                !following &&
+                preceding !== undefined &&
+                Comments.#closes.has(enclosing.type) &&
+                Comments.#parentheses(
+                    this.#source.slice(comment.end, enclosing.end),
+                    ")",
+                );
+            if (!opening && !closing) break;
+            const node = enclosing;
+            path.pop();
+            enclosing = parent;
+            const siblings = this.#childrenOf(parent);
+            const index = siblings.indexOf(node);
+            preceding = opening ? siblings[index - 1] : node;
+            following = opening ? node : siblings[index + 1];
         }
 
         const context: Context = { comment, enclosing };
@@ -182,7 +257,13 @@ export default class Comments {
 
     #ownLineHandler(context: Context): boolean {
         return (
+            this.#unionMember(context) ||
+            this.#moduleSpecifiers(context) ||
+            this.#interfaceHeritage(context) ||
+            this.#mappedType(context) ||
             this.#ifStatement(context, true) ||
+            this.#tryClause(context) ||
+            this.#beforeBody(context) ||
             this.#conditional(context) ||
             this.#memberExpression(context) ||
             this.#blockEnd(context) ||
@@ -192,20 +273,137 @@ export default class Comments {
 
     #endOfLineHandler(context: Context): boolean {
         return (
+            this.#unionMember(context) ||
+            this.#moduleSpecifiers(context) ||
+            this.#interfaceHeritage(context) ||
+            this.#mappedType(context) ||
             this.#ifStatement(context, false) ||
+            this.#tryClause(context) ||
+            this.#beforeBody(context) ||
+            this.#conditional(context) ||
+            this.#emptyParameters(context) ||
+            this.#propertyValue(context) ||
+            this.#assignedValue(context)
+        );
+    }
+
+    #remainingHandler(context: Context): boolean {
+        return (
+            this.#moduleSpecifiers(context) ||
+            this.#mappedType(context) ||
+            this.#ifStatement(context, false) ||
+            this.#tryClause(context) ||
             this.#conditional(context) ||
             this.#emptyParameters(context) ||
             this.#propertyValue(context)
         );
     }
 
-    #remainingHandler(context: Context): boolean {
-        return (
-            this.#ifStatement(context, false) ||
-            this.#conditional(context) ||
-            this.#emptyParameters(context) ||
-            this.#propertyValue(context)
-        );
+    /**
+     * Comments between the members of a union trail the member before, like
+     * Prettier's: before the next `|` they would end up after it.
+     */
+    #unionMember({ comment, enclosing, preceding }: Context): boolean {
+        if (enclosing.type !== "TSUnionType" || !preceding) return false;
+        this.#add(preceding, comment, "trailing");
+        return true;
+    }
+
+    /**
+     * Comments before the `}` of imported or exported names trail the last
+     * name, or stay inside the braces when there are none, instead of
+     * leading the module after `from`.
+     */
+    #moduleSpecifiers({ comment, enclosing, preceding }: Context): boolean {
+        if (
+            enclosing.type !== "ImportDeclaration" &&
+            enclosing.type !== "ExportNamedDeclaration"
+        )
+            return false;
+        if (this.#nextCharacter(comment.end) !== "}") return false;
+        if (
+            preceding?.type === "ImportSpecifier" ||
+            preceding?.type === "ExportSpecifier"
+        )
+            this.#add(preceding, comment, "trailing");
+        else this.#add(enclosing, comment, "dangling");
+        return true;
+    }
+
+    /**
+     * A line comment right before the `{` of a body, which must stay on the
+     * line before it, goes into the body, like Biome: before its first
+     * statement or member, or alone in it.
+     */
+    #beforeBody({ comment, following }: Context): boolean {
+        if (
+            comment.type !== "Line" ||
+            !following ||
+            !Comments.#bodies.has(following.type) ||
+            this.#nextCharacter(comment.end) !== "{"
+        )
+            return false;
+        const [first] = this.#childrenOf(following);
+        if (first) this.#add(first, comment, "leading");
+        else this.#add(following, comment, "dangling");
+        return true;
+    }
+
+    static readonly #bodies = new Set([
+        "BlockStatement",
+        "ClassBody",
+        "StaticBlock",
+        "TSInterfaceBody",
+        "TSModuleBlock",
+    ]);
+
+    /**
+     * In `{ [Key in Keys]: Type }`, comments before the `[` stay there, the key
+     * is no node they could lead, and comments after the `:` lead the type.
+     */
+    #mappedType({
+        comment,
+        enclosing,
+        preceding,
+        following,
+    }: Context): boolean {
+        if (enclosing.type !== "TSMappedType") return false;
+        const bracket = this.#source.indexOf("[", comment.end);
+        if (!preceding && following && bracket < following.start) {
+            this.#add(enclosing, comment, "dangling");
+            return true;
+        }
+        if (
+            preceding &&
+            following === enclosing.typeAnnotation &&
+            this.#source.slice(preceding.end, comment.start).includes("]")
+        ) {
+            this.#add(following, comment, "leading");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Comments between the name of an interface and the types it extends
+     * trail the name: after `extends` they would lead the first type, which
+     * prints after `extends` on the same line.
+     */
+    #interfaceHeritage({
+        comment,
+        enclosing,
+        preceding,
+        following,
+    }: Context): boolean {
+        if (
+            enclosing.type !== "TSInterfaceDeclaration" ||
+            !preceding ||
+            !following ||
+            following !== enclosing.extends?.[0]
+        )
+            return false;
+        this.#add(preceding, comment, "trailing");
+        return true;
     }
 
     /** `if (a /* comment *\/) {}`, comments before `else` and before the consequent block. */
@@ -310,6 +508,51 @@ export default class Comments {
         )
             return false;
         this.#add(fn, comment, "dangling");
+        return true;
+    }
+
+    /**
+     * `} // comment⏎catch {`: comments before `catch` or `finally` go into
+     * its block, before its first statement, like Prettier's and Biome's.
+     */
+    #tryClause({ comment, enclosing, preceding, following }: Context): boolean {
+        if (
+            enclosing.type !== "TryStatement" ||
+            !preceding ||
+            !following ||
+            (following !== enclosing.handler &&
+                following !== enclosing.finalizer)
+        )
+            return false;
+        const block =
+            following.type === "CatchClause" ? following.body : following;
+        const [first] = this.#childrenOf(block);
+        if (first) this.#add(first, comment, "leading");
+        else this.#add(block, comment, "dangling");
+        return true;
+    }
+
+    /**
+     * `const a = // comment⏎value`: a line comment between a variable or an
+     * assignment target and its value leads the value, which then starts on
+     * the next line, instead of trailing the name and ending up wherever the
+     * value breaks first.
+     */
+    #assignedValue({
+        comment,
+        enclosing,
+        preceding,
+        following,
+    }: Context): boolean {
+        if (comment.type !== "Line" || !preceding || !following) return false;
+        const [target, value] =
+            enclosing.type === "VariableDeclarator"
+                ? [enclosing.id, enclosing.init]
+                : enclosing.type === "AssignmentExpression"
+                  ? [enclosing.left, enclosing.right]
+                  : [];
+        if (preceding !== target || following !== value) return false;
+        this.#add(following, comment, "leading");
         return true;
     }
 

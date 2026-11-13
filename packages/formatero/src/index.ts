@@ -1,8 +1,8 @@
-import { writeFileSync } from "node:fs";
 import Config from "@aljazmc/config";
 import defaults from "./config.js";
 import EditorConfig from "./editorconfig.js";
-import Formatero, { FormatError } from "./formatero.js";
+import { formatFiles } from "./files.js";
+import Formatero from "./formatero.js";
 
 if (Config.init("formatero", defaults)) process.exit();
 
@@ -24,23 +24,11 @@ const formateroFor = (file: string): Formatero =>
           )
         : formatero;
 
-for (const { file, path, text } of config.sources((file) =>
-    formatero.formats(file),
-)) {
-    let formatted: string;
-    try {
-        formatted = formateroFor(file).format(text, file);
-    } catch (error) {
-        if (!(error instanceof FormatError)) throw error;
-        process.exitCode = 1;
-        console.log(`error: ${file}:${error.message}`);
-        continue;
-    }
-
-    if (formatted === text) continue;
-
-    if (write) writeFileSync(path, formatted);
-    else process.exitCode = 1;
-
-    console.log(`${write ? "formatted" : "unformatted"}: ${file}`);
-}
+if (
+    !formatFiles(
+        config.sources((file) => formatero.formats(file)),
+        (text, file) => formateroFor(file).format(text, file),
+        { write },
+    )
+)
+    process.exitCode = 1;

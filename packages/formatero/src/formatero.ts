@@ -103,10 +103,7 @@ export default class Formatero {
             try {
                 printed = Formatero.#css(rules).format(source);
             } catch (error) {
-                if (
-                    error instanceof Error &&
-                    error.message.startsWith("Comment would be lost")
-                )
+                if (Formatero.#lost(error))
                     throw new FormatError(error.message);
                 if (!(error instanceof ParseError)) throw error;
                 const lines = new Lines(source);
@@ -269,34 +266,39 @@ export default class Formatero {
             useEditorconfig: _useEditorconfig,
             ...shared
         } = this.#rules;
-        if (language === "css")
-            try {
+        // a comment the printers would lose fails the file, not the run
+        try {
+            if (language === "css")
                 return Formatero.#css({ ...shared, ...css, ...layout })
                     .format(code, level)
                     .replace(/\n+$/, "");
-            } catch (error) {
-                if (
-                    error instanceof Error &&
-                    error.message.startsWith("Comment would be lost")
-                )
-                    throw new FormatError(error.message);
-                throw error;
-            }
-        const options =
-            language === "json"
-                ? Formatero.#options(
-                      { ...shared, ...json, ...layout, ...jsonDefaults },
-                      true,
-                      { typescript: false, jsx: false },
-                  )
-                : Formatero.#options(
-                      { ...shared, ...javascript, ...layout },
-                      false,
-                      { typescript: false, jsx: false },
-                  );
-        return new JavaScript(options)
-            .format(code, { typescript: false, jsx: false }, level)
-            .replace(/\n+$/, "");
+            const options =
+                language === "json"
+                    ? Formatero.#options(
+                          { ...shared, ...json, ...layout, ...jsonDefaults },
+                          true,
+                          { typescript: false, jsx: false },
+                      )
+                    : Formatero.#options(
+                          { ...shared, ...javascript, ...layout },
+                          false,
+                          { typescript: false, jsx: false },
+                      );
+            return new JavaScript(options)
+                .format(code, { typescript: false, jsx: false }, level)
+                .replace(/\n+$/, "");
+        } catch (error) {
+            if (Formatero.#lost(error)) throw new FormatError(error.message);
+            throw error;
+        }
+    }
+
+    /** Whether an error is a printer refusing to lose a comment. */
+    static #lost(error: unknown): error is Error {
+        return (
+            error instanceof Error &&
+            error.message.startsWith("Comment would be lost")
+        );
     }
 
     /** The CSS printer for rules. */
@@ -372,13 +374,7 @@ export default class Formatero {
             const printed = new JavaScript(options).format(source, language);
             return this.#finish(printed, shared);
         } catch (error) {
-            if (
-                !(error instanceof ParseError) &&
-                !(
-                    error instanceof Error &&
-                    error.message.startsWith("Comment would be lost")
-                )
-            )
+            if (!(error instanceof ParseError) && !Formatero.#lost(error))
                 throw error;
             if (shared.formatWithErrors) return fallback();
             if (!(error instanceof ParseError))

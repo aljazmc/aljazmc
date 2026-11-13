@@ -74,7 +74,7 @@ export default class Statements extends Section {
         p.handle(["BreakStatement", "ContinueStatement"], (node) => [
             node.type === "BreakStatement" ? "break" : "continue",
             node.label ? [" ", this.print(node.label)] : "",
-            p.semi,
+            this.#end(node),
         ]);
         p.handle(["LabeledStatement"], (node) =>
             node.body.type === "EmptyStatement"
@@ -501,12 +501,25 @@ export default class Statements extends Section {
                 );
             else parts.push(" ", this.print(argument));
         }
-        const dangling = this.printer.dangling(node);
-        const lastLine = node.comments?.at(-1)?.type === "Line";
-        if (lastLine) parts.push(this.printer.semi);
-        if (dangling !== "") parts.push(" ", dangling);
-        if (!lastLine) parts.push(this.printer.semi);
+        parts.push(this.#end(node));
         return parts;
+    }
+
+    /**
+     * The end of a jump statement, with the comments before its `;`, like
+     * `continue /* c *\/;`. A line comment goes after the `;`, which it would
+     * hide.
+     */
+    #end(node: Node): Doc {
+        const dangling = this.printer.dangling(node);
+        if (dangling === "") return this.printer.semi;
+        const lastLine =
+            node.comments
+                ?.filter((comment) => comment.placement === "dangling")
+                .at(-1)?.type === "Line";
+        return lastLine
+            ? [this.printer.semi, " ", dangling]
+            : [" ", dangling, this.printer.semi];
     }
 
     /** Whether the return argument starts with a comment on its own line. */

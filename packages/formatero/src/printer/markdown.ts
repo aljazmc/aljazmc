@@ -246,6 +246,38 @@ export default class Markdown {
         return [`${"#".repeat(heading.level)}${content ? ` ${content}` : ""}`];
     }
 
+    /** The text of the line that starts at a token, up to the next break. */
+    static #lineAt(tokens: Token[], start: number): string {
+        const words: string[] = [];
+        for (const token of tokens.slice(start)) {
+            if (token.kind === "word") words.push(token.text);
+            else if (token.kind !== "space") break;
+        }
+        return words.join(" ");
+    }
+
+    /** HTML blocks that interrupt a paragraph, CommonMark's kinds 1 to 6. */
+    static readonly #htmlBlock = new RegExp(
+        `^<(?:!--|\\?|![A-Za-z]|!\\[CDATA\\[|/?(?:${"address article aside base basefont blockquote body caption center col colgroup dd details dialog dir div dl dt fieldset figcaption figure footer form frame frameset h1 h2 h3 h4 h5 h6 head header hr html iframe legend li link main menu menuitem nav noframes ol optgroup option p param pre script search section style summary table tbody td textarea tfoot th thead title tr track ul"
+            .split(" ")
+            .join("|")})(?:[\\s/>]|$))`,
+        "i",
+    );
+
+    /**
+     * Whether a line of a paragraph would interrupt it, or turn it into a
+     * setext heading, at the start of a line: a heading, quote, fence,
+     * thematic break, setext underline, HTML block, a bullet with content or
+     * an ordered list starting at 1, by CommonMark.
+     */
+    static #startsBlock(line: string): boolean {
+        return (
+            /^(?:#{1,6}(?:[ \t]|$)|>|[-+*][ \t]+\S|1[.)][ \t]+\S|`{3,}|~{3,}|(?:[-*_][ \t]*){3,}$|=+[ \t]*$|-+[ \t]*$)/.test(
+                line,
+            ) || Markdown.#htmlBlock.test(line)
+        );
+    }
+
     #paragraph(
         paragraph: Md.Paragraph,
         container: Container,
@@ -729,6 +761,13 @@ export default class Markdown {
                     line.push(LITERAL);
                     continue;
                 }
+                // a line that would start a block once at the start of its
+                // line, like an indented `# text`, joins the line before
+                if (
+                    wrap === "preserve" &&
+                    Markdown.#startsBlock(Markdown.#lineAt(tokens, index + 1))
+                )
+                    continue;
                 end();
             }
         }
@@ -762,7 +801,7 @@ export default class Markdown {
             let current = "";
             // always puts a word of several lines on lines of its own
             let alone = false;
-            for (const word of words) {
+            for (const [index, word] of words.entries()) {
                 const [first = "", ...rest] = word.split("\n");
                 const lines = wrap === "always" && rest.length > 0;
                 if (
@@ -771,7 +810,11 @@ export default class Markdown {
                     (alone ||
                         lines ||
                         Markdown.width(current) + 1 + Markdown.width(first) >
-                            available)
+                            available) &&
+                    // never at a word that would start a block on a new line
+                    !Markdown.#startsBlock(
+                        [first, ...words.slice(index + 1)].join(" "),
+                    )
                 ) {
                     filled.push(current);
                     current = first;

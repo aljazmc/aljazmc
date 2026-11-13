@@ -150,14 +150,12 @@ export default class Functions extends Section {
     parameters(node: { params: Node[] } & Node, expandArg = false): Doc {
         const { params } = node;
         if (params.length === 0) {
-            return [
+            return this.printer.enclosed(
+                node,
                 "(",
-                this.printer.dangling(node, {
-                    filter: (comment) =>
-                        this.#nextCharacter(comment.end) === ")",
-                }),
                 ")",
-            ];
+                (comment) => this.#nextCharacter(comment.end) === ")",
+            );
         }
 
         const printed: Doc[] = [];

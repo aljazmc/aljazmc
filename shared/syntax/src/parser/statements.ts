@@ -944,7 +944,8 @@ export default class Parser extends ExpressionParser {
     }
 
     #module(start: number, declare: boolean): Node {
-        const keyword = this.next().value;
+        const token = this.next();
+        const keyword = token.value;
         const kind =
             keyword === "global"
                 ? "global"
@@ -952,8 +953,9 @@ export default class Parser extends ExpressionParser {
                   ? "module"
                   : "namespace";
         let id: Node;
+        // the name is the `global` keyword, without `declare` before it
         if (kind === "global")
-            id = this.finish("Identifier", start, { name: "global" });
+            id = this.finish("Identifier", token.start, { name: "global" });
         else if (this.token.type === "string") id = this.parseString();
         else id = this.parseEntityName();
 

@@ -5,6 +5,7 @@ import {
     isCss,
     isHtml,
     isMarkdown,
+    Lines,
     language,
     type Markdown,
     ParseError,
@@ -424,6 +425,120 @@ describe("syntax", () => {
             expect((sheet.children[1] as Css.Rule).block.children).toHaveLength(
                 1,
             );
+        });
+    });
+
+    describe("regressions", () => {
+        /** The message of the ParseError a parse throws, or undefined when it parses. */
+        const error = (run: () => unknown): string | undefined => {
+            try {
+                run();
+                return undefined;
+            } catch (thrown) {
+                if (thrown instanceof ParseError) return thrown.message;
+                throw thrown;
+            }
+        };
+
+        test("the name of `declare global` is only the `global` keyword", () => {
+            const source = "declare global {\n    var a: string;\n}\n";
+            const [module] = parse(source, {
+                typescript: true,
+                jsx: false,
+            }).program.body as {
+                id: { start: number; end: number; name: string };
+            }[];
+            expect(module?.id.name).toBe("global");
+            expect(source.slice(module?.id.start, module?.id.end)).toBe(
+                "global",
+            );
+        });
+
+        test("columns count characters, like Biome, an emoji is one", () => {
+            const source = 'x = "😀"; y;\r\nz = "é";\rw;';
+            const lines = new Lines(source);
+            expect(
+                [
+                    source.indexOf("y"),
+                    source.indexOf("z"),
+                    source.indexOf("w"),
+                ].map(
+                    (offset) => `${lines.line(offset)}:${lines.column(offset)}`,
+                ),
+            ).toEqual(["1:10", "2:1", "3:1"]);
+            // parse errors name the same position
+            expect(
+                error(() =>
+                    parse('x = "😀"; )', { typescript: false, jsx: false }),
+                ),
+            ).toMatch(/\(1:10\)$/);
+        });
+
+        test("statement at-rules need their `;`, block ones their block, `@charset` one string", () => {
+            const css = (source: string) => error(() => parseCss(source));
+            for (const source of [
+                '@import "a.css";',
+                '@charset "utf-8";',
+                "@charset 'utf-8' ;",
+                "@layer a;",
+                "@layer a {}",
+                "@unknown foo;",
+                "@unknown foo {}",
+                "@media print { @page { margin: 0 } }",
+            ])
+                expect(css(source)).toBeUndefined();
+            expect(css('@import "a.css"')).toBe(
+                "expected `;` but instead the file ends",
+            );
+            expect(css("a { @include x }")).toBe(
+                "expected `;` but instead found `}`",
+            );
+            expect(css("@media screen")).toBe(
+                "expected `{` but instead the file ends",
+            );
+            expect(css("@font-face;")).toBe(
+                "expected `{` but instead found `;`",
+            );
+            expect(css("@import url(x) {}")).toBe(
+                "expected `;` but instead found `{`",
+            );
+            expect(css("@charset;")).toBe(
+                "Expected a string but instead found ';'.",
+            );
+            expect(css("@charset")).toBe(
+                "Expected a string but instead found the end of the file.",
+            );
+            expect(css('@charset "a" "b";')).toBe(
+                `Expected a string but instead found '"a" "b"'.`,
+            );
+            // recovering, the at-rule is skipped, an empty item, with its error
+            const sheet = parseCss('@import "a.css"', { recover: true });
+            expect(sheet.children.map(({ type }) => type)).toEqual(["Empty"]);
+            expect(sheet.errors.map(({ message }) => message)).toEqual([
+                "expected `;` but instead the file ends",
+            ]);
+        });
+
+        test("nesting too deep to parse is a ParseError, not a stack overflow", () => {
+            const deep = 100_000;
+            const js = { typescript: false, jsx: false };
+            for (const run of [
+                () => parse(`x = ${"[".repeat(deep)}${"]".repeat(deep)};`, js),
+                () => parseExpression(`${"[".repeat(deep)}${"]".repeat(deep)}`),
+                () => parseCss(`${"a { ".repeat(deep)}${"} ".repeat(deep)}`),
+                () =>
+                    parseHtml(
+                        `${"<div>".repeat(deep)}${"</div>".repeat(deep)}`,
+                    ),
+                () => parseMarkdown(`${">".repeat(deep)} a\n`),
+            ])
+                expect(error(run)).toBe("The nesting is too deep to parse.");
+            // a hundred levels are fine
+            expect(
+                error(() =>
+                    parse(`x = ${"[".repeat(100)}${"]".repeat(100)};`, js),
+                ),
+            ).toBeUndefined();
         });
     });
 });

@@ -57,6 +57,11 @@ const NTH_PSEUDOS = new Set([
 ]);
 
 /** At-rules whose blocks hold keyframes. */
+/** At-rules that need a block, also vendor prefixed. */
+const BLOCK_AT_RULES =
+    /^(?:-[a-z]+-)?(?:media|supports|font-face|keyframes|page|container|document|property|scope|starting-style|counter-style|font-feature-values|view-transition|position-try|font-palette-values)$/;
+/** At-rules that are statements, ended by a `;`, with no block. */
+const STATEMENT_AT_RULES = /^(?:import|namespace|charset)$/;
 const KEYFRAMES = /^(?:-[a-z]+-)?keyframes$/;
 
 /** Parses CSS into rules, at-rules, declarations and component values. */
@@ -124,6 +129,11 @@ export default class Parser {
                 if (depth === 0 && type === "}") return;
             } else if (depth === 0 && type === "semicolon") return;
         }
+    }
+
+    /** Where the parser is, the start of its current token. */
+    get position(): number {
+        return this.#peek().start;
     }
 
     parse(): Stylesheet {
@@ -404,13 +414,30 @@ export default class Parser {
         let semicolon = false;
         let end = preludeEnd;
         const token = this.#peek();
+        if (keyword === "charset") this.#charset(prelude, token);
+        // like Biome: at-rules with a block need one, statements need their `;`
+        const needs = BLOCK_AT_RULES.test(keyword)
+            ? "{"
+            : STATEMENT_AT_RULES.test(keyword)
+              ? ";"
+              : undefined;
+        const found =
+            token.type === "eof"
+                ? "the file ends"
+                : `found \`${token.type === "semicolon" ? ";" : token.type}\``;
         if (token.type === "{") {
+            if (needs === ";")
+                this.#error(`expected \`;\` but instead ${found}`, token.start);
             block = this.#block(KEYFRAMES.test(keyword));
             end = block.end;
-        } else if (token.type === "semicolon") {
+        } else if (token.type === "semicolon" && needs !== "{") {
             end = this.#next().end;
             semicolon = true;
-        }
+        } else
+            this.#error(
+                `expected \`${needs ?? ";"}\` but instead ${found}`,
+                token.start,
+            );
         return {
             type: "AtRule",
             start: at.start,
@@ -423,6 +450,21 @@ export default class Parser {
             block,
             semicolon,
         };
+    }
+
+    /** Like Biome, `@charset` takes one string. */
+    #charset(prelude: Value[], next: { type: string; start: number }): void {
+        const [first] = prelude;
+        if (prelude.length === 1 && first?.type === "String") return;
+        const found = first
+            ? `'${this.#source.slice(first.start, (prelude.at(-1) as Value).end)}'`
+            : next.type === "eof"
+              ? "the end of the file"
+              : `'${next.type === "semicolon" ? ";" : next.type}'`;
+        this.#error(
+            `Expected a string but instead found ${found}.`,
+            first?.start ?? next.start,
+        );
     }
 
     /** A component value, with nested values of functions and blocks. */

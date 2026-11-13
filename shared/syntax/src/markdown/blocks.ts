@@ -147,6 +147,11 @@ export default class Blocks {
             this.#lines.push({ text: source.slice(start), start });
     }
 
+    /** Where the parser is, the start of its current line. */
+    get position(): number {
+        return this.#lineStart;
+    }
+
     parse(frontmatter = false): Root {
         const bom = this.#source.startsWith("\uFEFF");
         let first = 0;

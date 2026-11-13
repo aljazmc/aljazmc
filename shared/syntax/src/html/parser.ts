@@ -66,6 +66,11 @@ export default class Parser {
         this.#source = source;
     }
 
+    /** Where the parser is. */
+    get position(): number {
+        return this.#position;
+    }
+
     parse(): Root {
         const source = this.#source;
         const bom = source.startsWith("\uFEFF");

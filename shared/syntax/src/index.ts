@@ -7,7 +7,7 @@ import type { Root } from "./markdown/ast.js";
 import Blocks, { type MarkdownOptions } from "./markdown/blocks.js";
 import type { Options } from "./parser/base.js";
 import Parser from "./parser/statements.js";
-import type { Comment } from "./scanner.js";
+import { type Comment, ParseError } from "./scanner.js";
 
 export type * from "./ast.js";
 export type * as Css from "./css/ast.js";
@@ -23,6 +23,25 @@ export type { MarkdownOptions, Options };
 export interface Parsed {
     program: Program;
     comments: Comment[];
+}
+
+/**
+ * Runs a parser, turning a stack overflow from nesting too deep, like
+ * thousands of nested brackets, into a ParseError where the parser was,
+ * instead of a RangeError. The parsers recurse, so it is caught here, out
+ * of them, where it cannot be mistaken for a failed alternative.
+ */
+function shallow<T>(run: () => T, parser: { position: number }): T {
+    try {
+        return run();
+    } catch (error) {
+        if (error instanceof RangeError && /call stack/i.test(error.message))
+            throw new ParseError(
+                "The nesting is too deep to parse.",
+                parser.position,
+            );
+        throw error;
+    }
 }
 
 /** How a file is parsed, decided by its extension. */
@@ -68,22 +87,26 @@ export function parseCss(
     source: string,
     options: { recover?: boolean } = {},
 ): Stylesheet {
-    return new CssParser(
+    const parser = new CssParser(
         source,
         undefined,
         undefined,
         options.recover ?? false,
-    ).parse();
+    );
+    return shallow(() => parser.parse(), parser);
 }
 
 /** Parses the component values of a range of CSS, like a `style` attribute value. */
 export function parseCssValues(source: string, start = 0, end = source.length) {
-    return CssParser.values(source, start, end);
+    return shallow(() => CssParser.values(source, start, end), {
+        position: start,
+    });
 }
 
 /** Parses HTML, throwing a ParseError at the first error. */
 export function parseHtml(source: string): HtmlRoot {
-    return new HtmlParser(source).parse();
+    const parser = new HtmlParser(source);
+    return shallow(() => parser.parse(), parser);
 }
 
 /** Parses CommonMark, with GitHub's tables, task lists and strikethrough unless `gfm` is false. */
@@ -91,19 +114,20 @@ export function parseMarkdown(
     source: string,
     options: MarkdownOptions = {},
 ): Root {
-    return new Blocks(source, options).parse(options.frontmatter);
+    const parser = new Blocks(source, options);
+    return shallow(() => parser.parse(options.frontmatter), parser);
 }
 
 export function parse(source: string, options: Options): Parsed {
     const parser = new Parser(source, options);
-    const program = parser.parseProgram();
+    const program = shallow(() => parser.parseProgram(), parser);
     return { program, comments: parser.comments };
 }
 
 /** Parses a single expression, like a JSON document, as an expression statement program. */
 export function parseExpression(source: string): Parsed {
     const parser = new Parser(source, { typescript: false, jsx: false });
-    const expression: Node = parser.parseDocument();
+    const expression: Node = shallow(() => parser.parseDocument(), parser);
     const statement: Node = {
         type: "ExpressionStatement",
         start: expression.start,

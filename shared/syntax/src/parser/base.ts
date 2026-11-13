@@ -1,4 +1,5 @@
 import type { Node, NodeOf, NodeType } from "../ast.js";
+import Lines from "../lines.js";
 import Scanner, { ParseError, type Token } from "../scanner.js";
 
 export interface Options {
@@ -19,6 +20,11 @@ export default abstract class BaseParser {
     protected readonly scanner: Scanner;
     protected readonly options: Options;
     protected token: Token;
+
+    /** Where the parser is, the start of its current token. */
+    get position(): number {
+        return this.token.start;
+    }
     /** End of the last consumed token. */
     protected previous = 0;
     /** Whether `in` is a binary operator here (not in a for-in head). */
@@ -147,9 +153,10 @@ export default abstract class BaseParser {
     }
 
     protected raise(message: string, position: number): never {
-        const before = this.source.slice(0, position);
-        const line = before.split("\n").length;
-        const column = position - before.lastIndexOf("\n");
-        throw new ParseError(`${message} (${line}:${column})`, position);
+        const lines = new Lines(this.source);
+        throw new ParseError(
+            `${message} (${lines.line(position)}:${lines.column(position)})`,
+            position,
+        );
     }
 }

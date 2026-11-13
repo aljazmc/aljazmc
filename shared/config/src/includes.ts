@@ -4,9 +4,10 @@ import Pattern from "./pattern.js";
 export default class Includes {
     readonly #globs: { pattern: Pattern; included: boolean }[];
 
-    constructor(globs: readonly string[]) {
+    /** With the name of the setting the globs come from, for their errors. */
+    constructor(globs: readonly string[], setting = "includes") {
         this.#globs = globs.map((glob) => ({
-            pattern: new Pattern(glob.replace(/^!/, "")),
+            pattern: new Pattern(glob.replace(/^!/, ""), setting),
             included: !glob.startsWith("!"),
         }));
     }

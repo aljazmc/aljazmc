@@ -164,7 +164,7 @@ export default class Versions {
         const roots = this.#config.rules.packages;
         const patterns = roots
             .filter((root) => root.replace(/^\.\/?|\/$/g, "") !== "")
-            .map((root) => new Pattern(root));
+            .map((root) => new Pattern(root, "packages"));
         const matched = (root: string) =>
             root !== "." && patterns.some((pattern) => pattern.matches(root));
         const all = [

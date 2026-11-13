@@ -1,8 +1,11 @@
+import { execFileSync } from "node:child_process";
 import {
+    chmodSync,
     mkdirSync,
     mkdtempSync,
     readFileSync,
     rmSync,
+    symlinkSync,
     writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -164,6 +167,12 @@ describe("config", () => {
             expect(config.custom).toEqual(defaults);
         });
 
+        test("writes JavaScript with --config=js too", () => {
+            expect(init("--config=js").output).toEqual([
+                "created: tool.config.js",
+            ]);
+        });
+
         test("writes JavaScript with js, and leaves the other options", () => {
             expect(init("--config", "js").output).toEqual([
                 "created: tool.config.js",
@@ -191,5 +200,97 @@ describe("config", () => {
         test("does nothing without --config", () => {
             expect(init("--write")).toEqual({ given: false, output: [] });
         });
+    });
+
+    describe("files", () => {
+        /** A config of the temporary root, collecting its warnings. */
+        const config = (ignore: string[] = []) => {
+            const warnings: string[] = [];
+            const found = new Config({ ignore, rules: {} }, root);
+            found.warn = (message) => warnings.push(message);
+            return { config: found, warnings };
+        };
+
+        test("symlinks are followed, each folder once, broken ones are reported", () => {
+            symlinkSync("src", join(root, "linked"));
+            symlinkSync("missing", join(root, "dangling"));
+            symlinkSync("../..", join(root, "src/bin/loop"));
+            const { config: found, warnings } = config(["c.log"]);
+            expect([...found.files()].sort()).toEqual([
+                "linked/a.ts",
+                "linked/bin/b.js",
+                "src/a.ts",
+                "src/bin/b.js",
+            ]);
+            expect(warnings).toEqual([
+                "dangling: a broken symlink (its target does not exist), left out.",
+            ]);
+            // an ignored broken symlink is not reported
+            const ignored = config(["dangling"]);
+            [...ignored.config.files()];
+            expect(ignored.warnings).toEqual([]);
+            expect(
+                [...found.sources()].map(({ file }) => file).sort(),
+            ).toContain("linked/a.ts");
+        });
+
+        test("unreadable folders and special files are left out, not fatal", () => {
+            mkdirSync(join(root, "locked"));
+            writeFileSync(join(root, "locked/x.ts"), "");
+            chmodSync(join(root, "locked"), 0o000);
+            execFileSync("mkfifo", [join(root, "pipe")]);
+            try {
+                const { config: found, warnings } = config(["c.log"]);
+                expect(
+                    [...found.sources()].map(({ file }) => file).sort(),
+                ).toEqual(["src/a.ts", "src/bin/b.js"]);
+                // root reads every folder, it cannot be tested as root
+                if (process.getuid?.() !== 0)
+                    expect(warnings).toEqual([
+                        "locked: the folder cannot be read (no permission), left out.",
+                    ]);
+            } finally {
+                chmodSync(join(root, "locked"), 0o755);
+            }
+        });
+
+        test("files that are not UTF-8 are reported and skipped, a byte order mark stays", () => {
+            writeFileSync(
+                join(root, "latin1.txt"),
+                Buffer.from([0x63, 0xe9, 0x0a]),
+            );
+            writeFileSync(join(root, "bom.txt"), "﻿text\n");
+            writeFileSync(join(root, "binary.bin"), Buffer.from([1, 0, 2]));
+            const { config: found, warnings } = config(["src", "c.log"]);
+            expect(
+                [...found.sources()].map(({ file, text }) => [file, text]),
+            ).toEqual([["bom.txt", "﻿text\n"]]);
+            expect(warnings).toEqual(["latin1.txt: not UTF-8, left out."]);
+        });
+    });
+
+    test("a config file that does not export an object is a clear error", async () => {
+        const defaults = { ignore: [], rules: {} };
+        writeFileSync(
+            join(root, "tool.config.js"),
+            "export default () => ({});\n",
+        );
+        await expect(Config.load("tool", defaults, root)).rejects.toThrow(
+            "tool.config.js must export default an object, like { ignore: [], rules: {} }, not function.",
+        );
+        writeFileSync(join(root, "other.config.js"), "export default [];\n");
+        await expect(Config.load("other", defaults, root)).rejects.toThrow(
+            "not an array.",
+        );
+        writeFileSync(
+            join(root, "third.config.js"),
+            'export default { ignore: "dist" };\n',
+        );
+        await expect(Config.load("third", defaults, root)).rejects.toThrow(
+            "third.config.js: ignore must be a list of strings.",
+        );
+        // no default export keeps the defaults
+        writeFileSync(join(root, "empty.config.js"), "export const a = 1;\n");
+        expect((await Config.load("empty", defaults, root)).rules).toEqual({});
     });
 });

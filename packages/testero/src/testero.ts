@@ -40,7 +40,7 @@ export default class Testero {
 
     /** The test files to run, relative to the root. */
     files(): string[] {
-        const includes = new Includes(this.#options.testMatch);
+        const includes = new Includes(this.#options.testMatch, "testMatch");
         const patterns = this.#options.patterns.map(
             (pattern) => new RegExp(pattern),
         );

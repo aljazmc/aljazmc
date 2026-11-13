@@ -1,4 +1,12 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+    type Dirent,
+    existsSync,
+    readdirSync,
+    readFileSync,
+    realpathSync,
+    statSync,
+    writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import Ignore from "./ignore.js";
@@ -23,6 +31,12 @@ export default class Config<Rules extends object = object> {
     readonly rules: Rules;
     /** What the config file set, before the defaults were merged in. */
     readonly custom: Partial<Options<Rules>>;
+    /**
+     * Reports files and folders that are left out, like a broken symlink, an
+     * unreadable folder or a file that is not UTF-8, as a warning by default.
+     */
+    warn: (message: string) => void = (message) =>
+        console.log(`warn: ${message}`);
 
     constructor(
         options: Options<Rules>,
@@ -47,6 +61,7 @@ export default class Config<Rules extends object = object> {
                 const { default: options } = await import(
                     pathToFileURL(file).href
                 );
+                Config.#check(`${name}.config.${extension}`, options);
                 return new Config(
                     Config.merge(defaults, options),
                     root,
@@ -58,6 +73,24 @@ export default class Config<Rules extends object = object> {
         return new Config(defaults, root);
     }
 
+    /** Fails clearly on a config file that does not export the shape of the defaults. */
+    static #check(file: string, options: unknown): void {
+        if (options === undefined) return;
+        if (options?.constructor !== Object)
+            throw new Error(
+                `${file} must export default an object, like { ignore: [], rules: {} }, not ${Array.isArray(options) ? "an array" : typeof options}.`,
+            );
+        const { ignore } = options as { ignore?: unknown };
+        if (
+            ignore !== undefined &&
+            !(
+                Array.isArray(ignore) &&
+                ignore.every((item) => typeof item === "string")
+            )
+        )
+            throw new Error(`${file}: ignore must be a list of strings.`);
+    }
+
     /** Handles `--config`, writing the defaults to a TypeScript config file, or with `--config js` a JavaScript one. Returns whether it was given. */
     static init(
         name: string,
@@ -65,12 +98,18 @@ export default class Config<Rules extends object = object> {
         argv: string[] = process.argv.slice(2),
         root: string = process.cwd(),
     ): boolean {
-        const index = argv.indexOf("--config");
+        const index = argv.findIndex(
+            (arg) => arg === "--config" || arg.startsWith("--config="),
+        );
         if (index === -1) return false;
 
-        const next = argv[index + 1];
+        // `--config js` or `--config=js`
+        const [, inline] = (argv[index] as string).split(/=(.*)/s);
+        const next = inline ?? argv[index + 1];
         const extension =
-            next === undefined || next.startsWith("-") ? "ts" : next;
+            next === undefined || next === "" || next.startsWith("-")
+                ? "ts"
+                : next;
         try {
             console.log(
                 `created: ${Config.export(name, defaults, extension, root)}`,
@@ -148,32 +187,111 @@ export default class Config<Rules extends object = object> {
         return merged as T;
     }
 
+    /**
+     * The files that are not ignored, relative to the root. Symlinks are
+     * followed, a folder by every path to it, but not into a folder it is in,
+     * which would never end; broken symlinks and unreadable folders are
+     * reported and left out, like pipes and other special files.
+     */
     *files(directory = ""): Generator<string> {
-        const entries = readdirSync(join(this.root, directory), {
-            withFileTypes: true,
-        });
-
-        for (const entry of entries) {
-            const path = directory ? `${directory}/${entry.name}` : entry.name;
-
-            if (this.ignore.matches(path)) continue;
-
-            if (entry.isDirectory()) yield* this.files(path);
-            else yield path;
-        }
+        yield* this.#walk(directory, new Set());
     }
 
-    /** Text files that are not ignored and that accepts takes, binaries are skipped. */
+    *#walk(directory: string, ancestors: Set<string>): Generator<string> {
+        const absolute = join(this.root, directory);
+        let entries: Dirent[];
+        let real: string;
+        try {
+            real = realpathSync(absolute);
+            // a symlink to a folder this one is in loops
+            if (ancestors.has(real)) return;
+            entries = readdirSync(absolute, { withFileTypes: true });
+        } catch (error) {
+            this.warn(
+                `${directory || "."}: the folder cannot be read (${Config.#reason(error)}), left out.`,
+            );
+            return;
+        }
+
+        ancestors.add(real);
+        for (const entry of entries) {
+            const path = directory ? `${directory}/${entry.name}` : entry.name;
+            let kind: "directory" | "file" | "other" = entry.isDirectory()
+                ? "directory"
+                : entry.isFile()
+                  ? "file"
+                  : "other";
+            if (entry.isSymbolicLink())
+                try {
+                    const target = statSync(join(this.root, path));
+                    kind = target.isDirectory()
+                        ? "directory"
+                        : target.isFile()
+                          ? "file"
+                          : "other";
+                } catch (error) {
+                    if (!this.ignore.matches(path))
+                        this.warn(
+                            `${path}: a broken symlink (${Config.#reason(error)}), left out.`,
+                        );
+                    continue;
+                }
+
+            if (this.ignore.matches(path, kind === "directory")) continue;
+
+            if (kind === "directory") yield* this.#walk(path, ancestors);
+            else if (kind === "file") yield path;
+        }
+        ancestors.delete(real);
+    }
+
+    /**
+     * Text files that are not ignored and that accepts takes. Binaries, with
+     * a NUL byte, are skipped; files that are not UTF-8 are reported and
+     * skipped, as writing them back as UTF-8 would change their text.
+     */
     *sources(
         accepts: (file: string) => boolean = () => true,
     ): Generator<Source> {
+        const utf8 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
         for (const file of this.files()) {
             if (!accepts(file)) continue;
 
             const path = join(this.root, file);
-            const text = readFileSync(path, "utf8");
+            let bytes: Buffer;
+            try {
+                bytes = readFileSync(path);
+            } catch (error) {
+                this.warn(
+                    `${file}: the file cannot be read (${Config.#reason(error)}), left out.`,
+                );
+                continue;
+            }
+            if (bytes.includes(0)) continue;
+            let text: string;
+            try {
+                text = utf8.decode(bytes);
+            } catch {
+                this.warn(`${file}: not UTF-8, left out.`);
+                continue;
+            }
+            yield { file, path, text };
+        }
+    }
 
-            if (!text.includes("\0")) yield { file, path, text };
+    /** Why a file system call failed, in words. */
+    static #reason(error: unknown): string {
+        const code = (error as { code?: string } | null)?.code;
+        switch (code) {
+            case "ENOENT":
+                return "its target does not exist";
+            case "EACCES":
+            case "EPERM":
+                return "no permission";
+            case "ELOOP":
+                return "a loop of symlinks";
+            default:
+                return error instanceof Error ? error.message : String(error);
         }
     }
 }

@@ -34,9 +34,15 @@ export default {
 | -------- | ------------------------------------------------------- |
 | `**`     | Any number of segments.                                 |
 | `*`, `?` | Any characters, or one character, within a segment.     |
+| `/name`  | `name` at the root only, like `./name`.                 |
+| `name/`  | Folders only, with their contents.                      |
 | `{a,b}`  | Alternatives.                                           |
 | name     | Any file or folder with that name, like `node_modules`. |
 | path     | A path relative to the root, with its contents.         |
+
+Symlinks are followed. Binary files are skipped. Broken symlinks,
+unreadable folders and files that are not UTF-8 are skipped with a
+warning.
 
 ## > License
 

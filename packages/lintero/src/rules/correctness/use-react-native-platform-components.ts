@@ -60,9 +60,11 @@ export default rule<Options>({
             "Program:exit"() {
                 const android = new Includes(
                     context.options.androidPathPatterns ?? [],
+                    "androidPathPatterns",
                 ).matches(context.file);
                 const ios = new Includes(
                     context.options.iosPathPatterns ?? [],
+                    "iosPathPatterns",
                 ).matches(context.file);
                 const mixed =
                     components.some(

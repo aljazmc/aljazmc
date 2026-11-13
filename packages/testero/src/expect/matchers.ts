@@ -19,7 +19,7 @@ export type Matcher = (
     received: unknown,
     // biome-ignore lint/suspicious/noExplicitAny: matchers take any arguments
     ...expected: any[]
-) => MatcherResult;
+) => MatcherResult | Promise<MatcherResult>;
 
 const show = (value: unknown) => Format.inline(value);
 

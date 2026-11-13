@@ -26,6 +26,13 @@ export default class Transformer {
     };
     /** The import.meta properties that describe the source file. */
     static readonly #meta = ["url", "filename", "dirname"];
+    /** CommonJS globals the ES module bundle lacks, mapped to the same descriptions. */
+    static readonly #commonjs: Record<string, string> = {
+        __dirname: "dirname",
+        __filename: "filename",
+    };
+    /** Sources that refer to the location of their own file. */
+    static readonly #located = /\bimport\.meta\b|\b__dirname\b|\b__filename\b/;
     /** Marks the resolutions the plugin asks esbuild for itself. */
     static readonly #own = Symbol("testero");
 
@@ -54,12 +61,16 @@ export default class Transformer {
             sourcemap: "inline",
             sourcesContent: false,
             inject: [this.#globals],
-            define: Object.fromEntries(
-                Transformer.#meta.map((name) => [
+            // defines replace only unbound names, so a file's own `__dirname` stays
+            define: Object.fromEntries([
+                ...Transformer.#meta.map((name) => [
                     `import.meta.${name}`,
                     `__testero.${name}`,
                 ]),
-            ),
+                ...Object.entries(Transformer.#commonjs).map(
+                    ([name, property]) => [name, `__testero.${property}`],
+                ),
+            ]),
             // CommonJS code in the bundle may require installed packages
             banner: {
                 js: 'import { createRequire as __testeroRequire } from "node:module";\nconst require = __testeroRequire(import.meta.url);',
@@ -130,11 +141,8 @@ export default class Transformer {
                 build.onLoad({ filter: /\.[cm]?[jt]sx?$/ }, (args) => {
                     if (Transformer.#installed(args.path)) return undefined;
                     const source = readFileSync(args.path, "utf8");
-                    const contents = /\bimport\.meta\b/.test(source)
-                        ? `${source}\nimport __testero from ${JSON.stringify(`testero-meta:${args.path}`)};\n`
-                        : source;
                     return {
-                        contents,
+                        contents: Transformer.#locate(source, args.path),
                         loader:
                             Transformer.#loaders[extname(args.path)] ?? "js",
                         resolveDir: dirname(args.path),
@@ -142,6 +150,29 @@ export default class Transformer {
                 });
             },
         };
+    }
+
+    /**
+     * A source with `__testero` describing its file, when it refers to it.
+     * Modules import it after their last line, as imports are hoisted.
+     * CommonJS files, without import or export statements, require it at the
+     * start of their first line instead, as an import would make them modules
+     * and their `module.exports` would be lost.
+     */
+    static #locate(source: string, path: string): string {
+        if (!Transformer.#located.test(source)) return source;
+        const meta = JSON.stringify(`testero-meta:${path}`);
+        // ES modules by their extension, or by import statements, not
+        // `import(` nor `import.meta`, or exports
+        if (
+            /\.m[jt]s$/.test(path) ||
+            /^\s*(?:import\s*[\w{*"']|export\b)/m.test(source)
+        )
+            return `${source}\nimport __testero from ${meta};\n`;
+        // after a shebang, which must stay first
+        const start = source.startsWith("#!") ? source.indexOf("\n") + 1 : 0;
+        if (source.startsWith("#!") && start === 0) return source;
+        return `${source.slice(0, start)}var __testero = require(${meta}).default;${source.slice(start)}`;
     }
 
     static #installed(path: string): boolean {

@@ -98,6 +98,35 @@ describe("equality", () => {
         expect(Equality.equals(0, -0)).toBe(false);
     });
 
+    test("buffers compare by their bytes, URLs by their href", () => {
+        const buffer = (...bytes: number[]) => new Uint8Array(bytes).buffer;
+        expect(Equality.equals(buffer(1, 2), buffer(1, 2))).toBe(true);
+        expect(Equality.equals(buffer(1), buffer(2))).toBe(false);
+        expect(Equality.equals(buffer(1), buffer(1, 0))).toBe(false);
+        expect(
+            Equality.equals(new DataView(buffer(1)), new DataView(buffer(1))),
+        ).toBe(true);
+        expect(
+            Equality.equals(new DataView(buffer(1)), new DataView(buffer(2))),
+        ).toBe(false);
+        // a view compares only its own window of the buffer
+        expect(
+            Equality.equals(
+                new DataView(buffer(9, 1), 1),
+                new DataView(buffer(8, 1), 1),
+            ),
+        ).toBe(true);
+        expect(
+            Equality.equals(new URL("http://a/"), new URL("http://a/")),
+        ).toBe(true);
+        expect(
+            Equality.equals(new URL("http://a/"), new URL("http://b/")),
+        ).toBe(false);
+        expect(Format.inline(buffer(1, 2))).toBe("ArrayBuffer [1, 2]");
+        expect(Format.inline(new DataView(buffer(3)))).toBe("DataView [3]");
+        expect(Format.inline(new URL("http://a/"))).toBe('URL "http://a/"');
+    });
+
     test("cycles are equal when they have the same shape", () => {
         const a: Record<string, unknown> = { name: "x" };
         const b: Record<string, unknown> = { name: "x" };
@@ -228,6 +257,52 @@ describe("expect", () => {
         );
     });
 
+    test("async matchers are awaited, failing like the others", async () => {
+        const local = new Expect().create();
+        local.extend({
+            async toBeEventually(received: unknown, expected: unknown) {
+                return {
+                    pass: received === expected,
+                    message: () => `expected ${received} to be ${expected}`,
+                };
+            },
+        });
+        await local(1).toBeEventually(1);
+        await local(1).not.toBeEventually(2);
+        await expect(local(1).toBeEventually(2)).rejects.toThrow(
+            "expected 1 to be 2",
+        );
+        await expect(local(1).not.toBeEventually(1)).rejects.toThrow(
+            "expected 1 to be 1",
+        );
+        await expect(
+            local(Promise.resolve(1)).resolves.toBeEventually(2),
+        ).rejects.toThrow("expected 1 to be 2");
+    });
+
+    test("extend changes the matchers of its own expect only", () => {
+        const first = new Expect().create();
+        const second = new Expect().create();
+        first.extend({
+            toBe: () => ({ pass: true, message: () => "" }),
+        });
+        first(1).toBe(2);
+        expect(failure(() => second(1).toBe(2))).toContain("Expected: 2");
+        expect(failure(() => check(1).toBe(2))).toContain("Expected: 2");
+        expect(typeof second(1).toBeEven).toBe("undefined");
+    });
+
+    test("matcher results without pass fail", () => {
+        const local = new Expect().create();
+        local.extend({
+            toBeBroken: () =>
+                ({}) as unknown as { pass: boolean; message: () => string },
+        });
+        expect(failure(() => local(1).toBeBroken())).toBe(
+            "The matcher did not return a result with pass and message.",
+        );
+    });
+
     test("assertion counts", () => {
         const counting = new Expect();
         const local = counting.create();
@@ -269,6 +344,28 @@ describe("mocks", () => {
         expect(fn.mock.calls).toHaveLength(1);
         fn.mockClear();
         expect(fn.mock.calls).toHaveLength(0);
+    });
+
+    test("instances are the objects new constructs", () => {
+        const Point = Mocks.fn(function (this: { x: number }, x: number) {
+            this.x = x;
+        });
+        const point = new Point(1);
+        expect(point).toEqual({ x: 1 });
+        expect(Point.mock.instances[0]).toBe(point);
+        expect(Point.mock.contexts[0]).toBe(point);
+
+        class Shape {
+            readonly sides = 3;
+        }
+        const Mocked = Mocks.fn().mockImplementation(Shape);
+        const shape = new Mocked();
+        expect(shape.sides).toBe(3);
+        expect(Mocked.mock.instances[0]).toBe(shape);
+
+        const Empty = Mocks.fn();
+        const empty = new Empty();
+        expect(Empty.mock.instances[0]).toBe(empty);
     });
 
     test("thrown errors are results too", () => {
@@ -325,10 +422,20 @@ describe("each", () => {
             [3, 4],
         ]);
         expect(Each.rows([1, 2], [])).toEqual([[1], [2]]);
-        const table = Object.assign(["a | b\n", "|", ""], {
-            raw: ["a | b\n", "|", ""],
-        }) as unknown as TemplateStringsArray;
-        expect(Each.rows(table, [1, 2])).toEqual([[{ a: 1, b: 2 }]]);
+        const table = (strings: TemplateStringsArray, ...values: unknown[]) =>
+            Each.rows(strings, values);
+        expect(table`
+            a    | b
+            ${1} | ${2}
+            ${3} | ${4}
+        `).toStrictEqual([[{ a: 1, b: 2 }], [{ a: 3, b: 4 }]]);
+        expect(
+            () => table`
+            a    | b
+            ${1} | ${2}
+            ${3}
+        `,
+        ).toThrow("each table has 2 columns (a, b), but 3 values");
     });
 });
 
@@ -414,6 +521,27 @@ describe("runner", () => {
         expect(String(results[5]?.errors[0])).toContain("no setup");
     });
 
+    test("fail ends the running test at once, nothing when idle", async () => {
+        const collector = new Collector();
+        const runner = new Runner({ timeout: 5000 });
+        collector.test("waits for done", (done) => {
+            setTimeout(() => runner.fail(new Error("thrown in a timer")), 1);
+            void done;
+        });
+        collector.test("runs after", () => {});
+        collector.close();
+        expect(runner.fail(new Error("idle"))).toBe(false);
+        const start = performance.now();
+        const { results } = await runner.run(collector.root);
+        expect(performance.now() - start).toBeLessThan(1000);
+        expect(statuses(results)).toEqual([
+            "waits for done: failed",
+            "runs after: passed",
+        ]);
+        expect(String(results[0]?.errors[0])).toContain("thrown in a timer");
+        expect(runner.fail(new Error("idle"))).toBe(false);
+    });
+
     test("name patterns select tests by their full name", async () => {
         const results = await run(
             ({ describe, test }) => {
@@ -428,6 +556,23 @@ describe("runner", () => {
             "math adds: passed",
             "math subtracts: skipped",
         ]);
+    });
+
+    test("each passes a done callback after the row's values", async () => {
+        const results = await run(({ test }) => {
+            test.each([[1], [2]])("done %i", (_n, done) => {
+                setTimeout(() => (done as (error?: unknown) => void)(), 1);
+            });
+            test.each([[3]])("done with an error %i", (n, done) =>
+                (done as (error?: unknown) => void)(new Error(`row ${n}`)),
+            );
+        });
+        expect(statuses(results)).toEqual([
+            "done 1: passed",
+            "done 2: passed",
+            "done with an error 3: failed",
+        ]);
+        expect(String(results[2]?.errors[0])).toContain("row 3");
     });
 
     test("each declares a test per row", async () => {
@@ -469,5 +614,12 @@ describe("arguments", () => {
         expect(() => new Arguments(["--nope"])).toThrow(
             "Unknown option --nope.",
         );
+        for (const timeout of ["abc", "", "0", "-5", "Infinity", "1e10"])
+            expect(() => new Arguments([`--testTimeout=${timeout}`])).toThrow(
+                `--testTimeout needs a positive number of milliseconds, not "${timeout}".`,
+            );
+        expect(new Arguments(["--testTimeout", "2.5"]).rules).toEqual({
+            testTimeout: 2.5,
+        });
     });
 });

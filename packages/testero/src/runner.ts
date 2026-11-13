@@ -31,6 +31,8 @@ export interface Settings {
 export default class Runner {
     readonly #settings: Settings;
     #focused = false;
+    /** Fails the test or hook that is running, if any. */
+    #abort: ((error: unknown) => void) | undefined;
 
     constructor(settings: Settings) {
         this.#settings = settings;
@@ -43,6 +45,16 @@ export default class Runner {
         const errors: unknown[] = [];
         await this.#suite(root, [], results, errors);
         return { results, errors };
+    }
+
+    /**
+     * Fails the running test or hook with an error thrown outside of it, like
+     * from a timer it started. Returns false when nothing is running.
+     */
+    fail(error: unknown): boolean {
+        if (!this.#abort) return false;
+        this.#abort(error);
+        return true;
     }
 
     /** Whether a test runs: not skipped, focused when others are, matching the name pattern. */
@@ -151,6 +163,7 @@ export default class Runner {
     ): Promise<unknown> {
         let timer: NodeJS.Timeout | undefined;
         const expired = new Promise((_, reject) => {
+            this.#abort = reject;
             timer = setTimeout(
                 () =>
                     reject(
@@ -168,6 +181,7 @@ export default class Runner {
         } catch (error) {
             return error ?? new Error(`${String(error)} was thrown`);
         } finally {
+            this.#abort = undefined;
             clearTimeout(timer);
         }
     }

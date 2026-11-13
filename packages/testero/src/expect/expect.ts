@@ -28,6 +28,8 @@ const negatable = (inverse: boolean) => ({
 export default class Expect {
     #expected: number | undefined;
     #needed = false;
+    /** The assertions of this test file, `expect.extend` adds matchers to them only. */
+    readonly #Assertion = class extends Assertion {};
 
     /** Starts the counts of a new test. */
     reset(): void {
@@ -57,7 +59,7 @@ export default class Expect {
     /** The function test files call as `expect`. */
     create() {
         const expect = (received: unknown) =>
-            new Assertion(received) as Assertion & Matchers;
+            new this.#Assertion(received) as Assertion & Matchers;
         return Object.assign(expect, {
             ...negatable(false),
             not: negatable(true),
@@ -71,7 +73,7 @@ export default class Expect {
             },
             extend: (added: Record<string, Matcher>) => {
                 for (const [name, matcher] of Object.entries(added))
-                    Assertion.define(name, matcher);
+                    Assertion.define(this.#Assertion, name, matcher);
             },
         });
     }

@@ -128,6 +128,7 @@ class Mock {
         this.state.results.push(result);
         this.state.lastCall = args;
 
+        const index = this.state.instances.length - 1;
         const implementation = this.#once.shift() ?? this.#implementation;
         try {
             result.value = !implementation
@@ -135,6 +136,11 @@ class Mock {
                 : target
                   ? Reflect.construct(implementation, args, target as Procedure)
                   : implementation.apply(context, args);
+            // `new` returns the object the implementation constructed, not `this`
+            if (target && typeof result.value === "object" && result.value) {
+                this.state.instances[index] = result.value;
+                this.state.contexts[index] = result.value;
+            }
             result.type = "return";
             return result.value;
         } catch (error) {

@@ -43,9 +43,18 @@ Options:
                 case "--testNamePattern":
                     this.namePattern = new RegExp(value());
                     break;
-                case "--testTimeout":
-                    this.rules.testTimeout = Number(value());
+                case "--testTimeout": {
+                    const text = value();
+                    const timeout = Number(text);
+                    // a timer of 2 ** 31 ms or more fires at once
+                    const valid = timeout > 0 && timeout < 2 ** 31;
+                    if (text.trim() === "" || !valid)
+                        throw new Error(
+                            `--testTimeout needs a positive number of milliseconds, not "${text}".`,
+                        );
+                    this.rules.testTimeout = timeout;
                     break;
+                }
                 case "--bail":
                 case "--verbose":
                 case "--passWithNoTests":

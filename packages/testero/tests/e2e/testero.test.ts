@@ -119,6 +119,102 @@ describe("testero", () => {
         expect(output).toContain("at tests/meta.test.mjs:9:29");
     });
 
+    test("__dirname and __filename describe the source file, of CommonJS too", async () => {
+        write(
+            "src/paths.cjs",
+            "module.exports = { dir: __dirname, file: __filename };\n",
+        );
+        write(
+            "src/own.mjs",
+            [
+                'import { dirname } from "node:path";',
+                'import { fileURLToPath } from "node:url";',
+                "const __filename = fileURLToPath(import.meta.url);",
+                "const __dirname = dirname(__filename);",
+                "export const own = { dir: __dirname, file: __filename };",
+                "",
+            ].join("\n"),
+        );
+        write(
+            "tests/paths.test.ts",
+            [
+                'import paths from "../src/paths.cjs";',
+                'import { own } from "../src/own.mjs";',
+                "",
+                'test("describe", () => {',
+                "    expect(paths.dir).toMatch(/\\/src$/);",
+                "    expect(paths.file).toMatch(/\\/src\\/paths\\.cjs$/);",
+                "    expect(own.file).toMatch(/\\/src\\/own\\.mjs$/);",
+                "    expect(__filename).toMatch(/\\/tests\\/paths\\.test\\.ts$/);",
+                "    expect(__dirname).toBe(import.meta.dirname);",
+                "});",
+                "",
+            ].join("\n"),
+        );
+        // a script, with no import statements, keeps its lines and columns
+        write(
+            "tests/script.test.js",
+            [
+                'test("fails", () => {',
+                '    expect(__filename).toBe("x");',
+                "});",
+                "",
+            ].join("\n"),
+        );
+        const { output } = await testero();
+        expect(output).toContain("✓ describe");
+        expect(output).toContain(
+            `Received: ${JSON.stringify(join(root, "tests/script.test.js"))}`,
+        );
+        expect(output).toContain('> 2 |     expect(__filename).toBe("x");');
+        expect(output).toContain("at tests/script.test.js:2:24");
+    });
+
+    test("expect.extend lasts for its own test file only", async () => {
+        write(
+            "tests/a.test.ts",
+            [
+                "expect.extend({ toBe: () => ({ pass: true, message: () => '' }) });",
+                'test("overrides toBe", () => expect(1).toBe(2));',
+                "",
+            ].join("\n"),
+        );
+        write(
+            "tests/b.test.ts",
+            'test("has its own toBe", () => expect(() => expect(1).toBe(2)).toThrow());\n',
+        );
+        const { passed, output } = await testero();
+        expect(output).toContain("✓ overrides toBe");
+        expect(output).toContain("✓ has its own toBe");
+        expect(passed).toBe(true);
+    });
+
+    test("an error thrown outside of a test fails the test running then", async () => {
+        write(
+            "tests/timer.test.ts",
+            [
+                'test("throws in a timer", (done) => {',
+                // under Jest, which catches real ones first, the event is emitted
+                "    setTimeout(",
+                '        () => process.emit("uncaughtException", new Error("from a timer")),',
+                "        1,",
+                "    );",
+                "    void done;",
+                "});",
+                'test("runs after", () => {});',
+                "",
+            ].join("\n"),
+        );
+        const start = performance.now();
+        const { passed, output } = await testero();
+        expect(performance.now() - start).toBeLessThan(4000);
+        expect(passed).toBe(false);
+        expect(output).toContain("✕ throws in a timer");
+        expect(output).toContain("Error: from a timer");
+        expect(output).toContain("✓ runs after");
+        expect(output).not.toContain("Test suite failed to run");
+    });
+
     test("import.meta in strings and comments stays as it is", async () => {
         write(
             "tests/strings.test.mjs",

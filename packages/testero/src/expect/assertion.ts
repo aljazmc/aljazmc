@@ -1,4 +1,9 @@
-import { type Matcher, type MatcherContext, matchers } from "./matchers.js";
+import {
+    type Matcher,
+    type MatcherContext,
+    type MatcherResult,
+    matchers,
+} from "./matchers.js";
 
 /** A failed expectation, its message says what was expected and received. */
 export class AssertionError extends Error {
@@ -62,36 +67,45 @@ export default class Assertion {
 
     /** The same assertion, expecting the opposite. */
     get not(): Assertion & Matchers {
-        return new Assertion(this.#received, {
-            ...this.#context,
-            isNot: !this.#context.isNot,
-        }) as Assertion & Matchers;
+        return this.#with({ isNot: !this.#context.isNot });
     }
 
     /** The assertion on what a promise resolves to, its matchers return promises. */
     get resolves(): Assertion & Matchers {
-        return new Assertion(this.#received, {
-            ...this.#context,
-            promise: "resolves",
-        }) as Assertion & Matchers;
+        return this.#with({ promise: "resolves" });
     }
 
     /** The assertion on why a promise rejects, its matchers return promises. */
     get rejects(): Assertion & Matchers {
-        return new Assertion(this.#received, {
+        return this.#with({ promise: "rejects" });
+    }
+
+    /** The same received value with another context, of the same class to keep its matchers. */
+    #with(change: Partial<MatcherContext>): Assertion & Matchers {
+        const Same = this.constructor as new (
+            received: unknown,
+            context: MatcherContext,
+        ) => Assertion;
+        return new Same(this.#received, {
             ...this.#context,
-            promise: "rejects",
+            ...change,
         }) as Assertion & Matchers;
     }
 
-    /** Adds a matcher to every assertion, like `expect.extend`. */
-    static define(name: string, matcher: Matcher): void {
-        matchers[name] = matcher;
-        Object.defineProperty(Assertion.prototype, name, {
+    /**
+     * Adds a matcher to the assertions of a class: Assertion itself for the
+     * built in ones, the class of one test file for `expect.extend`.
+     */
+    static define(
+        target: typeof Assertion,
+        name: string,
+        matcher: Matcher,
+    ): void {
+        Object.defineProperty(target.prototype, name, {
             configurable: true,
             writable: true,
             value: function check(this: Assertion, ...args: unknown[]) {
-                return this.#run(name, args, check);
+                return this.#run(name, matcher, args, check);
             },
         });
     }
@@ -99,6 +113,7 @@ export default class Assertion {
     /** Runs a matcher now, or once the promise settles for `.resolves` and `.rejects`. */
     #run(
         name: string,
+        matcher: Matcher,
         args: unknown[],
         caller: (...args: never[]) => unknown,
     ): Result {
@@ -108,11 +123,11 @@ export default class Assertion {
         Error.captureStackTrace(origin, caller);
 
         const { promise } = this.#context;
-        if (!promise) return this.#check(name, this.#received, args, origin);
+        if (!promise) return this.#check(matcher, this.#received, args, origin);
 
         const settled = (value: unknown, resolved: boolean) => {
             if (resolved === (promise === "resolves"))
-                return this.#check(name, value, args, origin);
+                return this.#check(matcher, value, args, origin);
             throw Assertion.#error(
                 `expect(received).${promise}.${name}()\n\nReceived promise ${resolved ? "resolved" : "rejected"} instead of ${resolved ? "rejected" : "resolved"}\n${resolved ? "Resolved" : "Rejected"} to value: ${String(value)}`,
                 origin,
@@ -132,24 +147,43 @@ export default class Assertion {
         );
     }
 
+    /** Calls a matcher, and fails when it does not pass, after awaiting an async one. */
     #check(
-        name: string,
+        matcher: Matcher,
         received: unknown,
         args: unknown[],
         origin: { stack?: string },
-    ): void {
-        const matcher = matchers[name] as Matcher;
+    ): Result {
+        const failed = (error: unknown) =>
+            Assertion.#error(
+                error instanceof Error ? error.message : String(error),
+                origin,
+            );
         let result: ReturnType<Matcher>;
         try {
             result = matcher.call(this.#context, received, ...args);
         } catch (error) {
+            throw failed(error);
+        }
+        if (typeof (result as PromiseLike<unknown>)?.then === "function")
+            return Promise.resolve(result).then(
+                (settled) => this.#verdict(settled, origin),
+                (error) => {
+                    throw failed(error);
+                },
+            );
+        return this.#verdict(result as MatcherResult, origin);
+    }
+
+    /** Throws when a matcher result is not what the assertion expects. */
+    #verdict(result: MatcherResult, origin: { stack?: string }): void {
+        if (Boolean(result?.pass) === this.#context.isNot)
             throw Assertion.#error(
-                error instanceof Error ? error.message : String(error),
+                typeof result?.message === "function"
+                    ? String(result.message())
+                    : "The matcher did not return a result with pass and message.",
                 origin,
             );
-        }
-        if (result.pass === this.#context.isNot)
-            throw Assertion.#error(result.message(), origin);
     }
 
     static #error(message: string, origin: { stack?: string }): AssertionError {
@@ -161,4 +195,4 @@ export default class Assertion {
 }
 
 for (const [name, matcher] of Object.entries(matchers))
-    Assertion.define(name, matcher);
+    Assertion.define(Assertion, name, matcher);

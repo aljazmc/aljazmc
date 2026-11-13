@@ -9,10 +9,12 @@ export default class Each {
      */
     static rows(table: unknown, values: unknown[]): unknown[][] {
         if (Each.#template(table)) {
-            const names = table
-                .join("")
-                .trim()
-                .split(/\s*\|\s*/);
+            // the header is the text before the first value, the rest separates values
+            const names = (table[0] ?? "").trim().split(/\s*\|\s*/);
+            if (values.length % names.length !== 0)
+                throw new TypeError(
+                    `each table has ${names.length} columns (${names.join(", ")}), but ${values.length} values do not fill whole rows`,
+                );
             const rows: unknown[][] = [];
             for (let index = 0; index < values.length; index += names.length)
                 rows.push([

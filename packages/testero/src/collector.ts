@@ -85,7 +85,10 @@ export default class Collector {
                 for (const [index, row] of Each.rows(table, values).entries())
                     this.#test(
                         Each.title(String(name), row, index),
-                        () => body(...row),
+                        // a parameter after the row's values is the done callback
+                        body.length > row.length
+                            ? (done) => body(...row, done)
+                            : () => body(...row),
                         mode,
                         timeout,
                     );

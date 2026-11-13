@@ -25,6 +25,8 @@ export default class Testero {
     readonly #reporter: Reporter;
     /** Errors thrown outside of tests, like from a forgotten timer. */
     #stray: unknown[] = [];
+    /** The runner of the file being run, which fails its running test with stray errors. */
+    #runner: Runner | undefined;
 
     constructor(
         config: Config<Rules>,
@@ -62,7 +64,9 @@ export default class Testero {
         }
 
         process.setSourceMapsEnabled(true);
-        const stray = (error: unknown) => this.#stray.push(error);
+        const stray = (error: unknown) => {
+            if (!this.#runner?.fail(error)) this.#stray.push(error);
+        };
         process.on("uncaughtException", stray);
         process.on("unhandledRejection", stray);
 
@@ -131,9 +135,12 @@ export default class Testero {
                 [new Error("Your test suite must contain at least one test.")],
             );
 
-        const { results, errors } = await new Runner(settings).run(
-            collector.root,
-        );
-        return finish(results, errors);
+        this.#runner = new Runner(settings);
+        try {
+            const { results, errors } = await this.#runner.run(collector.root);
+            return finish(results, errors);
+        } finally {
+            this.#runner = undefined;
+        }
     }
 }

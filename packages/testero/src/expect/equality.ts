@@ -85,6 +85,10 @@ export default class Equality {
         if (strict && Object.getPrototypeOf(a) !== Object.getPrototypeOf(b))
             return false;
 
+        // objects whose value is not in their own properties
+        const bytes = Equality.bytes(a);
+        if (bytes) return Equality.#sameBytes(bytes, Equality.bytes(b));
+        if (a instanceof URL) return a.href === (b as URL).href;
         if (a instanceof Date)
             return Object.is(a.getTime(), (b as Date).getTime());
         if (a instanceof RegExp) return String(a) === String(b);
@@ -107,6 +111,31 @@ export default class Equality {
             aSeen.pop();
             bSeen.pop();
         }
+    }
+
+    /** The bytes of an ArrayBuffer, SharedArrayBuffer or DataView, undefined for other values. */
+    static bytes(value: unknown): Uint8Array | undefined {
+        if (value instanceof DataView)
+            return new Uint8Array(
+                value.buffer,
+                value.byteOffset,
+                value.byteLength,
+            );
+        if (
+            value instanceof ArrayBuffer ||
+            (typeof SharedArrayBuffer === "function" &&
+                value instanceof SharedArrayBuffer)
+        )
+            return new Uint8Array(value);
+        return undefined;
+    }
+
+    static #sameBytes(a: Uint8Array, b: Uint8Array | undefined): boolean {
+        return (
+            b !== undefined &&
+            a.length === b.length &&
+            a.every((byte, index) => byte === b[index])
+        );
     }
 
     static #structures(

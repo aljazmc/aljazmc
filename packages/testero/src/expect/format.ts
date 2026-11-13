@@ -1,3 +1,5 @@
+import Equality from "./equality.js";
+
 /** Prints values like Jest's pretty-format, for messages and diffs. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups printing helpers
 export default class Format {
@@ -87,6 +89,7 @@ export default class Format {
                 ? "Date { NaN }"
                 : value.toISOString();
         if (value instanceof RegExp) return String(value);
+        if (value instanceof URL) return `URL ${JSON.stringify(value.href)}`;
         if (value instanceof Error) return `[${value.name}: ${value.message}]`;
         if (seen.includes(value)) return "[Circular]";
 
@@ -111,6 +114,15 @@ export default class Format {
                 "Set {",
                 "}",
                 [...value].map(print),
+                indent,
+                multiline,
+            );
+        const bytes = Equality.bytes(value);
+        if (bytes)
+            return Format.#block(
+                `${name ?? "ArrayBuffer"} [`,
+                "]",
+                Array.from(bytes, String),
                 indent,
                 multiline,
             );

@@ -4,7 +4,7 @@ import { rule } from "../../rules.js";
 const gradients = /^(?:-webkit-|-moz-|-o-|-ms-)?linear-gradient$/i;
 const direction = /^(top|left|bottom|right)(?: (top|left|bottom|right))?$/i;
 
-/** Like Biome: a side, or two different sides, after `to`, or without `to` when vendor prefixed. */
+/** A side, or two different sides, after `to`, or without `to` when vendor prefixed. */
 const standard = (text: string, prefixed: boolean): boolean => {
     let match: RegExpExecArray | null = null;
     if (prefixed && !text.startsWith("to ")) match = direction.exec(text);

@@ -137,7 +137,7 @@ export default class Lintero {
         let sheet: Css.Stylesheet | undefined;
         try {
             if (css) {
-                // like Biome, rules run on what parses, errors are reported too
+                // rules run on what parses, errors are reported too
                 sheet = parseCss(text, { recover: true });
                 parsed = {
                     program: {
@@ -251,7 +251,7 @@ export default class Lintero {
             }
         }
 
-        // like Biome, scripts in HTML are linted as files of their language
+        // scripts in HTML are linted as files of their language
         if (htmlRoot)
             for (const diagnostic of this.#scripts(htmlRoot, file, lines))
                 if (
@@ -335,7 +335,7 @@ export default class Lintero {
                 if (child.type !== "Element") continue;
                 collect(child.children);
                 const content = child.children[0];
-                // like Biome, styles of any type are CSS
+                // styles of any type are CSS
                 if (
                     (child.tag === "script" || child.tag === "style") &&
                     content?.type === "Text"
@@ -412,8 +412,8 @@ export default class Lintero {
 
     /**
      * The names of the top level imports and variables of module scripts.
-     * Biome's HTML support collects them for templates to use, and does not
-     * report them as unused in any script of the file.
+     * They are collected for templates to use, and are not
+     * reported as unused in any script of the file.
      */
     static #embeddedBindings(
         scripts: { element: Html.Element; content: Html.Text }[],
@@ -482,7 +482,7 @@ export default class Lintero {
         return names;
     }
 
-    /** How Biome reads a script by its type: JavaScript, JSON, or not at all. */
+    /** How a script is read by its type: JavaScript, JSON, or not at all. */
     static #scriptKind(element: Html.Element): "js" | "json" | undefined {
         const type = element.attributes.find(
             (attribute) => attribute.name.toLowerCase() === "type",

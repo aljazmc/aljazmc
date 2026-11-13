@@ -1,7 +1,7 @@
 import type { Css } from "@aljazmc/syntax";
 import { rule } from "../../rules.js";
 
-/** Units Biome knows. */
+/** Known units. */
 const units = new Set(
     "em rem ex rex cap rcap ch rch ic ric lh rlh vw svw lvw dvw vh svh lvh dvh vi svi lvi dvi vb svb lvb dvb vmin svmin lvmin dvmin vmax svmax lvmax dvmax cm mm q in pc pt px mozmm rpx cqw cqh cqi cqb cqmin cqmax deg grad rad turn s ms hz khz dpi dpcm dppx x fr".split(
         " ",
@@ -30,7 +30,7 @@ export default rule({
             for (const value of list) {
                 if (value.type === "Dimension") {
                     const lower = value.unit.toLowerCase();
-                    // like Biome, units with escapes are unknown dimensions too
+                    // units with escapes are unknown dimensions too
                     const unknown =
                         !units.has(lower) || value.unit.includes("\\");
                     if (

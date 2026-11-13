@@ -2,7 +2,7 @@ import type { Node } from "@aljazmc/syntax";
 import Html from "../../analysis/html.js";
 import { rule } from "../../rules.js";
 
-/** ISO 639-1 languages, ISO 15924 scripts and ISO 3166-1 regions Biome knows. */
+/** ISO 639-1 languages, ISO 15924 scripts and ISO 3166-1 regions. */
 export const languages = new Set(
     `
     aa ab af am an ar as ay az ba be bg bh bi bn bo br ca co cs cy da de dz

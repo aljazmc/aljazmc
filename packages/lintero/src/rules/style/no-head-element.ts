@@ -17,7 +17,7 @@ export default rule({
                 !node.selfClosing &&
                 !Imports.segments(context.file).slice(0, -1).includes("app")
             ) {
-                // like Biome, a parenthesized element starts after its parenthesis
+                // a parenthesized element starts after its parenthesis
                 const outer = context.outer(node);
                 const start =
                     outer.start === node.start ? node.start : outer.start + 1;

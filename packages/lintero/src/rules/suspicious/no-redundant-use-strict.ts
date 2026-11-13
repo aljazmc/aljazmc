@@ -17,7 +17,7 @@ export default rule({
     fix: "safe",
     languages: ["js"],
     create: (context) => {
-        // like Biome, everything is a module but CommonJS scripts
+        // everything is a module but CommonJS scripts
         const script =
             /\.cjs$/.test(context.file) ||
             (/\.jsx?$/.test(context.file) &&

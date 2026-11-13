@@ -1,4 +1,4 @@
-/** Keywords of CSS, from Biome 2.6.6 (`biome_css_syntax::keywords`). */
+/** Keywords of CSS. */
 
 const words = (text: string): string[] => text.split(" ");
 

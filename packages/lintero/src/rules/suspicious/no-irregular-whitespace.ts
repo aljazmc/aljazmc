@@ -27,7 +27,7 @@ export default rule({
         const skipped: { start: number; end: number }[] = [...context.comments];
         return {
             CssStylesheet(sheet) {
-                // like Biome, CSS has no irregular line separators, strings and comments may hold any
+                // CSS has no irregular line separators, strings and comments may hold any
                 const text = context.text;
                 const ranges = [
                     ...sheet.comments,
@@ -49,7 +49,7 @@ export default rule({
                         )
                     )
                         continue;
-                    // a byte order mark is part of the identifier it follows, Biome reports the identifier
+                    // a byte order mark is part of the identifier it follows, the identifier is reported
                     if (text[start] === "\uFEFF" && name(text[start - 1])) {
                         while (start > 0 && name(text[start - 1])) start--;
                         while (name(text[end])) end++;

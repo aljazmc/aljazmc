@@ -138,7 +138,7 @@ export function isVariable(text: string): boolean {
     return text.toLowerCase().startsWith("var(");
 }
 
-/** The font families of a `font` shorthand or `font-family` value, like Biome finds them. */
+/** The font families of a `font` shorthand or `font-family` value. */
 export function fontFamilies(
     components: FontComponent[],
     text: string,

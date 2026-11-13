@@ -1,7 +1,7 @@
 import type { Html } from "@aljazmc/syntax";
 import { rule } from "../../rules.js";
 
-/** Obsolete attributes and the elements they are obsolete on, `*` for all, from Biome 2.6.6. */
+/** Obsolete attributes and the elements they are obsolete on, `*` for all. */
 const obsolete: Record<string, string[]> = {
     abbr: ["td"],
     accept: ["form"],

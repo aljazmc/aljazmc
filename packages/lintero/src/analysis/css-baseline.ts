@@ -1,4 +1,4 @@
-/** Baseline availability of CSS features, from Biome 2.6.6 (`biome_css_analyze::baseline_data`). */
+/** Baseline availability of CSS features. */
 
 /** `l`imited, `n`ewly or `w`idely available, with the year it became newly available if known. */
 export interface Baseline {

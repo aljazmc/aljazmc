@@ -42,7 +42,7 @@ export default rule({
                     ? explicit
                     : implicitRole(node);
             const allowed = role === undefined ? named : supported(role);
-            // like Biome, sections without a name may still be labelled
+            // sections without a name may still be labelled
             if (node.name === "section" && role === "generic")
                 allowed.add("label").add("labelledby");
             for (const attribute of node.attributes) {

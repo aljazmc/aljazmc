@@ -14,7 +14,7 @@ export default rule({
             if (!parent || parent.type === "Stylesheet") return;
             if (inKeyframes([parent, ...context.cssAncestors(parent)])) return;
             const seen = new Set<string>();
-            // like Biome, the first duplicate of each block
+            // the first duplicate of each block
             for (const declaration of declarations(block)) {
                 if (declaration.property.startsWith("--")) continue;
                 if (seen.has(declaration.property)) {

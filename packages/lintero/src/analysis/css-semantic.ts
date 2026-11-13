@@ -1,6 +1,6 @@
 import type { Css } from "@aljazmc/syntax";
 
-/** A token of a resolved selector, like Biome's semantic model keeps them. */
+/** A token of a resolved selector, as the semantic model keeps them. */
 export interface SelectorToken {
     /** Combinators, `&`, the type or universal selector of a compound, or one of its simple selectors. */
     kind: "combinator" | "space" | "amp" | "type" | "simple";
@@ -45,7 +45,7 @@ const max = (list: Specificity[]): Specificity =>
 export const format = (specificity: Specificity): string =>
     `(${specificity[0]}, ${specificity[1]}, ${specificity[2]})`;
 
-/** Like Biome: `:where()` adds nothing, `:is()`, `:not()`, `:has()` their most specific argument, others a class more. */
+/** `:where()` adds nothing, `:is()`, `:not()`, `:has()` their most specific argument, others a class more. */
 function pseudoClass(node: Css.PseudoClassSelector): Specificity {
     const argument = node.argument;
     if (argument?.type !== "SelectorList") return CLASS;
@@ -207,7 +207,7 @@ export function semantic(sheet: Css.Stylesheet, text: string): SemanticRule[] {
     return visit(sheet.children, undefined);
 }
 
-/** A resolved selector as Biome prints it, explicit combinators spaced. */
+/** A resolved selector as printed in messages, explicit combinators spaced. */
 export const display = (tokens: SelectorToken[]): string =>
     tokens
         .map((token) =>

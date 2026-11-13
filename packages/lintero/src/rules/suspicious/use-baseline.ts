@@ -14,7 +14,7 @@ import { rule } from "../../rules.js";
 
 const colors = new Set(COLOR_KEYWORDS);
 
-/** At-rules Biome checks, by the names it knows. */
+/** At-rules that are checked, by their known names. */
 const atRules = new Set(
     "charset color-profile container counter-style document font-face font-feature-values font-palette-values import keyframes layer media namespace page position-try property scope starting-style supports view-transition function custom-media".split(
         " ",

@@ -26,7 +26,7 @@ export default rule({
             for (const [name, entries] of seen) {
                 if (entries.length < 2) continue;
                 if (json) {
-                    // like Biome, once at the first key, the others are its details
+                    // once at the first key, the others are its details
                     const [first] = entries;
                     if (first)
                         context.report(

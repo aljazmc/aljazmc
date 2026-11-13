@@ -6,7 +6,7 @@ type State = Set<number>;
 
 type Problem = "this" | "twice" | "loop" | "return" | "end";
 
-/** Messages by priority, like Biome only the first problem found is reported. */
+/** Messages by priority, only the first problem found is reported. */
 const messages: Record<Problem, string> = {
     this: "This constructor has code paths accessing `this` without calling `super()` first.",
     twice: "This constructor has code paths where `super()` is called more than once.",

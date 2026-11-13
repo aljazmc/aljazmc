@@ -7,7 +7,7 @@ const labelled = (node: Tree.Element) =>
         Html.nonEmpty(node, name),
     );
 
-/** Whether children have content screen readers read, like Biome's for controls. */
+/** Whether children have content screen readers read, for controls. */
 const accessible = (children: Tree.Child[]): boolean =>
     children.some((child) => {
         if (child.type === "Text") return child.value.trim() !== "";

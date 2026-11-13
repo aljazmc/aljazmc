@@ -34,7 +34,7 @@ export default rule({
             const text = context.text;
             const components = fontComponents(node.value);
             const families = fontFamilies(components, text);
-            // like Biome, `monospace, monospace` makes browsers keep their monospace size
+            // `monospace, monospace` makes browsers keep their monospace size
             if (
                 family &&
                 components.length === 3 &&

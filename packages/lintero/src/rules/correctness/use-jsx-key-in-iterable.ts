@@ -58,7 +58,7 @@ export default rule<{ checkShorthandFragments?: boolean }>({
                 context.report(context.find("(", node.callee.end), message);
         };
 
-        /** Like Biome, returns and declarations of a callback body, also in if blocks and switch cases. */
+        /** Returns and declarations of a callback body, also in if blocks and switch cases. */
         const statements = (list: Node[]) => {
             for (const statement of list)
                 switch (statement.type) {

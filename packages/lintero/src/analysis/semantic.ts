@@ -791,7 +791,7 @@ export default class Semantic {
             this.#pattern(param, inner, "parameter", node);
         if (node.returnType) this.#visit(node.returnType, inner, "type");
         if (!node.body) return;
-        // like Biome, the body is a scope of its own, `var` there shadows parameters
+        // the body is a scope of its own, `var` there shadows parameters
         if (node.body.type === "BlockStatement")
             this.#visitAll(
                 node.body.body,

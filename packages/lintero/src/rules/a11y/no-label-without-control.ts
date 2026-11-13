@@ -60,7 +60,7 @@ export default rule<Options>({
                 return textual(child.children);
             });
 
-        /** Whether an HTML element or its descendants have text or a label attribute, like Biome's walk. */
+        /** Whether an HTML element or its descendants have text or a label attribute. */
         const htmlLabelled = (element: Tree.Element): boolean =>
             element.attributes.some(
                 (attribute) =>

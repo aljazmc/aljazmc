@@ -3,7 +3,7 @@ import { properties, type ValueType } from "../../analysis/aria.js";
 import Html from "../../analysis/html.js";
 import { rule } from "../../rules.js";
 
-/** The value of an attribute as Biome reads it, undefined when only known at runtime. */
+/** The static value of an attribute, undefined when only known at runtime. */
 const value = (node: Node | null): string | undefined => {
     if (!node) return;
     if (node.type === "StringLiteral") return node.raw.slice(1, -1);
@@ -58,7 +58,7 @@ const valid = (text: string, kind: ValueType): boolean => {
     }
 };
 
-/** Whether a value has the type, like Biome's `AriaValueType::contains`. */
+/** Whether a value has the type. */
 const biomeValid = (text: string, kind: ValueType): boolean => {
     if (text === "") return false;
     const words = text.split(/[\t\n\f\r ]+/).filter((word) => word !== "");

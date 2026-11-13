@@ -19,7 +19,7 @@ export type ValueType =
       }
     | { type: "token" | "tokens"; values: string[] };
 
-/** ARIA attributes Biome knows, without the `aria-` prefix, and their values. */
+/** Known ARIA attributes, without the `aria-` prefix, and their values. */
 export const properties: Record<string, ValueType> = {
     activedescendant: { type: "idref" },
     atomic: { type: "boolean" },
@@ -836,7 +836,7 @@ export function implicitRole(element: Element): string | undefined {
     }
 }
 
-/** Elements Biome treats as interactive, never to be given non-interactive roles. */
+/** Elements treated as interactive, never to be given non-interactive roles. */
 const interactiveElements = new Set(
     `
         abbr area audio button canvas cite col colgroup datalist dl
@@ -860,7 +860,7 @@ export function interactiveElement(element: Element): boolean {
     return interactiveElements.has(name);
 }
 
-/** Elements Biome treats as non-interactive content, besides `<div>` and `<span>`. */
+/** Elements treated as non-interactive content, besides `<div>` and `<span>`. */
 const nonInteractiveElements = new Set(
     `
         address article aside b bdi bdo blockquote body br caption

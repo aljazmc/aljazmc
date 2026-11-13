@@ -2,7 +2,7 @@ import type { Node, NodeOf } from "@aljazmc/syntax";
 import Imports from "./imports.js";
 import Nodes from "./nodes.js";
 
-/** Helpers for JSON documents, like Biome's configuration files. */
+/** Helpers for JSON documents, like configuration files. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups JSON helpers
 export default class Json {
     /** The value of a member of an object, like `files` of the configuration. */
@@ -16,7 +16,7 @@ export default class Json {
         return property?.value;
     }
 
-    /** Whether a file is a Biome configuration, `biome.json` or `biome.jsonc`. */
+    /** Whether a file is a linter configuration file. */
     static biome(file: string): boolean {
         const name = Imports.segments(file).at(-1);
         return name === "biome.json" || name === "biome.jsonc";

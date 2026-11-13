@@ -2,7 +2,7 @@ import type { Html as Tree } from "@aljazmc/syntax";
 import type { Range } from "./context.js";
 import { fromRoles, isNonInteractive } from "./roles.js";
 
-/** An element as Biome's ARIA queries see it. */
+/** An element as the ARIA queries see it. */
 export interface AriaElement {
     /** The name, lower case for HTML elements. */
     name: string | undefined;
@@ -10,7 +10,7 @@ export interface AriaElement {
     attribute(name: string): { value: string | undefined } | undefined;
 }
 
-/** Biome's event handlers by type, without `on`. */
+/** Event handlers by type, without `on`. */
 const handlers: Record<string, string[]> = {
     animation: ["animationend", "animationiteration", "animationstart"],
     clipboard: ["copy", "cut", "paste"],
@@ -84,7 +84,7 @@ const quoted = (text: string) =>
     ((text.startsWith('"') && text.endsWith('"')) ||
         (text.startsWith("'") && text.endsWith("'")));
 
-/** Helpers for the elements and attributes of HTML files, like Biome's. */
+/** Helpers for the elements and attributes of HTML files. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups HTML helpers
 export default class Html {
     /** The first attribute with a name, ignoring ASCII case. */
@@ -103,8 +103,8 @@ export default class Html {
     }
 
     /**
-     * The static value of an attribute, undefined without a value. Like
-     * Biome, it drops the first and last characters of every value, quoted or
+     * The static value of an attribute, undefined without a value. It
+     * drops the first and last characters of every value, quoted or
      * not, then quotes left around it.
      */
     static value(attribute: Tree.Attribute | undefined): string | undefined {
@@ -121,12 +121,12 @@ export default class Html {
         return quoted(raw) ? raw.slice(1, -1) : raw;
     }
 
-    /** The range of an element's opening tag, which Biome reports for most rules. */
+    /** The range of an element's opening tag, reported by most rules. */
     static opening(element: Tree.Element): Range {
         return { start: element.start, end: element.openingEnd };
     }
 
-    /** Whether an attribute has a value that is not blank, Biome's `has_non_empty_attribute`. */
+    /** Whether an attribute has a value that is not blank. */
     static nonEmpty(element: Tree.Element, name: string): boolean {
         const attribute = Html.attribute(element, name);
         if (!attribute?.value) return false;
@@ -168,7 +168,7 @@ export default class Html {
         );
     }
 
-    /** The element as Biome's ARIA queries see it: lower-cased, attributes by exact name. */
+    /** The element as the ARIA queries see it: lower-cased, attributes by exact name. */
     static aria(element: Tree.Element): AriaElement {
         return {
             name: element.name.toLowerCase(),
@@ -182,7 +182,7 @@ export default class Html {
     }
 }
 
-/** Biome's `AriaRoles`, the ARIA queries shared by its JSX and HTML rules. */
+/** The ARIA queries shared by the JSX and HTML rules. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups ARIA queries
 export class AriaRoles {
     static implicitRole(element: AriaElement): string | undefined {

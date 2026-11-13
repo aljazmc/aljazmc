@@ -53,7 +53,7 @@ export default rule({
             VariableDeclaration(node) {
                 if (node.kind !== "var" || node.declare) return;
                 const parent = context.parent(node);
-                // like Biome, `for (var ...)` is reported, for in and of are not
+                // `for (var ...)` is reported, for in and of are not
                 if (parent?.type === "ForStatement") {
                     context.report(
                         node,

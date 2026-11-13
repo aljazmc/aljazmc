@@ -7,7 +7,7 @@ import { rule } from "../../rules.js";
 
 const features = new Set(MEDIA_FEATURE_NAMES);
 
-/** Like Biome: known names, and known names after a vendor prefix like `-webkit-min-device-pixel-ratio`. */
+/** Known names, and known names after a vendor prefix like `-webkit-min-device-pixel-ratio`. */
 const known = (name: string): boolean => {
     const lower = name.toLowerCase();
     if (features.has(lower)) return true;

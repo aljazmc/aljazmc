@@ -1,13 +1,13 @@
 import { rule } from "../../rules.js";
 
-/** Obsolete elements Biome knows as tags. */
+/** Obsolete elements known as tags. */
 const tags = new Set(
     "acronym basefont bgsound big blink center dir font frame frameset keygen marquee menuitem nobr noembed noframes plaintext rb rtc strike tt xmp".split(
         " ",
     ),
 );
 
-/** Obsolete elements Biome does not know as tags, by their lower case name. */
+/** Obsolete elements not known as tags, by their lower case name. */
 const unknown = new Set(
     "applet isindex listing multicol nextid spacer".split(" "),
 );

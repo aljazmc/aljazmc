@@ -9,7 +9,7 @@ export default rule({
     languages: ["html"],
     create: (context) => ({
         HtmlElement(node) {
-            // like Biome, names are compared as written
+            // names are compared as written
             const seen = new Set<string>();
             for (const attribute of node.attributes) {
                 if (seen.has(attribute.name))

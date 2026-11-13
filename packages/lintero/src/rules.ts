@@ -52,19 +52,19 @@ export type GroupConfiguration =
     | {
           /** Replaces `preset` for the group. */
           preset?: Preset;
-          /** Biome's older switch, `preset` takes precedence. */
+          /** The older switch, `preset` takes precedence. */
           recommended?: boolean;
           [rule: string]: RuleConfiguration | Preset | boolean | undefined;
       };
 
-/** Biome's linter settings: linter.*, linter.rules.*, javascript.* and json.linter. */
+/** The linter settings: linter.*, linter.rules.*, javascript.* and json.linter. */
 export interface Rules {
     enabled: boolean;
     /** Globs of the files to lint in order, the last match decides, "!" excludes. */
     includes: string[];
     domains: Partial<Record<Domain, DomainValue>>;
     preset: Preset;
-    /** Biome's older switch, false disables the recommended preset. */
+    /** The older switch, false disables the recommended preset. */
     recommended?: boolean;
     a11y?: GroupConfiguration;
     complexity?: GroupConfiguration;
@@ -85,7 +85,7 @@ export interface Rules {
     html: { enabled: boolean };
     css: {
         enabled: boolean;
-        /** Like Biome's `css.parser.cssModules`, CSS Modules syntax; unset, `.module.css` files have it. */
+        /** CSS Modules syntax, like `css.parser.cssModules`; unset, `.module.css` files have it. */
         cssModules?: boolean;
     };
 }

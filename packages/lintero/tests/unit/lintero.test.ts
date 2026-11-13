@@ -17,7 +17,7 @@ const only = (rule: string, level: unknown = "on") => {
     return { preset: "none", [group]: { [name]: level } };
 };
 
-/** Examples of Biome's documentation and edge cases, with the diagnostics Biome 2.6 reports for them. */
+/** Examples and edge cases, with the diagnostics expected for them. */
 const biome: {
     rule: string;
     file: string;
@@ -13646,7 +13646,7 @@ describe("lintero", () => {
     });
 
     describe("scopes", () => {
-        // the expected diagnostics are Biome's, but for rules lintero does not implement
+        // the expected diagnostics leave out rules lintero does not implement
         test("types and values, declarations and their uses are told apart", () => {
             const source = [
                 'import type { Shape } from "./shape";',
@@ -13737,7 +13737,7 @@ describe("lintero", () => {
             expect(lint(source, "a.css", { css: { enabled: false } })).toEqual(
                 [],
             );
-            // like Biome, styles in HTML are linted as CSS, style attributes not
+            // styles in HTML are linted as CSS, style attributes not
             expect(
                 lint(
                     '<html lang="en"><head><style>\na { color: red; color: blue; }\n</style></head><body><p style="color: red; color: blue">x</p></body></html>\n',
@@ -13792,7 +13792,7 @@ describe("lintero", () => {
         test("scripts in HTML are linted like files of their language, at their place", () => {
             const source =
                 '<div>\n<script>\nvar a = 1;\ndebugger;\n</script>\n<script type="module">\nimport b from "b";\nconst c = 1;\nfunction d() {}\n</script>\n<script type="application/json">{"e": 1, "e": 2}</script>\n<script type="text/template"><a onclick="x"></a></script>\n<!-- biome-ignore lint/suspicious/noDebugger: test -->\n<script>debugger;</script>\n<script>\n// biome-ignore lint/suspicious/noDebugger: test\ndebugger;\n</script>\n</div>\n';
-            // like Biome, the top level imports and variables of module scripts may be used by the page
+            // the top level imports and variables of module scripts may be used by the page
             expect(lint(source, "a.html")).toEqual([
                 "3:5 lint/correctness/noUnusedVariables This variable a is unused.",
                 "4:1 lint/suspicious/noDebugger This is an unexpected use of the debugger statement.",
@@ -13803,7 +13803,7 @@ describe("lintero", () => {
                 "<script>\ndebugger;\nlet  x = 1;\nconsole.log(x);\n</script>\n",
                 "a.html",
             );
-            // like Biome, removing the debugger statement is unsafe
+            // removing the debugger statement is unsafe
             expect(fixed).toBe(
                 "<script>\ndebugger;\nconst  x = 1;\nconsole.log(x);\n</script>\n",
             );
@@ -13844,7 +13844,7 @@ describe("lintero", () => {
             ).toEqual([
                 "9:1 suppressions/unused Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.",
                 "11:1 lint/nursery/useConsistentHeadingLevel This heading skipped a level.",
-                '13:19 suppressions/parse Failed to parse category "lint/foo". Example of suppression: // biome-ignore lint: reason',
+                '13:19 suppressions/parse Failed to parse category "lint/foo". Example of suppression: // lintero-ignore lint: reason',
             ]);
         });
 
@@ -13907,7 +13907,7 @@ describe("lintero", () => {
                     "a.js",
                 ),
             ).toEqual([
-                "1:17 suppressions/parse Unexpected token, expected one of ':', '(' or whitespace. Example of suppression: // biome-ignore lint: reason",
+                "1:17 suppressions/parse Unexpected token, expected one of ':', '(' or whitespace. Example of suppression: // lintero-ignore lint: reason",
                 "2:1 lint/suspicious/noDebugger This is an unexpected use of the debugger statement.",
             ]);
             expect(

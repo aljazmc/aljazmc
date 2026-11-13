@@ -1,7 +1,7 @@
 import type { Comment, Lines } from "@aljazmc/syntax";
 import type { Group } from "../rules.js";
 
-/** A `biome-ignore` (or `lintero-ignore`) comment, for lint categories, `<!-- -->` ones in Markdown. */
+/** A suppression comment, like `lintero-ignore`, for lint categories, `<!-- -->` ones in Markdown. */
 export interface Suppression {
     comment: Comment;
     /** Categories like `lint`, `lint/style` or `lint/style/useConst`. */
@@ -33,7 +33,7 @@ export default class Suppressions {
         "suspicious",
     ];
     static readonly #example =
-        "Example of suppression: // biome-ignore lint: reason";
+        "Example of suppression: // lintero-ignore lint: reason";
 
     readonly suppressions: Suppression[] = [];
     readonly errors: SuppressionError[] = [];

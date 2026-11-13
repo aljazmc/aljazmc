@@ -10,7 +10,7 @@ export default rule({
     create: (context) => ({
         CssBlock(node) {
             if (node.children.length > 0) return;
-            // like Biome, a comment is content
+            // a comment is content
             if (
                 context.comments.some(
                     (comment) =>

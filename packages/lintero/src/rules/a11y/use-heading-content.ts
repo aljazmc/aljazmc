@@ -23,7 +23,7 @@ export const contentProps = (element: NodeOf<"JSXElement">): boolean =>
     Jsx.attribute(element, "children") !== undefined ||
     Jsx.attribute(element, "dangerouslySetInnerHTML") !== undefined;
 
-/** Whether HTML children have content screen readers read, like Biome's for headings. */
+/** Whether HTML children have content screen readers read, for headings. */
 const headingContent = (children: Tree.Child[]): boolean =>
     children.some((child) => {
         if (child.type === "Text") return child.value.trim() !== "";

@@ -16,7 +16,7 @@ export default rule({
     fix: "safe",
     languages: ["css", "js"],
     create: (context) => {
-        /** The first useless escape of a text, Biome reports one per literal. */
+        /** The first useless escape of a text, one is reported per literal. */
         const useless = (
             raw: string,
             offset: number,

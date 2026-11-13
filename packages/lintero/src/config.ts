@@ -1,6 +1,6 @@
 import type { Rules } from "./rules.js";
 
-/** Biome's linter defaults, with the recommended rules. */
+/** The linter defaults, with the recommended rules. */
 const rules: Rules = {
     enabled: true,
     includes: ["**"],

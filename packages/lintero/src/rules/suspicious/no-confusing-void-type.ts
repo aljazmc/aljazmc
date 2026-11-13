@@ -20,7 +20,7 @@ const allowed = (context: Context, type: Node): boolean => {
     }
 };
 
-/** Like Biome, `void` may be in a union with `never` or a generic type, like `Promise<void>`. */
+/** `void` may be in a union with `never` or a generic type, like `Promise<void>`. */
 const excuses = (type: Node): boolean =>
     (type.type === "TSKeyword" && type.name === "never") ||
     (type.type === "TSTypeReference" && type.typeArguments !== null);

@@ -74,7 +74,7 @@ export default rule({
                     const conflict = declarations.slice(0, index).some(
                         (other) =>
                             other.kind !== "infer" &&
-                            // Biome sees a type alias and a function of one name as a redeclaration
+                            // a type alias and a function of one name are a redeclaration
                             ([other.kind, declaration.kind].sort().join(" ") ===
                                 "function typeAlias" ||
                                 spaces(other.kind).some((space) =>

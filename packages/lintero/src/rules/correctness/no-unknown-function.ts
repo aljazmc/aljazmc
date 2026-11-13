@@ -16,7 +16,7 @@ export default rule<{ ignore?: string[] }>({
         CssDeclaration(node) {
             for (const value of values(node.value)) {
                 if (value.type !== "Function") continue;
-                // like Biome, `module.function()` is SCSS, not a CSS function
+                // `module.function()` is SCSS, not a CSS function
                 if (context.text[value.start - 1] === ".") continue;
                 const name = value.name;
                 // `if()` is its own syntax, custom functions start with `--`

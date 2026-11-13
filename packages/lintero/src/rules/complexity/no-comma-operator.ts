@@ -11,7 +11,7 @@ export default rule({
         SequenceExpression(node) {
             const parent = context.parent(node);
             if (parent?.type === "ForStatement" && parent.test !== node) return;
-            // like Biome, one diagnostic at the last comma of the sequence
+            // one diagnostic at the last comma of the sequence
             const last = node.expressions.at(-1);
             const previous = node.expressions.at(-2);
             if (last && previous)

@@ -42,7 +42,7 @@ export default rule({
                 (constants === 0 || constants === parts.length)
             )
                 return;
-            // like Biome, concatenations over several lines are left alone
+            // concatenations over several lines are left alone
             for (const [index, part] of parts.slice(1).entries())
                 if (
                     /[\r\n]/.test(

@@ -1,7 +1,7 @@
 import { compounds } from "../../analysis/css.js";
 import { rule } from "../../rules.js";
 
-/** Like Biome: `0`, `0n` and `0n + 0` never match, the zeros as written. */
+/** `0`, `0n` and `0n + 0` never match, the zeros as written. */
 const unmatchable = (value: string): boolean => {
     const compact = value.replace(/\s+/g, "");
     const number = /^[+-]?(\d+)$/.exec(compact);

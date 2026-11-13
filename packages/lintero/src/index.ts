@@ -33,7 +33,7 @@ const project = {
 const linteros = new Map<string, Lintero>();
 const lintero = new Lintero(config.rules, {}, all, project);
 
-/** Like Biome, domains and the module type come from the closest package.json. */
+/** Domains and the module type come from the closest package.json. */
 const linteroFor = (file: string): Lintero => {
     let directory = dirname(join(config.root, file));
     while (!existsSync(join(directory, "package.json"))) {

@@ -11,7 +11,7 @@ export default rule({
     create: (context) => ({
         CssAtRule(node) {
             if (!isKeyframes(node) || !node.block) return;
-            // like Biome, the first one of each keyframes
+            // the first one of each keyframes
             for (const item of node.block.children) {
                 if (item.type !== "Rule") continue;
                 const important = declarations(item.block).find(

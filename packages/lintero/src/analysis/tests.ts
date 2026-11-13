@@ -34,7 +34,7 @@ const modifiers: Record<Kind, string[]> = {
     ],
 };
 
-/** Test framework calls, recognized by their callee like Biome does. */
+/** Test framework calls, recognized by their callee. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups test call helpers
 export default class Tests {
     static readonly hooks = [

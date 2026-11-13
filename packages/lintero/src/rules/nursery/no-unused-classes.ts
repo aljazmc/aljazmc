@@ -12,7 +12,7 @@ export default rule({
     create: (context) => ({
         CssRule(node) {
             if (!node.selectors) return;
-            // like Biome without files that import the stylesheet, no class is referenced
+            // without files that import the stylesheet, no class is referenced
             for (const { compound, pseudos } of compounds(node.selectors)) {
                 if (
                     pseudos.some(

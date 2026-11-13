@@ -24,7 +24,7 @@ export default rule<{ allowComments?: boolean }>({
     options: { allowComments: false },
     create: (context) => ({
         Program(node) {
-            // like Biome, scripts are never empty
+            // scripts are never empty
             const script =
                 /\.cjs$/.test(context.file) ||
                 (/\.jsx?$/.test(context.file) &&
@@ -40,7 +40,7 @@ export default rule<{ allowComments?: boolean }>({
             if (node.frontmatter || !node.children.every(comment)) return;
             if (context.options.allowComments && node.children.length > 0)
                 return;
-            // like Biome, at the first token, after the comments
+            // at the first token, after the comments
             const start =
                 /^(?:[ \t]*<!--[\s\S]*?-->)*/.exec(context.text)?.[0].length ??
                 0;

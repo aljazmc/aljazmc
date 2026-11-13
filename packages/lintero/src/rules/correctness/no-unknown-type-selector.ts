@@ -13,7 +13,7 @@ const math = new Set(MATH_ML_TAGS);
 /** Pseudo elements whose argument is a view transition name, not a type. */
 const transitions = /^view-transition(?:-group|-image-pair|-old|-new)?$/i;
 
-/** Like Biome: HTML and MathML names in any case, SVG ones as written, and custom elements. */
+/** HTML and MathML names in any case, SVG ones as written, and custom elements. */
 const known = (name: string): boolean => {
     const lower = name.toLowerCase();
     return (

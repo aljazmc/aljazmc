@@ -21,7 +21,7 @@ const text = (node: Node): string => {
     return node.children.map(text).join("");
 };
 
-/** Biome's text of an HTML element: without punctuation, lower case, single spaces. */
+/** The text of an HTML element: without punctuation, lower case, single spaces. */
 const standardize = (text: string): string =>
     text
         .replace(/[,.?¿!‽¡;:]/g, "")

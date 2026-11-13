@@ -10,7 +10,7 @@ export default rule({
     languages: ["js"],
     create: (context) => ({
         SwitchStatement(node) {
-            // like Biome, comments like `// falls through` are no exception
+            // comments like `// falls through` are no exception
             for (const clause of node.cases.slice(0, -1))
                 if (
                     clause.consequent.length > 0 &&

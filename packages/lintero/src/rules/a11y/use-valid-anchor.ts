@@ -5,7 +5,7 @@ import { rule } from "../../rules.js";
 
 type Attribute = NodeOf<"JSXAttribute">;
 
-/** Like Biome, the first attribute of a name counts. */
+/** The first attribute of a name counts. */
 const attribute = (
     element: NodeOf<"JSXElement">,
     name: string,

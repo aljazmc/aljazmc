@@ -1,6 +1,6 @@
 /**
- * ARIA roles like Biome's metadata, generated from the WAI-ARIA 1.3, DPUB-ARIA
- * 1.1 and Graphics ARIA 1.0 data of Biome 2.6.6. For each concrete role: its
+ * ARIA roles, generated from the WAI-ARIA 1.3, DPUB-ARIA 1.1 and Graphics
+ * ARIA 1.0 specifications. For each concrete role: its
  * inherited abstract roles, its required, prohibited and supported attributes
  * without `aria-`, and the HTML elements it is based on or related to, like
  * `input[type=checkbox]`.
@@ -1078,7 +1078,7 @@ export function role(name: string):
     };
 }
 
-/** The first valid role of a `role` value, like Biome's `AriaRole::from_roles`. */
+/** The first valid role of a `role` value. */
 export function fromRoles(value: string): string | undefined {
     return value
         .split(/[\t\n\f\r ]+/)

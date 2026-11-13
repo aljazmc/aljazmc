@@ -9,7 +9,7 @@ const globals: Record<Library, string> = {
     "react-dom": "ReactDOM",
 };
 
-/** React APIs, recognized like Biome: imported from the library, or on its global. */
+/** React APIs, recognized when imported from the library, or on its global. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups React helpers
 export default class React {
     /** Whether a callee is a React API, like `React.createElement` or an imported `createElement`. */

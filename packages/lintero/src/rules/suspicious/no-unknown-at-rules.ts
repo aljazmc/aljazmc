@@ -1,7 +1,7 @@
 import type { Css } from "@aljazmc/syntax";
 import { rule } from "../../rules.js";
 
-/** At-rules Biome parses, the others are unknown. */
+/** Known at-rules, the others are unknown. */
 const known = new Set(
     "charset color-profile container counter-style custom-media document -moz-document font-face font-feature-values font-palette-values function import keyframes -webkit-keyframes -moz-keyframes -o-keyframes -ms-keyframes layer media namespace page position-try property scope starting-style supports view-transition".split(
         " ",

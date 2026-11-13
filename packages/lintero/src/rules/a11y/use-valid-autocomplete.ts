@@ -87,7 +87,7 @@ const addresses = new Set([
     "street-address",
 ]);
 
-/** Whether autocomplete values are valid, Biome's `is_valid_autocomplete` of HTML. */
+/** Whether autocomplete values of HTML are valid. */
 const biomeAutocomplete = (values: string[]): boolean => {
     const [first, second] = values;
     if (first === undefined) return true;

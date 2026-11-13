@@ -32,7 +32,7 @@ export interface Source {
     comments: Comment[];
     /**
      * Names of the top level imports and variables of the module scripts of
-     * an HTML file, which Biome treats as used by every script of it.
+     * an HTML file, treated as used by every script of it.
      */
     embeddedBindings?: ReadonlySet<string>;
     settings: Rules;

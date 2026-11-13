@@ -21,7 +21,7 @@ export default rule({
                           ? `string:${Nodes.string(value)}`
                           : undefined;
                 if (key === undefined) continue;
-                // like Biome, only the first duplicate of an enum
+                // only the first duplicate of an enum
                 if (seen.has(key))
                     return context.report(
                         member,

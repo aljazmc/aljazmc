@@ -67,7 +67,7 @@ export const used = (binding: Binding): boolean =>
 
 /**
  * Whether a parameter is a lone arrow function parameter without parentheses,
- * which Biome checks as a variable rather than as a parameter.
+ * which is checked as a variable rather than as a parameter.
  */
 export const bare = (declaration: Declaration, text: string): boolean => {
     const fn = declaration.node;
@@ -121,7 +121,7 @@ export default rule<{
 
         /**
          * Declarations without reads, each `var` redeclaration taking over the
-         * reads after it, like Biome.
+         * reads after it.
          */
         const unused = (binding: Binding): Declaration[] => {
             const { declarations } = binding;

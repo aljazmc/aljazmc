@@ -4,7 +4,7 @@ import Jsx from "../../analysis/jsx.js";
 import { rule } from "../../rules.js";
 import { accessible, contentProps } from "./use-heading-content.js";
 
-/** Whether HTML children have content screen readers read, like Biome's `has_accessible_content`. */
+/** Whether HTML children have content screen readers read. */
 const htmlAccessible = (children: Tree.Child[]): boolean =>
     children.some((child) => {
         if (child.type === "Text") return child.value.trim() !== "";

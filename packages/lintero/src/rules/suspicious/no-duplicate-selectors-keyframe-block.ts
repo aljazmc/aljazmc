@@ -16,7 +16,7 @@ export default rule({
                 if (item.type !== "Rule") continue;
                 const first = item.prelude[0];
                 if (!first) return;
-                // like Biome, only the first selector of each keyframe counts
+                // only the first selector of each keyframe counts
                 const comma = item.prelude.findIndex(
                     (value) => value.type === "Comma",
                 );

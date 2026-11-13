@@ -34,7 +34,7 @@ export interface Manifest {
     peerDependencies?: Record<string, string>;
 }
 
-/** Resolves Biome style linter settings to the enabled rules. */
+/** Resolves linter settings to the enabled rules. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups settings helpers
 export default class Settings {
     /** Packages, with their minimum version, that enable a domain. */
@@ -98,7 +98,7 @@ export default class Settings {
             let fix = rule.fix;
 
             if (typeof group === "string") {
-                // like Biome, a level for the group leaves domain rules to their domains
+                // a level for the group leaves domain rules to their domains
                 enabled =
                     group !== "off" &&
                     (!rule.domains ||

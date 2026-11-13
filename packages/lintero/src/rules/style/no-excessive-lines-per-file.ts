@@ -38,7 +38,7 @@ export default rule<{ maxLines?: number; skipBlankLines?: boolean }>({
         const check = (ranges: [number, number][], comments: Set<number>) => {
             const text = context.text;
             const skip = context.options.skipBlankLines ?? false;
-            // like Biome, the line breaks in the trivia before each token count, those before the end of the file not
+            // the line breaks in the trivia before each token count, those before the end of the file not
             let lines = 1;
             let breaks = 0;
             let first: number | undefined;

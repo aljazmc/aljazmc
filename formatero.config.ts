@@ -2,7 +2,7 @@ import biome from "./biome.json" with { type: "json" };
 
 const { formatter, javascript, json } = biome;
 
-/** Formats this project like biome.json does. */
+/** Formats this project with the settings of the imported JSON configuration. */
 export default {
     ignore: [
         ".cache",

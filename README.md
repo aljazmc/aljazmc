@@ -5,88 +5,79 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/aljazmc/aljazmc)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/aljazmc/aljazmc)
 
-# aljazmc
+# > aljazmc
 
-Lightweight npm packages, written in modern TypeScript: a formatter, a
-linter, a test runner and a monorepo tool. No package depends on
-anything outside of this repository, except esbuild for testero, and all
-of them are published by [aljazmc on npm](https://www.npmjs.com/~aljazmc).
+Lightweight npm packages written in modern TypeScript: a formatter, a
+linter, a monorepo release tool and a test runner. They depend on nothing
+outside this repository, except esbuild for testero, and are published by
+[aljazmc on npm](https://www.npmjs.com/~aljazmc).
 
-## Packages
+## > Packages
 
-| Package                         | What it does                                                                                             | npm                                                                    |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [formatero](packages/formatero) | Formats CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript, with options compatible with Biome's. | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
-| [lintero](packages/lintero)     | Lints CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript with 287 rules compatible with Biome's.  | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
-| [monorepo](packages/monorepo)   | Versions each package on its own by conventional commits, and moves the tags a rebase left behind.       | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
-| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, JSX and TypeScript, compiled with esbuild.                           | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
+| Package                         | Description                                                        | npm                                                                    |
+| ------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| [formatero](packages/formatero) | Formats CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript. | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
+| [lintero](packages/lintero)     | Lints the same languages with 287 rules and automatic fixes.       | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
+| [monorepo](packages/monorepo)   | Versions packages by conventional commits, fixes rebased tags.     | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
+| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, JSX and TypeScript.            | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
 
-The packages share code, published for its types and bundled by esbuild
-into the packages that use it:
+## > Shared code
 
-| Shared code                      | What it does                                                                 |
-| -------------------------------- | ---------------------------------------------------------------------------- |
-| [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs.            |
-| [@aljazmc/syntax](shared/syntax) | Parses CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript into trees. |
+Bundled into the packages by esbuild, and published for their types.
 
-## Requirements
+| Package                          | Description                                                       |
+| -------------------------------- | ----------------------------------------------------------------- |
+| [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs. |
+| [@aljazmc/syntax](shared/syntax) | Parses CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript. |
 
-- Docker with Compose. Everything else, Node.js and yarn included, runs in a container.
+## > Development
 
-## Usage
+Requires only Docker with Compose, everything else runs in a container.
 
-```sh
-./project.sh start  # create docker-compose.yml, install the dependencies, then lint, test, build and export the types of everything
-./project.sh clean  # remove the container, the dependencies and the generated files
-docker compose run --rm node yarn c:testero  # run any script of package.json
-```
+| Command                                                         | Description                                              |
+| --------------------------------------------------------------- | -------------------------------------------------------- |
+| `./project.sh clean`                                            | Removes the container, dependencies and generated files. |
+| `./project.sh start`                                            | Installs dependencies, then lints, tests and builds all. |
+| `docker compose run --rm node yarn <script>`                    | Runs any script of `package.json`.                       |
+| `docker compose run --rm node node packages/<name>/bin/main.js` | Runs a package on this repository.                       |
 
-The packages check this repository too, configured by
-`formatero.config.ts`, `lintero.config.ts`, `monorepo.config.ts` and
-`testero.config.ts`:
+### > Scripts
 
-```sh
-docker compose run --rm node node packages/formatero/bin/main.js
-docker compose run --rm node node packages/lintero/bin/main.js
-docker compose run --rm node node packages/testero/bin/main.js
-docker compose run --rm node node packages/monorepo/bin/main.js tags
-```
+Scripts are named `<prefix>:<package>`, like `c:lintero`, and most
+prefixes also have `<prefix>:all`.
 
-### Scripts
+| Prefix   | Description                                 |
+| -------- | ------------------------------------------- |
+| `b:`     | Builds the package with esbuild.            |
+| `c:`     | Lints, tests, builds and exports the types. |
+| `ct:`    | Checks the types.                           |
+| `et:`    | Exports the types as declaration files.     |
+| `l:`     | Lints.                                      |
+| `lw:`    | Lints and writes the safe fixes.            |
+| `lwu:`   | Lints and writes the unsafe fixes too.      |
+| `p:`     | Publishes to npm.                           |
+| `t:`     | Runs the tests.                             |
+| `te2e:`  | Runs the end-to-end tests.                  |
+| `tunit:` | Runs the unit tests.                        |
 
-The scripts of `package.json` are named `<prefix>:<package>`, like
-`c:lintero`, and most prefixes also have `<prefix>:all`:
-
-| Prefix   | What it does                                                      |
-| -------- | ----------------------------------------------------------------- |
-| `b:`     | builds the package with esbuild                                   |
-| `c:`     | completes every check: lints, tests, builds and exports the types |
-| `ct:`    | checks the types                                                  |
-| `et:`    | exports the types, as declaration files                           |
-| `l:`     | lints with Biome                                                  |
-| `lw:`    | lints and writes the safe fixes                                   |
-| `lwu:`   | lints and writes the unsafe fixes too                             |
-| `p:`     | publishes to npm                                                  |
-| `t:`     | runs the tests                                                    |
-| `te2e:`  | runs the end-to-end tests                                         |
-| `tunit:` | runs the unit tests                                               |
-
-## Monorepo structure
+### > CI/CD
 
 ```
 push to main
-├─> yarn c:<package>    lints, tests, builds and exports the types of each changed package
-├─> monorepo --push     bumps, commits, tags and pushes the versions, by conventional commits
-└─> yarn p:all          publishes the versions that are not on npm yet, dependencies first
+├─> yarn c:<package>   checks each changed package
+├─> monorepo --push    bumps, commits, tags and pushes the versions
+└─> yarn p:all         publishes the versions not yet on npm, dependencies first
 ```
 
-```
-packages/<name>/       the published packages, each with its src/, tests/ and README
-shared/<name>/         code bundled into the packages, published for their types
-<package>.config.ts    how the packages check this repository
-project.sh             creates the container and runs the checks
-```
+### > Layout
 
-## License
+| Path                  | Description                                                |
+| --------------------- | ---------------------------------------------------------- |
+| `<package>.config.ts` | How the packages check this repository.                    |
+| `packages/<name>/`    | Published packages, each with `src/`, `tests/` and README. |
+| `project.sh`          | Creates the container and runs the checks.                 |
+| `shared/<name>/`      | Code bundled into the packages.                            |
+
+## > License
 
 MIT, see [LICENSE](LICENSE).

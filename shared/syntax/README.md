@@ -1,68 +1,46 @@
 # > syntax
 
 Shared, dependency-free scanner and recursive descent parser for CSS,
-HTML, JavaScript, JSON, JSX, Markdown and TypeScript, bundled into `@aljazmc/formatero` and `@aljazmc/lintero`, and published for their
-types.
+HTML, JavaScript, JSON, JSX, Markdown and TypeScript, bundled into
+`@aljazmc/formatero` and `@aljazmc/lintero` and published for their
+types. Invalid sources throw a `ParseError` with the position of the
+problem.
+
+## > Features
+
+| Language                    | Entry points                  | Tree                                                                               |
+| --------------------------- | ----------------------------- | ---------------------------------------------------------------------------------- |
+| CSS                         | `isCss`, `parseCss`           | Rules, at-rules, declarations, values and selectors, with comments.                |
+| HTML                        | `isHtml`, `parseHtml`         | Elements, attributes and text, comments and whitespace as trivia.                  |
+| JavaScript, JSX, TypeScript | `language`, `parse`           | ESTree, with Babel-style literals and TypeScript nodes.                            |
+| JSON                        | `language`, `parse`           | ESTree expressions.                                                                |
+| Markdown                    | `isMarkdown`, `parseMarkdown` | CommonMark blocks and inlines, with GitHub's tables, task lists and strikethrough. |
+
+| Helper                           | Description                                                 |
+| -------------------------------- | ----------------------------------------------------------- |
+| `Lines`                          | Turns offsets into 1-based lines and columns, for messages. |
+| `parseCss(…, { recover: true })` | Skips items with errors and lists them in `errors`.         |
+| `ParseError`                     | Thrown for invalid sources, with the position.              |
+| `tagOf`                          | The known tag of an element name, like `div` for `DIV`.     |
+| `Walker`                         | Lists the child nodes of a node in source order.            |
+
+## > Usage
 
 ```ts
-import { language, parse } from "@aljazmc/syntax";
+import {
+    language,
+    parse,
+    parseCss,
+    parseHtml,
+    parseMarkdown,
+} from "@aljazmc/syntax";
 
-const options = language("a.tsx"); // { json: false, typescript: true, jsx: true }
-const { program, comments } = parse("let a = <b />;", options);
+const { program, comments } = parse("let a = <b />;", language("a.tsx"));
+const sheet = parseCss("a > .b:hover { color: red; }\n");
+const page = parseHtml('<p class="a">Hi <b>there</b></p>\n');
+const doc = parseMarkdown("# Title\n\n- [x] done\n");
 ```
 
-Syntax trees follow ESTree, with Babel-style literals and TypeScript nodes.
-Invalid sources throw `ParseError` with the position of the problem.
+## > License
 
-`Walker.children(node)` lists the child nodes of a node in source order, and
-`Lines` turns offsets into 1-based lines and columns, for messages.
-
-Markdown is parsed like CommonMark, with GitHub's tables, task list items
-and strikethrough:
-
-```ts
-import { isMarkdown, parseMarkdown } from "@aljazmc/syntax";
-
-isMarkdown("README.md"); // true
-const root = parseMarkdown("# Title\n\n- [x] done\n");
-// root.children: a Heading and a List, with their offsets and lines
-```
-
-Blocks have offsets into the source and 1-based lines, and keep what a
-formatter needs to print them as written, like the indentation of each
-line. Inlines have offsets into the text of their block.
-
-HTML is parsed like Biome parses it: elements must be closed, only void
-elements may have no closing tag, and whitespace and comments are trivia
-between nodes, not children:
-
-```ts
-import { isHtml, parseHtml } from "@aljazmc/syntax";
-
-isHtml("index.html"); // true
-const root = parseHtml('<p class="a">Hi <b>there</b></p>\n');
-// root.children: an Element p, with its attributes, a Text and an Element b
-// root.comments: every <!-- --> comment
-```
-
-Element names keep their case, and `tag` is the known tag they match, like
-`div` for `DIV` and `feBlend` for `feBlend`. Scripts, styles and
-preformatted elements keep their content as one raw text.
-
-CSS is parsed into rules, at-rules, declarations and their component
-values, and the selectors of rules into compound selectors, combinators
-and simple selectors, like Biome reads them:
-
-```ts
-import { isCss, parseCss } from "@aljazmc/syntax";
-
-isCss("styles.css"); // true
-const sheet = parseCss("a > .b:hover { color: red !important; }\n");
-// sheet.children: a Rule, its selectors and a block with a Declaration
-// sheet.comments: every /* */ comment
-```
-
-Nested rules, `@media` queries and other at-rule preludes keep their
-values, keyframes keep theirs instead of selectors. Errors throw a
-`ParseError`, or with `parseCss(source, { recover: true })` the items
-with errors are skipped and listed in `sheet.errors`.
+MIT, see [LICENSE](LICENSE).

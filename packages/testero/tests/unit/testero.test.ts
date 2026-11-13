@@ -10,7 +10,7 @@ import Mocks from "../../src/mock.ts";
 import Runner, { type Result } from "../../src/runner.ts";
 import Watcher, { Dependencies, type Run } from "../../src/watcher.ts";
 
-/** testero's own expect, Jest's is the global one here. */
+/** An expect of its own, apart from the global one running these tests. */
 const check = new Expect().create();
 
 /** The message of the assertion error a call throws. */

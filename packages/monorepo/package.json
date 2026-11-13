@@ -33,7 +33,6 @@
         "@aljazmc/config": "workspace:^"
     },
     "devDependencies": {
-        "@jest/globals": "^30.5.2",
         "@types/node": "^26.6.6"
     }
 }

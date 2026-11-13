@@ -63,7 +63,7 @@ services:
             HOME:               $PWD
             NODE_AUTH_TOKEN:    \${NODE_AUTH_TOKEN:-}
             NODE_ENV:           development
-            NODE_OPTIONS:       "--experimental-vm-modules --no-webstorage"
+            NODE_OPTIONS:       "--no-webstorage"
             NODE_NO_WARNINGS:   "1"
         network_mode: host
 EOF

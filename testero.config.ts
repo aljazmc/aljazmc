@@ -1,4 +1,4 @@
-/** Runs this project's tests like jest.config.ts does. */
+/** Runs this project's tests. */
 export default {
     ignore: [
         ".cache",

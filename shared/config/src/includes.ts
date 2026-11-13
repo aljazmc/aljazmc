@@ -1,6 +1,6 @@
 import Pattern from "./pattern.js";
 
-/** Biome style `includes`: globs in order, the last one matching a file decides, `!` excludes. */
+/** `includes`: globs in order, the last one matching a file decides, `!` excludes. */
 export default class Includes {
     readonly #globs: { pattern: Pattern; included: boolean }[];
 

@@ -99,9 +99,21 @@ export default class Git {
             });
     }
 
-    /** The tags of a remote and the commits they point to. */
+    /**
+     * The tags of a remote and the commits they point to. A repository
+     * without any remote has none, a remote name it lacks is an error.
+     */
     remoteTags(remote: string): Map<string, string> {
         const tags = new Map<string, string>();
+        // URLs and paths are remotes too, names must be configured
+        if (!/[:/\\]/.test(remote)) {
+            const remotes = this.run(["remote"]).split("\n").filter(Boolean);
+            if (remotes.length === 0) return tags;
+            if (!remotes.includes(remote))
+                throw new Error(
+                    `There is no remote ${remote}, the remotes are ${remotes.join(", ")}.`,
+                );
+        }
         const output = this.run(["ls-remote", "--tags", remote]);
         for (const line of output.split("\n")) {
             const match = /^([0-9a-f]+)\trefs\/tags\/(.+?)(\^\{\})?$/.exec(

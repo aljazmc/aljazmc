@@ -10,6 +10,8 @@ export default class History {
     readonly #git: Git;
     readonly #byIdentity: Map<string, string | null>;
     readonly #byPatch: Map<string, string | null>;
+    /** Diffs as patch-id reads them, whatever the color and signature settings. */
+    static readonly #plain = ["--no-color", "--no-show-signature"];
 
     /** The history of a branch, with the commits not reachable from the replaced ones. */
     constructor(git: Git, branch: string, replaced: string[]) {
@@ -34,7 +36,13 @@ export default class History {
                 }),
         );
         this.#byPatch = History.#unique(
-            this.#patches(["log", "-p", "--format=commit %H", ...range]),
+            this.#patches([
+                "log",
+                "-p",
+                ...History.#plain,
+                "--format=commit %H",
+                ...range,
+            ]),
         );
     }
 
@@ -49,6 +57,7 @@ export default class History {
         // a reworded commit keeps its change
         const [[patch] = []] = this.#patches([
             "show",
+            ...History.#plain,
             "--format=commit %H",
             commit,
         ]);

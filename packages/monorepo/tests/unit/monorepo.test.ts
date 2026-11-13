@@ -7,11 +7,12 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { parse } from "../../src/arguments.ts";
 import defaults from "../../src/config.ts";
 import Git from "../../src/git.ts";
 import Monorepo from "../../src/monorepo.ts";
 import type { Rules } from "../../src/rules.ts";
-import { bump } from "../../src/versions.ts";
+import { bump, setVersion } from "../../src/versions.ts";
 
 beforeAll(() => {
     Object.assign(process.env, {
@@ -164,6 +165,42 @@ describe("monorepo tags", () => {
         const v2 = moves.find((move) => move.name === "v2");
         expect(v2?.to).toBeUndefined();
         expect(tagged(git, "v2")).toBe(v2?.from);
+    });
+
+    test("reworded commits are found whatever the color settings", () => {
+        git.run(["config", "color.ui", "always"]);
+        git.run(["config", "log.showSignature", "true"]);
+        expect(
+            monorepo()
+                .tags()
+                .moves.map(({ name, to }) => [name, to]),
+        ).toEqual([
+            ["v1", git.run(["rev-parse", "HEAD~1"])],
+            ["v2", git.run(["rev-parse", "HEAD"])],
+        ]);
+    });
+
+    test("a repository without remotes has only local tags, a missing remote is an error", () => {
+        git.run(["remote", "add", "upstream", join(root, "origin.git")]);
+        expect(() =>
+            new Monorepo(join(root, "work"), {
+                ...defaults.rules,
+                remote: "elsewhere",
+            }).tags(),
+        ).toThrow(
+            "There is no remote elsewhere, the remotes are origin, upstream.",
+        );
+
+        git.run(["remote", "remove", "origin"]);
+        git.run(["remote", "remove", "upstream"]);
+        const { moves } = monorepo().tags({ write: true });
+        expect(
+            moves.map(({ name, local, remote }) => ({ name, local, remote })),
+        ).toEqual([
+            { name: "v1", local: true, remote: false },
+            { name: "v2", local: true, remote: false },
+        ]);
+        expect(tagged(git, "v1")).toBe(git.run(["rev-parse", "HEAD~1"]));
     });
 
     test("tags in the history of the branch are fine", () => {
@@ -516,5 +553,148 @@ describe("monorepo version", () => {
         expect(origin.run(["rev-parse", "main"])).not.toBe(
             git.run(["rev-parse", "HEAD"]),
         );
+    });
+
+    test("a tag a rebase left behind is an error, unless versions count from where it is moved", () => {
+        // the tagged commit is replaced, its change kept
+        git.run(["commit", "-q", "--amend", "-m", "feat: packages, amended"]);
+        commit("packages/a/src.ts", "fix: a");
+        expect(() => plan()).toThrow(
+            /^The tag .+ is not in the history of HEAD, a rebase left it behind\. Move it first, with monorepo tags --write\.$/,
+        );
+        expect(() => monorepo().version({ write: true })).toThrow(
+            "is not in the history of HEAD",
+        );
+        expect(version("packages/a/package.json")).toBe("0.1.0");
+
+        // only the fix counts, not the rebased commit the tags were on
+        const expected = [
+            {
+                name: "@x/a",
+                from: "0.1.0",
+                to: "0.1.1",
+                level: "patch",
+                tag: "@x/a@0.1.1",
+            },
+        ];
+        const { moved } = monorepo().tags();
+        expect(
+            monorepo()
+                .version({ moved })
+                .releases.map(({ name, from, to, level, tag }) => ({
+                    name,
+                    from,
+                    to,
+                    level,
+                    tag,
+                })),
+        ).toEqual(expected);
+        monorepo().tags({ write: true });
+        expect(plan()).toEqual(expected);
+    });
+
+    test("only the top-level version is bumped, nested ones and formatting stay", () => {
+        const text =
+            '{\n  "name": "@x/b",\n  "config": { "version": "keep" },\n  "version":   "1.2.3",\n  "description": "has \\"version\\": \\"9\\""\n}\n';
+        write("packages/b/package.json", text);
+        git.run(["add", "."]);
+        git.run(["commit", "-q", "-m", "fix: b"]);
+        monorepo().version({ write: true });
+        expect(
+            readFileSync(join(root, "work/packages/b/package.json"), "utf8"),
+        ).toBe(text.replace('"version":   "1.2.3"', '"version":   "1.2.4"'));
+        expect(git.run(["tag", "--points-at", "HEAD"])).toBe("@x/b@1.2.4");
+    });
+
+    test("packages without a version are not versioned", () => {
+        write("packages/c/package.json", '{\n    "name": "@x/c"\n}\n');
+        git.run(["add", "."]);
+        git.run(["commit", "-q", "-m", "chore: c"]);
+        commit("packages/c/src.ts", "feat: c");
+        expect(plan()).toEqual([]);
+        monorepo().version({ write: true });
+        expect(git.run(["tag", "--list", "@x/c*"])).toBe("");
+    });
+
+    test("package.json files that are not JSON are skipped, unless they would be versioned", () => {
+        write("packages/a/tests/fixtures/package.json", "{ not json\n");
+        git.run(["add", "."]);
+        git.run(["commit", "-q", "-m", "test: a fixture"]);
+        expect(plan()).toEqual([]);
+
+        write("packages/d/package.json", "{ not json\n");
+        expect(() => plan()).toThrow(/^packages\/d\/package\.json: /);
+    });
+});
+
+describe("setVersion", () => {
+    test("sets the top-level version only, as it is written", () => {
+        expect(setVersion('{"name":"a","version":"1.0.0"}', "1.0.1")).toBe(
+            '{"name":"a","version":"1.0.1"}',
+        );
+        expect(
+            setVersion(
+                '{ "a": { "version": "x" }, "b": ["version"], "c": "\\"version\\":", "version" : "1.0.0" }',
+                "2.0.0",
+            ),
+        ).toBe(
+            '{ "a": { "version": "x" }, "b": ["version"], "c": "\\"version\\":", "version" : "2.0.0" }',
+        );
+        expect(() =>
+            setVersion('{"name":"a","x":{"version":"1"}}', "2"),
+        ).toThrow("The package.json has no version to set.");
+    });
+});
+
+describe("arguments", () => {
+    test("commands, options and their values", () => {
+        expect(parse([])).toEqual({
+            command: undefined,
+            write: false,
+            push: false,
+            dryRun: false,
+            rules: {},
+            help: false,
+            wrong: false,
+        });
+        expect(
+            parse([
+                "version",
+                "--push",
+                "--dry-run",
+                "--remote",
+                "up",
+                "--branch",
+                "main",
+            ]),
+        ).toMatchObject({
+            command: "version",
+            push: true,
+            dryRun: true,
+            rules: { remote: "up", branch: "main" },
+        });
+        expect(parse(["--write"])).toMatchObject({
+            command: undefined,
+            write: true,
+        });
+        expect(parse(["-h"])).toMatchObject({ help: true, wrong: false });
+        expect(parse(["tags", "--help"])).toMatchObject({
+            command: "tags",
+            help: true,
+            wrong: false,
+        });
+        expect(parse(["nope"])).toMatchObject({ help: true, wrong: true });
+        expect(() => parse(["--nope"])).toThrow("Unknown option --nope.");
+    });
+
+    test("--remote and --branch need a name", () => {
+        const cases: [string[], string][] = [
+            [["--remote"], "--remote"],
+            [["--remote", ""], "--remote"],
+            [["--branch", "--push"], "--branch"],
+            [["tags", "--branch"], "--branch"],
+        ];
+        for (const [argv, option] of cases)
+            expect(() => parse(argv)).toThrow(`${option} needs a name.`);
     });
 });

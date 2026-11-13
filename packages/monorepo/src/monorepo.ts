@@ -10,6 +10,8 @@ export interface Report {
     moves: Move[];
     /** Signed tags lose their signature when moved. */
     unsigned: string[];
+    /** The commits the resolved tags belong to, by name, for the version command. */
+    moved: Map<string, string>;
 }
 
 /** Monorepo maintenance, run on the repository in a directory. */
@@ -33,14 +35,20 @@ export default class Monorepo {
      * a tag count from the commit that set them, and are tagged as they are
      * when nothing since calls for a bump. With write, each version is committed
      * and tagged on its own, with push the branch and the tags are pushed.
-     * With dry run, nothing changes, the steps are only returned.
+     * With dry run, nothing changes, the steps are only returned. Tags the
+     * tags command moves, or would move, count from their new commits.
      */
-    version({ write = false, push = false, dryRun = false } = {}): {
+    version({
+        write = false,
+        push = false,
+        dryRun = false,
+        moved = new Map<string, string>() as ReadonlyMap<string, string>,
+    } = {}): {
         releases: Release[];
         steps: Step[];
     } {
         const versions = new Versions(this.#git, this.#config);
-        const releases = versions.plan();
+        const releases = versions.plan(moved);
         const steps = write || push ? versions.steps(releases, { push }) : [];
         if (!dryRun) versions.run(steps);
         return { releases, steps };
@@ -71,6 +79,11 @@ export default class Monorepo {
                     (move) => move.to && move.local && signed.has(move.name),
                 )
                 .map((move) => move.name),
+            moved: new Map(
+                moves.flatMap((move) =>
+                    move.to ? [[move.name, move.to] as const] : [],
+                ),
+            ),
         };
 
         if (write || push) tags.write(moves);

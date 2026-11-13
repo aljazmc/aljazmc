@@ -8,7 +8,8 @@ import type { Level, Rules } from "./rules.js";
 /** A package of the repository, from its package.json. */
 export interface Package {
     name: string;
-    version: string;
+    /** undefined without a version field, such packages are not versioned. */
+    version: string | undefined;
     /** Its folder relative to the root, `.` for the root. */
     root: string;
     /** Names of other packages of the repository it depends on, through `workspace:`. */
@@ -33,7 +34,51 @@ export type Step =
     | { type: "file"; file: string; text: string; version: string }
     | { type: "git"; args: string[] };
 
+/** A package that has a version, the ones that are versioned. */
+type Versioned = Package & { version: string };
+
+/** A package.json that is not valid JSON. */
+interface Broken {
+    file: string;
+    root: string;
+    error: string;
+}
+
 const levels: Level[] = ["patch", "minor", "major"];
+
+/** The index of the closing quote of a JSON string that opens at an index. */
+function stringEnd(text: string, start: number): number {
+    for (let index = start + 1; index < text.length; index++)
+        if (text[index] === "\\") index++;
+        else if (text[index] === '"') return index;
+    return text.length;
+}
+
+/**
+ * A package.json text with its top-level version set, keeping the rest of
+ * it as it is written, nested `"version"` keys included.
+ */
+export function setVersion(text: string, version: string): string {
+    let depth = 0;
+    for (let index = 0; index < text.length; index++) {
+        const char = text[index];
+        if (char === '"') {
+            const end = stringEnd(text, index);
+            if (depth === 1 && text.slice(index, end + 1) === '"version"') {
+                const [, colon = "", value = ""] =
+                    /^(\s*:\s*)("(?:[^"\\]|\\.)*")/.exec(text.slice(end + 1)) ??
+                    [];
+                if (value) {
+                    const start = end + 1 + colon.length;
+                    return `${text.slice(0, start)}${JSON.stringify(version)}${text.slice(start + value.length)}`;
+                }
+            }
+            index = end;
+        } else if (char === "{" || char === "[") depth++;
+        else if (char === "}" || char === "]") depth--;
+    }
+    throw new Error("The package.json has no version to set.");
+}
 
 /** Bumps a version, before 1.0.0 breaking changes bump the minor version. */
 export function bump(version: string, level: Level): string {
@@ -50,31 +95,56 @@ export function bump(version: string, level: Level): string {
 export default class Versions {
     readonly #git: Git;
     readonly #config: Config<Rules>;
+    /** The package.json files the last call of packages could not read. */
+    #broken: Broken[] = [];
 
     constructor(git: Git, config: Config<Rules>) {
         this.#git = git;
         this.#config = config;
     }
 
-    /** Every package.json of the repository that is not ignored. */
+    /**
+     * Every package.json of the repository that is not ignored. Ones that are
+     * not valid JSON, like test fixtures, are left out, an error only when
+     * they would be versioned.
+     */
     packages(): Package[] {
         const packages: Package[] = [];
+        this.#broken = [];
         for (const file of this.#config.files()) {
             if (file !== "package.json" && !file.endsWith("/package.json"))
                 continue;
-            const manifest = JSON.parse(
-                readFileSync(join(this.#config.root, file), "utf8"),
+            let manifest: Record<string, unknown> | null;
+            try {
+                manifest = JSON.parse(
+                    readFileSync(join(this.#config.root, file), "utf8"),
+                );
+            } catch (error) {
+                this.#broken.push({
+                    file,
+                    root: dirname(file),
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                });
+                continue;
+            }
+            if (typeof manifest?.name !== "string") continue;
+            const fields = [
+                "dependencies",
+                "devDependencies",
+                "peerDependencies",
+                "optionalDependencies",
+            ];
+            const dependencies: Record<string, unknown> = Object.assign(
+                {},
+                ...fields.map((field) => manifest?.[field] ?? {}),
             );
-            if (typeof manifest.name !== "string") continue;
-            const dependencies = {
-                ...manifest.dependencies,
-                ...manifest.devDependencies,
-                ...manifest.peerDependencies,
-                ...manifest.optionalDependencies,
-            };
             packages.push({
                 name: manifest.name,
-                version: String(manifest.version ?? "0.0.0"),
+                version:
+                    typeof manifest.version === "string"
+                        ? manifest.version
+                        : undefined,
                 root: dirname(file),
                 workspaces: Object.entries(dependencies)
                     .filter(([, range]) =>
@@ -86,34 +156,44 @@ export default class Versions {
         return packages;
     }
 
-    /** The packages the `packages` setting versions, the shallowest matches of each root. */
-    versioned(packages = this.packages()): Package[] {
+    /**
+     * The packages the `packages` setting versions, the shallowest matches of
+     * each root, that have a version.
+     */
+    versioned(packages = this.packages()): Versioned[] {
         const roots = this.#config.rules.packages;
         const patterns = roots
             .filter((root) => root.replace(/^\.\/?|\/$/g, "") !== "")
             .map((root) => new Pattern(root));
         const matched = (root: string) =>
             root !== "." && patterns.some((pattern) => pattern.matches(root));
+        const all = [
+            ...packages.map((pack) => pack.root),
+            ...this.#broken.map((broken) => broken.root),
+        ];
+        const selected = (root: string) =>
+            (root === "."
+                ? roots.some((each) => each.replace(/^\.\/?|\/$/g, "") === "")
+                : matched(root)) &&
+            // packages/a/sub is part of packages/a
+            !all.some(
+                (other) =>
+                    other !== root &&
+                    other !== "." &&
+                    root.startsWith(`${other}/`) &&
+                    matched(other),
+            );
+        for (const broken of this.#broken)
+            if (selected(broken.root))
+                throw new Error(`${broken.file}: ${broken.error}`);
         return packages.filter(
-            (pack) =>
-                (pack.root === "."
-                    ? roots.some(
-                          (root) => root.replace(/^\.\/?|\/$/g, "") === "",
-                      )
-                    : matched(pack.root)) &&
-                // packages/a/sub is part of packages/a
-                !packages.some(
-                    (other) =>
-                        other !== pack &&
-                        other.root !== "." &&
-                        pack.root.startsWith(`${other.root}/`) &&
-                        matched(other.root),
-                ),
+            (pack): pack is Versioned =>
+                pack.version !== undefined && selected(pack.root),
         );
     }
 
     /** The tag of a version of a package. */
-    tag(pack: Package, version: string): string {
+    tag(pack: Versioned, version: string): string {
         const template =
             pack.root === "."
                 ? this.#config.rules.rootTag
@@ -123,8 +203,11 @@ export default class Versions {
             .replaceAll("{version}", version);
     }
 
-    /** The releases the commits since the last versions call for. */
-    plan(): Release[] {
+    /**
+     * The releases the commits since the last versions call for. Tags about to
+     * be moved count from where they will be, given as tag names and commits.
+     */
+    plan(moved: ReadonlyMap<string, string> = new Map()): Release[] {
         const all = this.packages();
         const versioned = this.versioned(all);
         const byName = new Map(all.map((pack) => [pack.name, pack]));
@@ -132,10 +215,17 @@ export default class Versions {
 
         for (const pack of versioned) {
             const tag = this.tag(pack, pack.version);
+            const at = moved.get(tag) ?? this.#git.commit(`refs/tags/${tag}`);
+            const tagged = at !== undefined;
+            // a tag left on a commit a rebase replaced would count the
+            // rebased commits again, up to and with the one it was on
+            if (at !== undefined && !this.#ancestor(at))
+                throw new Error(
+                    `The tag ${tag} is not in the history of HEAD, a rebase left it behind. Move it first, with monorepo tags --write.`,
+                );
             // without a tag, the version counts from the commit that set it,
             // released already or not, like when monorepo is first used
-            const tagged = this.#git.commit(`refs/tags/${tag}`) !== undefined;
-            const base = tagged ? tag : this.#versioned(pack);
+            const base = at ?? this.#versioned(pack);
             const commits = base
                 ? this.#commits(base, this.#paths(pack, byName, all))
                 : [];
@@ -194,10 +284,7 @@ export default class Versions {
                     {
                         type: "file",
                         file,
-                        text: text.replace(
-                            /("version"\s*:\s*)"[^"]*"/,
-                            `$1"${release.to}"`,
-                        ),
+                        text: setVersion(text, release.to),
                         version: release.to,
                     },
                     { type: "git", args: ["add", "--", file] },
@@ -267,6 +354,16 @@ export default class Versions {
         return [...roots];
     }
 
+    /** Whether a commit is in the history of HEAD. */
+    #ancestor(commit: string): boolean {
+        try {
+            this.#git.run(["merge-base", "--is-ancestor", commit, "HEAD"]);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     /** The last commit that changed the version in the package.json of a package. */
     #versioned(pack: Package): string | undefined {
         const file =
@@ -283,15 +380,15 @@ export default class Versions {
         return hash === "" ? undefined : hash;
     }
 
-    /** Commits since a tag or commit that change some paths, without the version commits themselves. */
+    /** Commits since a commit that change some paths, without the version commits themselves. */
     #commits(
-        tag: string,
+        base: string,
         paths: string[],
     ): { subject: string; body: string }[] {
         const output = this.#git.run([
             "log",
             "--format=%s%x00%b%x01",
-            `${tag}..HEAD`,
+            `${base}..HEAD`,
             "--",
             ...paths,
         ]);

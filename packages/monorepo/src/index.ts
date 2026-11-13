@@ -1,4 +1,5 @@
 import Config from "@aljazmc/config";
+import { parse } from "./arguments.js";
 import defaults from "./config.js";
 import Monorepo from "./monorepo.js";
 
@@ -34,11 +35,23 @@ interface Options {
 const quote = (arg: string) =>
     /^[\w@%+=:,./-]+$/.test(arg) ? arg : `'${arg.replaceAll("'", "'\\''")}'`;
 
-/** Runs the version command, printing the releases, and with dry run the steps. */
-const version = (monorepo: Monorepo, options: Options) => {
+/**
+ * Runs the version command, printing the releases, and with dry run the
+ * steps. Tags the tags command moved, or would move, count from their new
+ * commits.
+ */
+const version = (
+    monorepo: Monorepo,
+    options: Options,
+    moved?: ReadonlyMap<string, string>,
+) => {
     // a dry run shows what --write would do, and --push with it
     const write = options.write || options.push || options.dryRun;
-    const { releases, steps } = monorepo.version({ ...options, write });
+    const { releases, steps } = monorepo.version({
+        ...options,
+        write,
+        ...(moved ? { moved } : {}),
+    });
     const done = write && !options.dryRun;
     const would = options.dryRun ? "would " : "";
     for (const release of releases)
@@ -65,39 +78,19 @@ const version = (monorepo: Monorepo, options: Options) => {
 try {
     if (Config.init("monorepo", defaults)) process.exit();
 
-    const argv = process.argv.slice(2);
-    // without a command, the options are for both
-    const command = argv[0]?.startsWith("--") ? undefined : argv[0];
-    const args = command === undefined ? argv : argv.slice(1);
-    if (
-        (command !== undefined &&
-            command !== "tags" &&
-            command !== "version") ||
-        args.includes("--help") ||
-        args.includes("-h")
-    ) {
+    const {
+        command,
+        help,
+        wrong,
+        rules: given,
+        ...options
+    } = parse(process.argv.slice(2));
+    if (help) {
         process.stdout.write(usage);
-        if (
-            command !== "--help" &&
-            command !== "-h" &&
-            !args.includes("--help") &&
-            !args.includes("-h")
-        )
-            process.exitCode = 1;
+        if (wrong) process.exitCode = 1;
     } else {
         const config = await Config.load("monorepo", defaults);
-        const rules = { ...config.rules };
-        const options = { write: false, push: false, dryRun: false };
-        for (let index = 0; index < args.length; index++) {
-            const arg = args[index];
-            if (arg === "--write") options.write = true;
-            else if (arg === "--push") options.push = true;
-            else if (arg === "--dry-run") options.dryRun = true;
-            else if (arg === "--remote" || arg === "--branch")
-                rules[arg.slice(2) as "remote" | "branch"] =
-                    args[++index] ?? "";
-            else throw new Error(`Unknown option ${arg}.`);
-        }
+        const rules = { ...config.rules, ...given };
 
         // like the other settings, the ignore of the config file replaces the default
         const monorepo = new Monorepo(
@@ -105,22 +98,24 @@ try {
             rules,
             config.custom.ignore ?? defaults.ignore,
         );
-        if (command !== "version") tags(monorepo, rules, options);
-        if (command !== "tags") version(monorepo, options);
+        // versions count from where the tags belong, moved or not yet
+        const moved =
+            command === "version" ? undefined : tags(monorepo, rules, options);
+        if (command !== "tags") version(monorepo, options, moved);
     }
 } catch (error) {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;
 }
 
-/** Runs the tags command, printing the moves. */
+/** Runs the tags command, printing the moves, returns where the tags belong. */
 function tags(
     monorepo: Monorepo,
     rules: { remote: string; branch: string },
     options: Options,
-) {
+): ReadonlyMap<string, string> {
     // a dry run reports the moves without making them
-    const { moves, unsigned } = monorepo.tags(
+    const { moves, unsigned, moved } = monorepo.tags(
         options.dryRun ? { write: false, push: false } : options,
     );
     const short = (hash: string | undefined) => hash?.slice(0, 7) ?? "?";
@@ -163,4 +158,5 @@ function tags(
         console.log(
             "Run with --write to move local tags, and --push to update the remote.",
         );
+    return moved;
 }

@@ -70,14 +70,15 @@ export default rule({
                         continue;
                     // a caret first in the class would negate it
                     if (char === "^" && index === 0 && !klass.negate) continue;
-                    // a dash between two characters would make a range
+                    // a dash between two characters would make a range, also
+                    // after a range, like `[a-z\-0]`, where `-0` would start one;
+                    // first or last in the class it is a dash anyway, like Biome's
                     const previous = klass.elements[index - 1];
                     const next = klass.elements[index + 1];
                     if (
                         char === "-" &&
                         previous &&
                         previous.type !== "operator" &&
-                        klass.elements[index - 2]?.type !== "operator" &&
                         next &&
                         next.type !== "operator"
                     )

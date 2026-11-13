@@ -1,4 +1,4 @@
-import type { Html } from "@aljazmc/syntax";
+import { type Html, type Node, Walker } from "@aljazmc/syntax";
 import { strings } from "../../analysis/css.js";
 import { rule } from "../../rules.js";
 
@@ -26,13 +26,32 @@ function tokens(root: Html.Root): [number, number][] {
     return ranges.sort((a, b) => a[0] - b[0]);
 }
 
+/**
+ * The ranges of a JavaScript file whose line breaks do not count, like
+ * Biome's tokens: template text, strings and JSX text.
+ */
+function multiline(program: Node): [number, number][] {
+    const ranges: [number, number][] = [];
+    const visit = (node: Node) => {
+        if (
+            node.type === "TemplateElement" ||
+            node.type === "StringLiteral" ||
+            node.type === "JSXText"
+        )
+            ranges.push([node.start, node.end]);
+        for (const child of Walker.children(node)) visit(child);
+    };
+    visit(program);
+    return ranges;
+}
+
 export default rule<{ maxLines?: number; skipBlankLines?: boolean }>({
     name: "noExcessiveLinesPerFile",
     group: "style",
     severity: "info",
     recommended: false,
     fix: "none",
-    languages: ["css", "html"],
+    languages: ["css", "html", "js"],
     options: { maxLines: 300, skipBlankLines: false },
     create: (context) => {
         const check = (ranges: [number, number][], comments: Set<number>) => {
@@ -77,6 +96,19 @@ export default rule<{ maxLines?: number; skipBlankLines?: boolean }>({
             );
         };
         return {
+            Program(program) {
+                // like Biome, scripts in HTML count on their own too
+                const ranges: [number, number][] = [
+                    ...context.comments.map(
+                        ({ start, end }): [number, number] => [start, end],
+                    ),
+                    ...multiline(program),
+                ].sort((a, b) => a[0] - b[0]);
+                check(
+                    ranges,
+                    new Set(context.comments.map(({ start }) => start)),
+                );
+            },
             HtmlRoot(root) {
                 check(
                     tokens(root),

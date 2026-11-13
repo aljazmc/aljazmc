@@ -44,7 +44,7 @@ const option: Partial<Record<BindingKind, keyof Ignored>> = {
 export const used = (binding: Binding): boolean =>
     binding.references.some(
         (reference) =>
-            (reference.read || reference.type) &&
+            (reference.read || reference.type || reference.query === true) &&
             !binding.declarations.some(
                 (declaration) =>
                     ["function", "class"].includes(declaration.kind) &&

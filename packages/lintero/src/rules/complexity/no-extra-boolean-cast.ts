@@ -16,8 +16,13 @@ export default rule({
             node.callee.name === "Boolean" &&
             context.semantic.isGlobal(node.callee);
 
-        /** Whether a node is coerced to a boolean by where it is. */
+        /**
+         * Whether a node is coerced to a boolean by where it is. Like Biome,
+         * parentheses end the context, and so does a `Boolean()` call, unlike
+         * `new Boolean()`.
+         */
         const coerced = (node: Node): boolean => {
+            if (node.parenthesized) return false;
             const parent = context.parent(node);
             switch (parent?.type) {
                 case "IfStatement":
@@ -28,7 +33,6 @@ export default rule({
                     return parent.test === node;
                 case "UnaryExpression":
                     return parent.operator === "!";
-                case "CallExpression":
                 case "NewExpression":
                     return booleanCall(parent) && parent.arguments[0] === node;
                 case "LogicalExpression":

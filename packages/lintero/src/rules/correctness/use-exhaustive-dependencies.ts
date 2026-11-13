@@ -2,6 +2,7 @@ import type { Node } from "@aljazmc/syntax";
 import Functions from "../../analysis/functions.js";
 import Nodes from "../../analysis/nodes.js";
 import type { Binding } from "../../analysis/semantic.js";
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
 type StableResult = boolean | number | (number | string)[];
@@ -20,23 +21,23 @@ interface Options {
 }
 
 /** React's hooks taking a closure and its dependencies. */
-const checked: Record<string, [number, number]> = {
+const checked: Record<string, [number, number]> = table({
     useCallback: [0, 1],
     useEffect: [0, 1],
     useImperativeHandle: [1, 2],
     useInsertionEffect: [0, 1],
     useLayoutEffect: [0, 1],
     useMemo: [0, 1],
-};
+});
 
 /** React's hooks returning values that never change. */
-const stable: Record<string, StableResult> = {
+const stable: Record<string, StableResult> = table({
     useEffectEvent: true,
     useReducer: [1],
     useRef: true,
     useState: [1],
     useTransition: [1],
-};
+});
 
 const libraries = ["react", "preact/hooks", "preact/compat"];
 

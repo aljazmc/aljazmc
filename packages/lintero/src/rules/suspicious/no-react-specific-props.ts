@@ -1,9 +1,10 @@
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
-const replacements: Record<string, string> = {
+const replacements: Record<string, string> = table({
     className: "class",
     htmlFor: "for",
-};
+});
 
 export default rule({
     name: "noReactSpecificProps",

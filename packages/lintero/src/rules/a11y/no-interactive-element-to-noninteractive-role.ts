@@ -6,13 +6,14 @@ import {
 } from "../../analysis/aria.js";
 import Html, { AriaRoles } from "../../analysis/html.js";
 import { fromRoles, isNonInteractive } from "../../analysis/roles.js";
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
 /** Roles that are fine on some interactive elements, like an image drawn on a canvas. */
-const exceptions: Record<string, string[]> = {
+const exceptions: Record<string, string[]> = table({
     canvas: ["img"],
     hr: ["none", "presentation"],
-};
+});
 
 export default rule({
     name: "noInteractiveElementToNoninteractiveRole",

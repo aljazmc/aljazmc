@@ -1,13 +1,16 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 import Config from "@aljazmc/config";
 import defaults from "./config.js";
+import { lintFiles } from "./files.js";
 import Lintero from "./lintero.js";
 import all from "./rules/index.js";
 
 if (Config.init("lintero", defaults)) process.exit();
 
 const config = await Config.load("lintero", defaults);
+/** Problems with the files of the project, reported with the diagnostics. */
+const problems: string[] = [];
 
 /** Reads a JSON file of the project, also with comments and trailing commas like `turbo.jsonc`. */
 const readJson = (...names: string[]): unknown => {
@@ -20,7 +23,14 @@ const readJson = (...names: string[]): unknown => {
                 (_, string) => string ?? "",
             )
             .replace(/,(\s*[}\]])/g, "$1");
-        return JSON.parse(text);
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            problems.push(
+                `error: ${name}: ${error instanceof Error ? error.message : String(error)}, linted without it.`,
+            );
+            return undefined;
+        }
     }
 };
 const project = {
@@ -33,7 +43,10 @@ const project = {
 const linteros = new Map<string, Lintero>();
 const lintero = new Lintero(config.rules, {}, all, project);
 
-/** Domains and the module type come from the closest package.json. */
+/**
+ * Domains and the module type come from the closest package.json, one that
+ * is not valid JSON, like a test fixture, gives the defaults.
+ */
 const linteroFor = (file: string): Lintero => {
     let directory = dirname(join(config.root, file));
     while (!existsSync(join(directory, "package.json"))) {
@@ -45,43 +58,34 @@ const linteroFor = (file: string): Lintero => {
     const manifest = join(directory, "package.json");
     let found = linteros.get(manifest);
     if (!found) {
-        found = new Lintero(
-            config.rules,
-            JSON.parse(readFileSync(manifest, "utf8")),
-            all,
-            project,
-        );
+        try {
+            found = new Lintero(
+                config.rules,
+                JSON.parse(readFileSync(manifest, "utf8")),
+                all,
+                project,
+            );
+        } catch (error) {
+            console.log(
+                `warn: ${relative(config.root, manifest)}: ${error instanceof Error ? error.message : String(error)}, its files are linted without its domains.`,
+            );
+            found = lintero;
+        }
         linteros.set(manifest, found);
     }
     return found;
 };
-const write = process.argv.includes("--write");
-const unsafe = process.argv.includes("--unsafe");
-const counts = { error: 0, warn: 0, info: 0 };
 
-for (const { file, path, text } of config.sources((file) =>
-    lintero.lints(file),
-)) {
-    const linter = linteroFor(file);
-    let source = text;
-
-    if (write) {
-        const fixed = linter.fix(source, file, unsafe);
-        if (fixed !== source) {
-            writeFileSync(path, fixed);
-            console.log(`fixed: ${file}`);
-            source = fixed;
-        }
-    }
-
-    for (const diagnostic of linter.lint(source, file)) {
-        const { line, column, category, severity, message } = diagnostic;
-        counts[severity]++;
-        console.log(
-            `${severity}: ${file}:${line}:${column} ${category}: ${message}`,
-        );
-    }
-}
+for (const problem of problems) console.log(problem);
+const counts = lintFiles(
+    config.sources((file) => lintero.lints(file)),
+    linteroFor,
+    {
+        write: process.argv.includes("--write"),
+        unsafe: process.argv.includes("--unsafe"),
+    },
+);
+counts.error += problems.length;
 
 if (counts.error > 0) process.exitCode = 1;
 console.log(

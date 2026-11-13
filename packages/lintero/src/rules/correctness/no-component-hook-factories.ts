@@ -13,6 +13,43 @@ const defines = (value: Node | null): boolean =>
         (value.type === "CallExpression" &&
             wrappers.includes(Nodes.path(value.callee) ?? "")));
 
+/**
+ * The function a declaration, assignment or property defines, undefined for
+ * `memo(...)` and `forwardRef(...)`, which define components whatever they wrap.
+ */
+const definedFunction = (node: Node): Node | undefined => {
+    const value =
+        node.type === "VariableDeclarator"
+            ? node.init
+            : node.type === "AssignmentExpression"
+              ? node.right
+              : node.type === "Property"
+                ? node.value
+                : node;
+    if (value?.type === "CallExpression") return undefined;
+    return value ?? undefined;
+};
+
+/**
+ * Whether a function takes parameters like a component, like Biome's: props,
+ * or props and `ref`, or none; with more it is no component.
+ */
+const componentParameters = (fn: Node | undefined): boolean => {
+    if (
+        fn?.type !== "FunctionDeclaration" &&
+        fn?.type !== "FunctionExpression" &&
+        fn?.type !== "ArrowFunctionExpression"
+    )
+        return true;
+    const [, second, ...rest] = fn.params;
+    return (
+        second === undefined ||
+        (rest.length === 0 &&
+            second.type === "Identifier" &&
+            second.name === "ref")
+    );
+};
+
 export default rule({
     name: "noComponentHookFactories",
     group: "correctness",
@@ -30,6 +67,14 @@ export default rule({
                   ? "hook"
                   : undefined;
             if (!kind) return;
+            // like Biome, a function expression on its own, returned or
+            // passed, is a component by its name, whatever it takes
+            if (
+                kind === "component" &&
+                node.type !== "FunctionExpression" &&
+                !componentParameters(definedFunction(node))
+            )
+                return;
             const outer = Functions.enclosing(context, node);
             if (
                 (outer?.type !== "FunctionDeclaration" &&
@@ -56,9 +101,28 @@ export default rule({
                 if (node.id) check(node.id, node);
             },
             FunctionExpression(node) {
+                // like Biome, a function that is a value goes by the name it
+                // is given, `x = function Comp() {}` by `x`
                 const parent = context.parent(node);
-                if (node.id && parent?.type !== "VariableDeclarator")
-                    check(node.id, node);
+                const named =
+                    parent?.type === "VariableDeclarator" ||
+                    (parent?.type === "AssignmentExpression" &&
+                        parent.right === node) ||
+                    (parent?.type === "Property" && parent.value === node);
+                if (node.id && !named) check(node.id, node);
+            },
+            Property(node) {
+                // like Biome, `{ Comp: () => <div /> }` defines a component,
+                // methods and hooks named by keys do not count
+                if (
+                    !node.computed &&
+                    !node.method &&
+                    node.kind === "init" &&
+                    node.key.type === "Identifier" &&
+                    Functions.component(node.key.name) &&
+                    defines(node.value)
+                )
+                    check(node.key, node);
             },
             VariableDeclarator(node) {
                 if (defines(node.init)) check(node.id, node);

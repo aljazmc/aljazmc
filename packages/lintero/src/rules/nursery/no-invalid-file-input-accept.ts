@@ -1,4 +1,5 @@
 import Html from "../../analysis/html.js";
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
 type Token = { value: string; dot: boolean };
@@ -6,13 +7,13 @@ type Token = { value: string; dot: boolean };
 const wildcards = ["audio/*", "image/*", "video/*"];
 
 /** Renamed MIME types and their standard names. */
-const renamed: Record<string, string> = {
+const renamed: Record<string, string> = table({
     "application/x-rar-compressed": "application/vnd.rar",
     "application/x-zip-compressed": "application/zip",
     "image/jpg": "image/jpeg",
     "image/svg": "image/svg+xml",
     "image/x-icon": "image/vnd.microsoft.icon",
-};
+});
 
 const invalidExtension = (value: string) => /[\s,/*${}]/u.test(value);
 const httpToken = (value: string) =>

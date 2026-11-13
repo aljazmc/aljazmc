@@ -24,6 +24,8 @@ export default rule<{ allowComments?: boolean }>({
     options: { allowComments: false },
     create: (context) => ({
         Program(node) {
+            // like Biome, declaration files are not checked, also without declarations
+            if (/\.d\.[cm]?ts$/.test(context.file)) return;
             // scripts are never empty
             const script =
                 /\.cjs$/.test(context.file) ||

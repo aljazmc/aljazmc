@@ -1,8 +1,9 @@
 import type { Html } from "@aljazmc/syntax";
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
 /** Obsolete attributes and the elements they are obsolete on, `*` for all. */
-const obsolete: Record<string, string[]> = {
+const obsolete: Record<string, string[]> = table({
     abbr: ["td"],
     accept: ["form"],
     align: [
@@ -152,7 +153,7 @@ const obsolete: Record<string, string[]> = {
     vlink: ["body"],
     vspace: ["embed", "iframe", "input", "img", "object"],
     width: ["col", "hr", "pre", "table", "td", "th"],
-};
+});
 
 export default rule({
     name: "noObsoleteAttributes",

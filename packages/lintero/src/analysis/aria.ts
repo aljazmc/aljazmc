@@ -1,5 +1,6 @@
 import type { Node, NodeOf } from "@aljazmc/syntax";
 import Jsx from "./jsx.js";
+import table from "./table.js";
 
 type Element = NodeOf<"JSXElement">;
 type Attribute = NodeOf<"JSXAttribute">;
@@ -20,7 +21,7 @@ export type ValueType =
     | { type: "token" | "tokens"; values: string[] };
 
 /** Known ARIA attributes, without the `aria-` prefix, and their values. */
-export const properties: Record<string, ValueType> = {
+export const properties: Record<string, ValueType> = table({
     activedescendant: { type: "idref" },
     atomic: { type: "boolean" },
     autocomplete: { type: "token", values: ["list", "inline", "both", "none"] },
@@ -95,7 +96,7 @@ export const properties: Record<string, ValueType> = {
     valuemin: { type: "number" },
     valuenow: { type: "number" },
     valuetext: { type: "string" },
-};
+});
 
 /** Attributes every role supports. */
 export const globalProperties = new Set(
@@ -109,7 +110,7 @@ export const globalProperties = new Set(
 );
 
 /** Valid, non-abstract roles, with the attributes they support besides the global ones, and those they require. */
-const definitions: Record<string, [string, string]> = {
+const definitions: Record<string, [string, string]> = table({
     alert: [
         "braillelabel brailleroledescription label labelledby roledescription",
         "",
@@ -582,7 +583,7 @@ const definitions: Record<string, [string, string]> = {
         "braillelabel brailleroledescription expanded label labelledby roledescription",
         "",
     ],
-};
+});
 
 export const roles = new Set(Object.keys(definitions));
 
@@ -633,7 +634,7 @@ export const nonInteractiveRoles = new Set(
 );
 
 /** Implicit roles of elements without attributes that change them. */
-const implicitRoles: Record<string, string> = {
+const implicitRoles: Record<string, string> = table({
     a: "generic",
     address: "group",
     area: "generic",
@@ -714,7 +715,7 @@ const implicitRoles: Record<string, string> = {
     tr: "row",
     u: "generic",
     ul: "list",
-};
+});
 
 /** Roles not reported as the only role, like `img` for a picture made of other elements. */
 export const semanticExceptions = new Set([
@@ -726,7 +727,7 @@ export const semanticExceptions = new Set([
 ]);
 
 /** Elements that are semantic alternatives to roles. */
-export const semanticElements: Record<string, string[]> = {
+export const semanticElements: Record<string, string[]> = table({
     combobox: ["select"],
     img: ["img"],
     listbox: ["select"],
@@ -775,7 +776,7 @@ export const semanticElements: Record<string, string[]> = {
     term: ["dfn"],
     textbox: ['input type="text"', "textarea"],
     time: ["time"],
-};
+});
 
 /** The implicit role of an intrinsic element, like `link` for `<a href>`. */
 export function implicitRole(element: Element): string | undefined {

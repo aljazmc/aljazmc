@@ -1,11 +1,12 @@
 import type { Node, NodeOf } from "@aljazmc/syntax";
+import table from "./table.js";
 
 type Call = NodeOf<"CallExpression">;
 
 /** Whether a call declares a suite, like `describe`, or a test, like `it`. */
 export type Kind = "describe" | "test";
 
-const bases: Record<string, Kind> = {
+const bases: Record<string, Kind> = table({
     describe: "describe",
     fdescribe: "describe",
     xdescribe: "describe",
@@ -17,9 +18,9 @@ const bases: Record<string, Kind> = {
     ftest: "test",
     xtest: "test",
     skip: "test",
-};
+});
 
-const modifiers: Record<Kind, string[]> = {
+const modifiers: Record<Kind, string[]> = table({
     describe: ["only", "skip", "todo", "concurrent", "sequential", "fixme"],
     test: [
         "only",
@@ -32,7 +33,7 @@ const modifiers: Record<Kind, string[]> = {
         "step",
         "fixme",
     ],
-};
+});
 
 /** Test framework calls, recognized by their callee. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups test call helpers

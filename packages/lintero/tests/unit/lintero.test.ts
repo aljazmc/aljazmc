@@ -1,5 +1,6 @@
 import Config from "@aljazmc/config";
 import defaults from "../../src/config.ts";
+import { lintFiles } from "../../src/files.ts";
 import Lintero from "../../src/lintero.ts";
 import type { Rules } from "../../src/rules.ts";
 
@@ -13475,6 +13476,371 @@ const biome: {
             "9:54 This block is nested too deeply.",
         ],
     },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = this && this.a;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = (this && this.a) || f;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = !t && e && e.__esModule;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: 'x = typeof process === "object" && process.stdout && process.stdout.isTTY;\n',
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = l[j + 1] && l[j + 1].match(/a/);\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = o.t && o.t[k] !== undefined;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = this && this.a && this.a.b;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!a || a.b === 1) {}\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: 'if (!node || node.type !== "d") {}\n',
+        expected: ["1:5 Change to an optional chain."],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!a || a.b !== 1 || x) {}\n",
+        expected: ["1:5 Change to an optional chain."],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = a && b && b.c;\n",
+        expected: ["1:5 Change to an optional chain."],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "x = super.a && super.a.b;\n",
+        expected: ["1:5 Change to an optional chain."],
+    },
+    {
+        rule: "correctness/noUnusedImports",
+        file: "a.ts",
+        source: 'import type M from "./m";\ninterface T {\n    f: typeof M.fn;\n}\nexport type { T };\n',
+        expected: [],
+    },
+    {
+        rule: "correctness/noUnusedImports",
+        file: "a.ts",
+        source: 'import M from "./m";\nexport type T = typeof M;\n',
+        expected: [],
+    },
+    {
+        rule: "correctness/noUnusedVariables",
+        file: "a.ts",
+        source: "const a = 1;\nexport type T = typeof a;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/noUselessEscapeInRegex",
+        file: "a.js",
+        source: "x = /[a-z\\-0]/;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/noUselessEscapeInRegex",
+        file: "a.js",
+        source: "x = /[a-z\\-\\d]/;\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/noUselessEscapeInRegex",
+        file: "a.js",
+        source: "x = /[a-z\\-]/;\n",
+        expected: ["1:10 The character doesn't need to be escaped."],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.d.ts",
+        source: "",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.d.ts",
+        source: "// only a comment\n",
+        expected: [],
+    },
+    {
+        rule: "suspicious/noEmptySource",
+        file: "a.d.ts",
+        source: '/// <reference path="b.d.ts" />\n',
+        expected: [],
+    },
+    {
+        rule: "complexity/noExtraBooleanCast",
+        file: "a.js",
+        source: "if ((!!a)) {}\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/noExtraBooleanCast",
+        file: "a.js",
+        source: "x = !(!!a);\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/noExtraBooleanCast",
+        file: "a.js",
+        source: "x = Boolean(!!a);\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/noExtraBooleanCast",
+        file: "a.js",
+        source: "x = new Boolean(!!a);\n",
+        expected: ["1:17 Avoid redundant double-negation."],
+    },
+    {
+        rule: "complexity/noExtraBooleanCast",
+        file: "a.js",
+        source: "x = !!(!!a);\n",
+        expected: ["1:6 Avoid redundant double-negation."],
+    },
+    {
+        rule: "complexity/noExtraBooleanCast",
+        file: "a.js",
+        source: "if (a && (b || !!c)) {}\n",
+        expected: [],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    x = function SuppressedError(e) {\n        return 1;\n    };\n}\n",
+        expected: [],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    return { ThisExpression: (node) => g(node) };\n}\n",
+        expected: [
+            "2:14 Do not define component ThisExpression inside a function.",
+        ],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    return { A: memo(() => 1) };\n}\n",
+        expected: ["2:14 Do not define component A inside a function."],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    return { useThing: () => 1, a: function Comp() {} };\n}\n",
+        expected: [],
+    },
+    {
+        rule: "correctness/noUnusedPrivateClassMembers",
+        file: "a.js",
+        source: "export class A {\n    #c = 0;\n    inc() {\n        this.#c++;\n    }\n}\n",
+        expected: ["2:5 This private class member is defined but never used."],
+    },
+    {
+        rule: "correctness/noUnusedPrivateClassMembers",
+        file: "a.js",
+        source: "export class A {\n    #c = 0;\n    inc() {\n        return this.#c++;\n    }\n}\n",
+        expected: [],
+    },
+    {
+        rule: "correctness/noUnusedPrivateClassMembers",
+        file: "a.js",
+        source: "export class A {\n    #c = 0;\n    m() {\n        for (;; this.#c++) {}\n    }\n}\n",
+        expected: [],
+    },
+    {
+        rule: "correctness/noUnusedPrivateClassMembers",
+        file: "a.js",
+        source: "export class A {\n    set #s(v) {}\n    get #g() {\n        return 1;\n    }\n    run() {\n        this.#s = 1;\n        this.#g = 1;\n    }\n}\n",
+        expected: [],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: 'x = <div style={{ color: "red" }} />;\n',
+        expected: ["1:10 Unexpected style attribute."],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: 'x = <div Style="color: red" />;\n',
+        expected: ["1:10 Unexpected style attribute."],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: "x = <div style />;\n",
+        expected: ["1:10 Unexpected style attribute."],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: "x = <Comp style={s} />;\n",
+        expected: [],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: "x = <svg:rect style={s} />;\n",
+        expected: [],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: "x = <div {...{ style: s }} />;\n",
+        expected: [],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: 'x = React.createElement("div", { style: { color: "red" } });\n',
+        expected: ["1:34 Unexpected style attribute."],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: 'x = React.createElement("div", { "style": s });\n',
+        expected: [],
+    },
+    {
+        rule: "style/noInlineStyles",
+        file: "a.jsx",
+        source: 'x = createElement("div", { style: s });\n',
+        expected: [],
+    },
+    {
+        rule: "style/noExcessiveLinesPerFile",
+        file: "a.js",
+        source: Array.from(
+            { length: 301 },
+            (_, i) => `const a${i} = ${i};`,
+        ).join("\n"),
+        expected: [
+            "1:1 This file has too many lines (301). Maximum allowed is 300.",
+        ],
+    },
+    {
+        rule: "style/noExcessiveLinesPerFile",
+        file: "a.js",
+        source: `${Array.from({ length: 300 }, (_, i) => `const a${i} = ${i};`).join("\n")}\n\n\n`,
+        expected: [],
+    },
+    {
+        rule: "style/noExcessiveLinesPerFile",
+        file: "a.js",
+        source: `const t = \`\n${"x\n".repeat(60)}\`;\n${Array.from({ length: 250 }, (_, i) => `const a${i} = ${i};`).join("\n")}`,
+        expected: [],
+    },
+    {
+        rule: "style/noExcessiveLinesPerFile",
+        file: "a.js",
+        source: `${"// x\n".repeat(60)}${Array.from({ length: 250 }, (_, i) => `const a${i} = ${i};`).join("\n")}`,
+        expected: [
+            "61:1 This file has too many lines (310). Maximum allowed is 300.",
+        ],
+    },
+    {
+        rule: "style/noExcessiveLinesPerFile",
+        file: "a.html",
+        source: `<script>\n${Array.from({ length: 301 }, (_, i) => `var a${i} = ${i};`).join("\n")}\n</script>\n`,
+        expected: [
+            "2:1 This file has too many lines (302). Maximum allowed is 300.",
+        ],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!q || q?.[0] !== fn) {}\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!m || m.b !== x) {}\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!a || a.b !== -1) {}\n",
+        expected: [],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!m || m[1] !== 1) {}\n",
+        expected: ["1:5 Change to an optional chain."],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!a || 1 !== a.b) {}\n",
+        expected: ["1:5 Change to an optional chain."],
+    },
+    {
+        rule: "complexity/useOptionalChain",
+        file: "a.js",
+        source: "if (!a || a.b !== `x`) {}\n",
+        expected: ["1:5 Change to an optional chain."],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    function B(a, b) {}\n    const C = (a, b) => 1;\n}\n",
+        expected: [],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    function B(props, ref) {}\n}\n",
+        expected: ["2:14 Do not define component B inside a function."],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    const X = memo((p, q) => 1);\n}\n",
+        expected: ["2:11 Do not define component X inside a function."],
+    },
+    {
+        rule: "correctness/noComponentHookFactories",
+        file: "a.jsx",
+        source: "function f() {\n    return function Intercept(opts, handler) {};\n}\n",
+        expected: ["2:21 Do not define component Intercept inside a function."],
+    },
 ];
 
 describe("lintero", () => {
@@ -13984,6 +14350,62 @@ describe("lintero", () => {
             expect(
                 lintero.fix('a["b"] = c?.["d"] + e[ "f" ];\n', "a.js", true),
             ).toBe("a.b = c?.d + e.f;\n");
+        });
+    });
+
+    describe("regressions", () => {
+        test("names that Object.prototype has are names like any other", () => {
+            const all = settings({
+                preset: "all",
+                nursery: "on",
+                domains: { react: "all", test: "all", qwik: "all" },
+            });
+            const lintero = new Lintero(all);
+            const templates: [string, string][] = [
+                ["a.ts", "N.call(a);\nN.only('x', () => {});\nReact.N(a);\n"],
+                ["a.tsx", 'x = <div role="N" aria-N="true" />;\n'],
+                ["a.html", '<div role="N" N="a" aria-N="x" align="y"></div>\n'],
+                ["a.css", "a { N: red; width: 1N; color: N(1); }\n"],
+            ];
+            // `__proto__` and `hasOwnProperty` have rules of their own
+            for (const name of ["constructor", "toString", "valueOf"])
+                for (const [file, template] of templates) {
+                    // columns move with the length of the name, lines and rules not
+                    const categories = (text: string) =>
+                        lintero
+                            .lint(text, file)
+                            .map((d) => `${d.line} ${d.category}`);
+                    expect(categories(template.replaceAll("N", name))).toEqual(
+                        categories(template.replaceAll("N", "zzqq")),
+                    );
+                }
+        });
+
+        test("a file that fails stops no other, and counts as an error", () => {
+            const log: string[] = [];
+            const lintero = new Lintero(settings());
+            const counts = lintFiles(
+                [
+                    { file: "a.js", path: "/a.js", text: "debugger;\n" },
+                    { file: "b.js", path: "/b.js", text: "debugger;\n" },
+                    { file: "c.js", path: "/c.js", text: "debugger;\n" },
+                ],
+                (file) => {
+                    if (file === "b.js") throw new TypeError("a bug");
+                    return lintero;
+                },
+                { log: (line) => log.push(line) },
+            );
+            expect(counts).toEqual({ error: 3, warn: 0, info: 0 });
+            expect(log[0]).toMatch(
+                /^error: a\.js:1:1 lint\/suspicious\/noDebugger/,
+            );
+            expect(log[1]).toMatch(
+                /^error: b\.js: lintero failed, please report it: TypeError: a bug/,
+            );
+            expect(log[2]).toMatch(
+                /^error: c\.js:1:1 lint\/suspicious\/noDebugger/,
+            );
         });
     });
 });

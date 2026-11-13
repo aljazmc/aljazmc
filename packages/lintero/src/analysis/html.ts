@@ -1,6 +1,7 @@
 import type { Html as Tree } from "@aljazmc/syntax";
 import type { Range } from "./context.js";
 import { fromRoles, isNonInteractive } from "./roles.js";
+import table from "./table.js";
 
 /** An element as the ARIA queries see it. */
 export interface AriaElement {
@@ -11,7 +12,7 @@ export interface AriaElement {
 }
 
 /** Event handlers by type, without `on`. */
-const handlers: Record<string, string[]> = {
+const handlers: Record<string, string[]> = table({
     animation: ["animationend", "animationiteration", "animationstart"],
     clipboard: ["copy", "cut", "paste"],
     composition: ["compositionend", "compositionstart", "compositionupdate"],
@@ -70,7 +71,7 @@ const handlers: Record<string, string[]> = {
     transition: ["transitionend"],
     ui: ["scroll"],
     wheel: ["wheel"],
-};
+});
 
 /** Whether an attribute name, like `onClick` or `onclick`, handles events of the types. */
 export function eventHandler(types: string[], name: string): boolean {

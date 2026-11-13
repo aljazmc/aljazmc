@@ -4,6 +4,10 @@ import { rule } from "../../rules.js";
 
 const message = "Change to an optional chain.";
 
+const nullish = (node: Node): boolean =>
+    node.type === "NullLiteral" ||
+    (node.type === "Identifier" && node.name === "undefined");
+
 /** The value a null check tests, like `foo` of `foo != null` or `foo !== undefined`. */
 const checked = (node: Node): Node => {
     if (
@@ -12,9 +16,6 @@ const checked = (node: Node): Node => {
     )
         return node;
     if (node.operator === "==" || node.operator === "===") return node;
-    const nullish = (side: Node) =>
-        side.type === "NullLiteral" ||
-        (side.type === "Identifier" && side.name === "undefined");
     if (nullish(node.right)) return node.left;
     if (nullish(node.left)) return node.right;
     return node;
@@ -49,6 +50,56 @@ const same = (a: Node, b: Node): boolean => {
         );
     return Nodes.same(a, b);
 };
+
+/** Whether a computed key is simple enough to compare: a name or a literal. */
+const simpleKey = (node: Node): boolean =>
+    node.type === "Identifier" ||
+    node.type === "StringLiteral" ||
+    node.type === "NumericLiteral";
+
+/**
+ * Whether an operand can take part in a chain, like Biome's: a name, or a
+ * member access or call on one, where `this` and `super` may start a member
+ * access but not stand alone, and computed keys are names or literals.
+ */
+const chainable = (node: Node, alone = true): boolean => {
+    if (node.type === "Identifier") return true;
+    if (node.type === "ThisExpression" || node.type === "Super") return !alone;
+    if (node.type === "MemberExpression")
+        return (
+            (!node.computed || simpleKey(node.property)) &&
+            chainable(node.object, false)
+        );
+    if (node.type === "CallExpression") return chainable(node.callee, false);
+    return false;
+};
+
+/**
+ * What an operand of `!a || !a.b || a.b.c !== 1` tests: `a` of the guard
+ * `!a`, and of an extension also `a.b.c` of an inequality with a value that
+ * is not nullish, which `?.` keeps true when `a` is missing.
+ */
+const negated = (node: Node, extension: boolean): Node | undefined => {
+    if (node.type === "UnaryExpression" && node.operator === "!")
+        return chainable(node.argument) ? node.argument : undefined;
+    if (
+        !extension ||
+        node.type !== "BinaryExpression" ||
+        (node.operator !== "!==" && node.operator !== "!=")
+    )
+        return undefined;
+    // like Biome, compared with a literal, on either side
+    if (literal(node.right) && chainable(node.left)) return node.left;
+    if (literal(node.left) && chainable(node.right)) return node.right;
+    return undefined;
+};
+
+/** A literal value that is not nullish, like `1`, `"a"`, `true` or `` `a` ``. */
+const literal = (node: Node): boolean =>
+    node.type === "StringLiteral" ||
+    node.type === "NumericLiteral" ||
+    node.type === "BooleanLiteral" ||
+    (node.type === "TemplateLiteral" && node.expressions.length === 0);
 
 /** The operands of a chain like `a && b && c`, up to parentheses. */
 const operands = (node: Node, operator: string, root = true): Node[] =>
@@ -86,24 +137,33 @@ export default rule({
                 )
                     return;
                 const list = operands(node, node.operator);
-                // !foo || !foo.bar
-                const values =
-                    node.operator === "||"
-                        ? list.map((operand) =>
-                              operand.type === "UnaryExpression" &&
-                              operand.operator === "!"
-                                  ? operand.argument
-                                  : undefined,
-                          )
-                        : list.map(checked);
-                const chained = values.some((value, index) => {
-                    const next = values[index + 1];
-                    return (
-                        value !== undefined &&
-                        next !== undefined &&
-                        extendsChain(value, next)
-                    );
+                const or = node.operator === "||";
+                // what each operand guards: `foo` of `foo`, `foo != null` or,
+                // in `||` chains, `!foo`; undefined for others, which end it
+                const guards = list.map((operand) => {
+                    if (or) return negated(operand, false);
+                    const value = checked(operand);
+                    return chainable(value) ? value : undefined;
                 });
+                // and what it accesses into the guard before it: `foo.bar`,
+                // or in `||` chains `!foo.bar` or `foo.bar !== 1`
+                const extensions = list.map((operand) =>
+                    or
+                        ? negated(operand, true)
+                        : chainable(operand)
+                          ? operand
+                          : undefined,
+                );
+                let chained = false;
+                for (const [index, guard] of guards.entries()) {
+                    // like Biome, an operand that guards nothing before the chain ends it
+                    if (guard === undefined) break;
+                    const next = extensions[index + 1];
+                    if (next !== undefined && extendsChain(guard, next)) {
+                        chained = true;
+                        break;
+                    }
+                }
                 if (chained) context.report(node, message);
             },
             MemberExpression(node) {

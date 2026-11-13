@@ -1,10 +1,11 @@
 import type { Node } from "@aljazmc/syntax";
 import Nodes from "../../analysis/nodes.js";
 import React from "../../analysis/react.js";
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
 /** Methods passing an index to their callback, with the parameter position of the index. */
-const methods: Record<string, number> = {
+const methods: Record<string, number> = table({
     every: 1,
     filter: 1,
     find: 1,
@@ -16,7 +17,7 @@ const methods: Record<string, number> = {
     reduce: 2,
     reduceRight: 2,
     some: 1,
-};
+});
 
 export default rule({
     name: "noArrayIndexKey",

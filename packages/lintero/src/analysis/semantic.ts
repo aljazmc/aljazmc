@@ -71,6 +71,8 @@ export interface Reference {
     write: boolean;
     /** Whether the reference names a type, `typeof` queries are values. */
     type: boolean;
+    /** Whether the reference is a `typeof` query in a type, which uses it but does not read it. */
+    query?: boolean;
     /** The assignment or update expression writing the reference. */
     writer?: Node;
 }
@@ -494,6 +496,7 @@ export default class Semantic {
                 else
                     this.#qualified(node.exprName, scope, "value", {
                         read: false,
+                        query: true,
                     });
                 if (node.typeArguments)
                     this.#visit(node.typeArguments, scope, "type");

@@ -1,6 +1,7 @@
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
-const boxed: Record<string, string | undefined> = {
+const boxed: Record<string, string | undefined> = table({
     BigInt: "bigint",
     Boolean: "boolean",
     Function: undefined,
@@ -8,7 +9,7 @@ const boxed: Record<string, string | undefined> = {
     Object: undefined,
     String: "string",
     Symbol: "symbol",
-};
+});
 
 export default rule({
     name: "noBannedTypes",

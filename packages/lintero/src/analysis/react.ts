@@ -1,13 +1,14 @@
 import type { Node, NodeOf } from "@aljazmc/syntax";
 import type Context from "./context.js";
 import Nodes from "./nodes.js";
+import table from "./table.js";
 
 type Library = "react" | "react-dom";
 
-const globals: Record<Library, string> = {
+const globals: Record<Library, string> = table({
     react: "React",
     "react-dom": "ReactDOM",
-};
+});
 
 /** React APIs, recognized when imported from the library, or on its global. */
 // biome-ignore lint/complexity/noStaticOnlyClass: groups React helpers

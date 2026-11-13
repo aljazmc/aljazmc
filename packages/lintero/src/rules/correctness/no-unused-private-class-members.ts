@@ -6,9 +6,15 @@ import { rule } from "../../rules.js";
 
 type Member = NodeOf<"MethodDefinition"> | NodeOf<"PropertyDefinition">;
 
-/** Whether a member access only writes its value, like `this.#a = 1`. */
+/**
+ * Whether a member access only writes its value, like `this.#a = 1`, or like
+ * Biome's, `this.#a++` whose result is not used.
+ */
 const writeOnly = (context: Context, access: Node): boolean => {
     const parent = context.parent(access);
+    if (parent?.type === "UpdateExpression") {
+        return context.parent(parent)?.type === "ExpressionStatement";
+    }
     return (
         parent?.type === "AssignmentExpression" &&
         parent.operator === "=" &&
@@ -20,7 +26,13 @@ const writeOnly = (context: Context, access: Node): boolean => {
 const reads = (
     context: Context,
     node: Node,
-    names: { private: Set<string>; public: Set<string>; dynamic: boolean },
+    names: {
+        private: Set<string>;
+        public: Set<string>;
+        dynamic: boolean;
+        /** Accessors, a write to one calls it, so it uses it, like Biome's. */
+        accessors: Set<string>;
+    },
 ): void => {
     for (const child of Walker.children(node)) {
         if (child.type === "MemberExpression") {
@@ -28,7 +40,10 @@ const reads = (
             if (name === undefined) {
                 if (child.object.type === "ThisExpression")
                     names.dynamic = true;
-            } else if (!writeOnly(context, child)) {
+            } else if (
+                !writeOnly(context, child) ||
+                names.accessors.has(name)
+            ) {
                 if (name.startsWith("#")) names.private.add(name);
                 else if (child.object.type === "ThisExpression")
                     names.public.add(name);
@@ -74,6 +89,16 @@ export default rule({
                 private: new Set<string>(),
                 public: new Set<string>(),
                 dynamic: false,
+                accessors: new Set(
+                    node.body.flatMap((member) =>
+                        member.type === "MethodDefinition" &&
+                        (member.kind === "set" || member.kind === "get")
+                            ? [
+                                  Nodes.key(member.key, member.computed) ?? [],
+                              ].flat()
+                            : [],
+                    ),
+                ),
             };
             reads(context, node, names);
 

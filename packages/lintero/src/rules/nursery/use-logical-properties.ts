@@ -4,10 +4,11 @@ import {
     LONGHAND_SUB_PROPERTIES_OF_SHORTHAND_PROPERTIES,
     SHORTHAND_PROPERTIES,
 } from "../../analysis/css-keywords.js";
+import table from "../../analysis/table.js";
 import { rule } from "../../rules.js";
 
 /** Physical properties and their logical replacements, left to right and right to left. */
-const properties: Record<string, [string, string]> = {
+const properties: Record<string, [string, string]> = table({
     width: ["inline-size", "inline-size"],
     "min-width": ["min-inline-size", "min-inline-size"],
     "max-width": ["max-inline-size", "max-inline-size"],
@@ -85,10 +86,10 @@ const properties: Record<string, [string, string]> = {
         "border-end-end-radius",
         "border-end-start-radius",
     ],
-};
+});
 
 /** Physical shorthands of four sides and their block and inline logical shorthands. */
-const shorthands: Record<string, [string, string]> = {
+const shorthands: Record<string, [string, string]> = table({
     margin: ["margin-block", "margin-inline"],
     padding: ["padding-block", "padding-inline"],
     inset: ["inset-block", "inset-inline"],
@@ -97,7 +98,7 @@ const shorthands: Record<string, [string, string]> = {
     "border-width": ["border-block-width", "border-inline-width"],
     "border-style": ["border-block-style", "border-inline-style"],
     "border-color": ["border-block-color", "border-inline-color"],
-};
+});
 
 /** Logical start and end longhands, and the shorthand that sets both. */
 const merges: [string, string, string][] = [

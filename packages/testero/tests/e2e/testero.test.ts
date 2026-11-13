@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+    mkdirSync,
+    mkdtempSync,
+    readFileSync,
+    rmSync,
+    writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -6,6 +12,7 @@ import Config from "@aljazmc/config";
 import defaults from "../../src/config.ts";
 import Reporter from "../../src/reporter.ts";
 import Testero, { type Options } from "../../src/testero.ts";
+import Transformer from "../../src/transformer.ts";
 
 describe("testero", () => {
     let root: string;
@@ -272,5 +279,79 @@ describe("testero", () => {
             (await testero({ patterns: ["none"], passWithNoTests: true }))
                 .passed,
         ).toBe(true);
+    });
+
+    test("coverage reports the lines and functions the tests ran, also to lcov", async () => {
+        write(
+            "src/branch.ts",
+            [
+                "export const sign = (n: number): string => {",
+                "    if (n < 0) {",
+                '        return "negative";',
+                "    }",
+                '    return "positive";',
+                "};",
+                "export function unused(): number {",
+                "    return 1;",
+                "}",
+                "",
+            ].join("\n"),
+        );
+        write("src/untested.ts", "export const never = (): number => 2;\n");
+        write(
+            "tests/branch.test.ts",
+            [
+                'import { add } from "../src/math.ts";',
+                'import { sign } from "../src/branch.ts";',
+                'test("signs", () => {',
+                '    expect(sign(add(1, 1))).toBe("positive");',
+                "});",
+                "",
+            ].join("\n"),
+        );
+
+        const { passed, output } = await testero({ collectCoverage: true });
+        expect(passed).toBe(true);
+        expect(output).toMatch(/All files\s+\|\s+66\.66 \|\s+50 \|/);
+        expect(output).toMatch(
+            / src\/branch\.ts\s+\|\s+50 \|\s+44\.44 \| 3-4,7-9/,
+        );
+        expect(output).toMatch(/ src\/math\.ts\s+\|\s+100 \|\s+100 \|/);
+        // test files are not covered, files no test loads only when asked for
+        expect(output).not.toContain("branch.test.ts |");
+        expect(output).not.toContain("untested.ts");
+
+        const lcov = readFileSync(join(root, "coverage/lcov.info"), "utf8");
+        expect(lcov).toContain(`SF:${join(root, "src/branch.ts")}`);
+        expect(lcov).toContain("FNDA:1,sign");
+        expect(lcov).toContain("FNDA:0,unused");
+        expect(lcov).toContain("DA:3,0\nDA:4,0\nDA:5,1");
+
+        const from = await testero({
+            collectCoverage: true,
+            collectCoverageFrom: ["src/**", "!src/math.ts"],
+        });
+        expect(from.output).toMatch(/ src\/untested\.ts\s+\|\s+0 \|\s+0 \| 1/);
+        expect(from.output).toContain(" src/branch.ts");
+        expect(from.output).not.toContain("math.ts");
+    });
+
+    test("the inputs of a test file are the local files it is bundled from", async () => {
+        write(
+            "tests/math.test.ts",
+            'import { add } from "../src/math.ts";\ntest("adds", () => expect(add(1, 2)).toBe(3));\n',
+        );
+        const transformer = new Transformer();
+        try {
+            const inputs = await transformer.inputs(
+                join(root, "tests/math.test.ts"),
+            );
+            expect(inputs.sort()).toEqual([
+                join(root, "src/math.ts"),
+                join(root, "tests/math.test.ts"),
+            ]);
+        } finally {
+            transformer.dispose();
+        }
     });
 });

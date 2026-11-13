@@ -14,6 +14,9 @@ Options:
   --listTests                    print the test files instead of running them
   --passWithNoTests              succeed when there are no test files
   --testTimeout <ms>             milliseconds a test or hook may take
+  --coverage                     report which lines and functions the tests run
+  --watch                        rerun the tests of changed files and what imports them
+  --watchAll                     rerun every test when a file changes
   --config [js]                  write the default testero.config.ts, or .js
   -h, --help                     show this help
 `;
@@ -23,10 +26,15 @@ Options:
     namePattern: RegExp | undefined;
     listTests = false;
     help = false;
+    /** Reruns the tests of changed files, or all of them, when files change. */
+    watch: "related" | "all" | undefined;
+    /** The options, without the patterns and the watch ones, for the runs of watch mode. */
+    readonly flags: string[] = [];
 
     constructor(argv: string[]) {
         for (let index = 0; index < argv.length; index++) {
             const argument = argv[index] as string;
+            const start = index;
             const [name, inline] = argument.split(/=(.*)/s) as [
                 string,
                 string?,
@@ -62,6 +70,16 @@ Options:
                         name.slice(2) as "bail" | "verbose" | "passWithNoTests"
                     ] = true;
                     break;
+                case "--coverage":
+                case "--collectCoverage":
+                    this.rules.collectCoverage = true;
+                    break;
+                case "--watch":
+                    this.watch ??= "related";
+                    continue;
+                case "--watchAll":
+                    this.watch = "all";
+                    continue;
                 case "--listTests":
                     this.listTests = true;
                     break;
@@ -73,7 +91,9 @@ Options:
                     if (name.startsWith("-"))
                         throw new Error(`Unknown option ${name}.`);
                     this.patterns.push(argument);
+                    continue;
             }
+            this.flags.push(...argv.slice(start, index + 1));
         }
     }
 

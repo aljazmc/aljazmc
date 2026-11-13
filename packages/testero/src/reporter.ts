@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import Coverage, { type FileCoverage } from "./coverage.js";
 import { AssertionError } from "./expect/assertion.js";
 import Format from "./expect/format.js";
 import type { Result } from "./runner.js";
@@ -139,6 +140,78 @@ export default class Reporter {
                 `${this.#paint("Time:", "bold")}        ${(duration / 1000).toFixed(3)} s`,
                 "",
             ].join("\n"),
+        );
+    }
+
+    /** The coverage of each file in a table like Jest's, under the totals. */
+    coverage(files: FileCoverage[]): void {
+        const row = (
+            name: string,
+            functions: number,
+            lines: number,
+            uncovered: string,
+        ) => [
+            name,
+            String(functions),
+            String(lines),
+            uncovered.length > 40 ? `${uncovered.slice(0, 37)}...` : uncovered,
+        ];
+        const header = ["File", "% Funcs", "% Lines", "Uncovered Line #s"];
+        const rows = [
+            row(
+                "All files",
+                Coverage.percent(Coverage.sum(files.map(Coverage.functions))),
+                Coverage.percent(Coverage.sum(files.map(Coverage.lines))),
+                "",
+            ),
+            ...files.map((coverage) =>
+                row(
+                    ` ${coverage.file}`,
+                    Coverage.percent(
+                        Coverage.functions(coverage),
+                        coverage.loaded,
+                    ),
+                    Coverage.percent(Coverage.lines(coverage), coverage.loaded),
+                    Coverage.uncovered(coverage),
+                ),
+            ),
+        ];
+        const widths = header.map((title, column) =>
+            Math.max(
+                title.length,
+                ...rows.map((cells) => cells[column]?.length ?? 0),
+            ),
+        );
+        const line = (cells: string[], paint: boolean) =>
+            cells
+                .map((cell, column) => {
+                    const width = widths[column] ?? 0;
+                    if (column === 1 || column === 2) {
+                        const padded = cell.padStart(width);
+                        if (!paint) return padded;
+                        const percent = Number(cell);
+                        return this.#paint(
+                            padded,
+                            percent >= 80
+                                ? "green"
+                                : percent >= 50
+                                  ? "yellow"
+                                  : "red",
+                        );
+                    }
+                    return cell.padEnd(width);
+                })
+                .join(" | ");
+        const rule = widths.map((width) => "-".repeat(width)).join("-|-");
+        this.#write(
+            `${[
+                "",
+                rule,
+                line(header, false),
+                rule,
+                ...rows.map((cells) => line(cells, true)),
+                rule,
+            ].join("\n")}\n`,
         );
     }
 

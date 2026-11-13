@@ -1,7 +1,9 @@
-import { join } from "node:path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
 import type Config from "@aljazmc/config";
 import { Includes } from "@aljazmc/config";
 import Collector from "./collector.js";
+import Coverage from "./coverage.js";
 import Expect from "./expect/expect.js";
 import Globals from "./globals.js";
 import Mocks from "./mock.js";
@@ -27,6 +29,10 @@ export default class Testero {
     #stray: unknown[] = [];
     /** The runner of the file being run, which fails its running test with stray errors. */
     #runner: Runner | undefined;
+    /** The test files and collectCoverageFrom, made when coverage first needs them. */
+    #coverageIncludes:
+        | { tests: Includes; from: Includes | undefined }
+        | undefined;
 
     constructor(
         config: Config<Rules>,
@@ -63,6 +69,11 @@ export default class Testero {
             return this.#options.passWithNoTests;
         }
 
+        const coverage = this.#options.collectCoverage
+            ? new Coverage(this.#config.root, (file) => this.#tracks(file))
+            : undefined;
+        await coverage?.start();
+
         process.setSourceMapsEnabled(true);
         // a run within a run, like testero testing itself, shares the process:
         // only the innermost one, the one running now, takes the stray errors
@@ -75,7 +86,7 @@ export default class Testero {
         process.on("uncaughtException", stray);
         process.on("unhandledRejection", stray);
 
-        const transformer = new Transformer();
+        const transformer = new Transformer(coverage !== undefined);
         const results: FileResult[] = [];
         try {
             for (const file of files) {
@@ -91,8 +102,54 @@ export default class Testero {
             runs.splice(runs.indexOf(stray), 1);
         }
 
+        if (coverage) {
+            const covered = await coverage.collect(
+                transformer.bundles,
+                this.#options.collectCoverageFrom.length > 0
+                    ? [...this.#config.files()].filter(
+                          (file) =>
+                              Transformer.loader(file) !== undefined &&
+                              this.#tracks(file),
+                      )
+                    : [],
+            );
+            this.#reporter.coverage(covered);
+            const directory = join(
+                this.#config.root,
+                this.#options.coverageDirectory,
+            );
+            mkdirSync(directory, { recursive: true });
+            writeFileSync(
+                join(directory, "lcov.info"),
+                Coverage.lcov(this.#config.root, covered),
+            );
+        }
+
         this.#reporter.summary(results, performance.now() - start);
         return !results.some(Reporter.failed);
+    }
+
+    /**
+     * Whether coverage is reported for a file, relative to the root: one of
+     * the project, not a test file nor installed, and in collectCoverageFrom
+     * when it is set.
+     */
+    #tracks(file: string): boolean {
+        if (file.startsWith("../") || isAbsolute(file)) return false;
+        if (this.#config.ignore.matches(file)) return false;
+        if (file.split("/").includes("node_modules")) return false;
+        this.#coverageIncludes ??= {
+            tests: new Includes(this.#options.testMatch, "testMatch"),
+            from:
+                this.#options.collectCoverageFrom.length > 0
+                    ? new Includes(
+                          this.#options.collectCoverageFrom,
+                          "collectCoverageFrom",
+                      )
+                    : undefined,
+        };
+        const { tests, from } = this.#coverageIncludes;
+        return !tests.matches(file) && (from?.matches(file) ?? true);
     }
 
     /**

@@ -1,5 +1,6 @@
 import Arguments from "../../src/arguments.ts";
 import Collector from "../../src/collector.ts";
+import Coverage, { type FileCoverage } from "../../src/coverage.ts";
 import Each from "../../src/each.ts";
 import { AssertionError } from "../../src/expect/assertion.ts";
 import Equality from "../../src/expect/equality.ts";
@@ -7,6 +8,7 @@ import Expect from "../../src/expect/expect.ts";
 import Format from "../../src/expect/format.ts";
 import Mocks from "../../src/mock.ts";
 import Runner, { type Result } from "../../src/runner.ts";
+import Watcher, { Dependencies, type Run } from "../../src/watcher.ts";
 
 /** testero's own expect, Jest's is the global one here. */
 const check = new Expect().create();
@@ -621,5 +623,275 @@ describe("arguments", () => {
         expect(new Arguments(["--testTimeout", "2.5"]).rules).toEqual({
             testTimeout: 2.5,
         });
+    });
+
+    test("coverage, and watch modes with the options their runs get", () => {
+        expect(new Arguments(["--coverage"]).rules).toEqual({
+            collectCoverage: true,
+        });
+        expect(new Arguments(["--collectCoverage"]).rules).toEqual({
+            collectCoverage: true,
+        });
+        expect(new Arguments([]).watch).toBeUndefined();
+        expect(new Arguments(["--watch"]).watch).toBe("related");
+        expect(new Arguments(["--watch", "--watchAll"]).watch).toBe("all");
+        expect(new Arguments(["--watchAll", "--watch"]).watch).toBe("all");
+
+        const args = new Arguments([
+            "unit",
+            "--watch",
+            "-t",
+            "adds",
+            "--bail",
+            "--testTimeout=50",
+            "--coverage",
+        ]);
+        expect(args.patterns).toEqual(["unit"]);
+        expect(args.flags).toEqual([
+            "-t",
+            "adds",
+            "--bail",
+            "--testTimeout=50",
+            "--coverage",
+        ]);
+    });
+});
+
+describe("coverage", () => {
+    const file = (
+        lines: [number, number][],
+        functions: [string, number, number][] = [],
+        loaded = true,
+    ): FileCoverage => ({
+        file: "src/a.ts",
+        lines: new Map(lines),
+        functions: new Map(
+            functions.map(([name, line, count]) => [
+                `${line}:1`,
+                { name, line, count },
+            ]),
+        ),
+        loaded,
+    });
+
+    test("source map mappings decode to absolute positions", () => {
+        // from esbuild: two generated lines, the second with two segments
+        expect(Coverage.decode(";AAAA,IAAM;AACN")).toEqual([
+            { line: 1, column: 0, source: 0, sourceLine: 0, sourceColumn: 0 },
+            { line: 1, column: 4, source: 0, sourceLine: 0, sourceColumn: 6 },
+            { line: 2, column: 0, source: 0, sourceLine: 1, sourceColumn: 0 },
+        ]);
+        // negative and multi-digit values, and segments without a source
+        expect(Coverage.decode("A,gBAAD")).toEqual([
+            { line: 0, column: 16, source: 0, sourceLine: 0, sourceColumn: -1 },
+        ]);
+        expect(() => Coverage.decode("A!")).toThrow(
+            'The source map has "!" in its mappings.',
+        );
+    });
+
+    test("ratios, percentages like Jest's and uncovered line ranges", () => {
+        const coverage = file(
+            [
+                [1, 1],
+                [2, 0],
+                [3, 0],
+                [4, 0],
+                [6, 2],
+                [9, 0],
+            ],
+            [
+                ["a", 1, 1],
+                ["b", 2, 0],
+                ["c", 6, 3],
+            ],
+        );
+        expect(Coverage.lines(coverage)).toEqual({ covered: 2, total: 6 });
+        expect(Coverage.functions(coverage)).toEqual({ covered: 2, total: 3 });
+        expect(Coverage.percent(Coverage.lines(coverage))).toBe(33.33);
+        expect(Coverage.percent(Coverage.functions(coverage))).toBe(66.66);
+        expect(Coverage.uncovered(coverage)).toBe("2-4,9");
+        expect(
+            Coverage.sum([Coverage.lines(coverage), { covered: 3, total: 4 }]),
+        ).toEqual({ covered: 5, total: 10 });
+        // nothing to run counts as covered, unless no test loaded the file
+        expect(Coverage.percent({ covered: 0, total: 0 })).toBe(100);
+        expect(Coverage.percent({ covered: 0, total: 0 }, false)).toBe(0);
+    });
+
+    test("lcov names functions apart", () => {
+        const coverage = file(
+            [
+                [3, 1],
+                [1, 0],
+            ],
+            [
+                ["", 1, 0],
+                ["", 3, 2],
+                ["run", 5, 1],
+            ],
+        );
+        expect(Coverage.lcov("/root", [coverage])).toBe(
+            [
+                "TN:",
+                "SF:/root/src/a.ts",
+                "FN:1,(anonymous)",
+                "FN:3,(anonymous)_1",
+                "FN:5,run",
+                "FNDA:0,(anonymous)",
+                "FNDA:2,(anonymous)_1",
+                "FNDA:1,run",
+                "FNF:3",
+                "FNH:2",
+                "DA:1,0",
+                "DA:3,1",
+                "LF:2",
+                "LH:1",
+                "end_of_record",
+                "",
+            ].join("\n"),
+        );
+    });
+});
+
+describe("watcher", () => {
+    /** A watcher whose runs are recorded and finish when told, with changes made by hand. */
+    const watching = (
+        mode: "all" | "related",
+        related = async () => [] as string[],
+    ) => {
+        const runs: {
+            files: string[] | undefined;
+            stopped: boolean;
+            finish: () => void;
+        }[] = [];
+        let change: (path: string) => void = () => {};
+        let output = "";
+        const watcher = new Watcher({
+            mode,
+            delay: 1,
+            related,
+            run: (files): Run => {
+                let finish = () => {};
+                const done = new Promise<void>((resolve) => {
+                    finish = resolve;
+                });
+                const run = { files, stopped: false, finish };
+                runs.push(run);
+                return {
+                    done,
+                    stop: () => {
+                        run.stopped = true;
+                        finish();
+                    },
+                };
+            },
+            subscribe: (listener) => {
+                change = listener;
+                return () => {
+                    change = () => {};
+                };
+            },
+            ignores: (path) => path.startsWith("coverage/"),
+            write: (text) => {
+                output += text;
+            },
+        });
+        return {
+            watcher,
+            runs,
+            change: (path: string) => change(path),
+            output: () => output,
+        };
+    };
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+    test("runs all tests first, then on every change in watchAll mode", async () => {
+        const { watcher, runs, change, output } = watching("all");
+        watcher.start();
+        expect(runs.map((run) => run.files)).toEqual([undefined]);
+        runs[0]?.finish();
+        await settle();
+        expect(output()).toContain("Watching for changes");
+
+        change("coverage/lcov.info");
+        await settle();
+        expect(runs).toHaveLength(1);
+        change("src/a.ts");
+        change("src/b.ts");
+        await settle();
+        expect(runs.map((run) => run.files)).toEqual([undefined, undefined]);
+        watcher.close();
+    });
+
+    test("runs related tests, a change during a run stops it and runs its files too", async () => {
+        const { watcher, runs, change } = watching("related", async () => [
+            "tests/a.test.ts",
+        ]);
+        watcher.start();
+        runs[0]?.finish();
+        await settle();
+
+        change("src/a.ts");
+        await settle();
+        expect(runs[1]?.files).toEqual(["tests/a.test.ts"]);
+        change("src/a.ts");
+        await settle();
+        expect(runs[1]?.stopped).toBe(true);
+        expect(runs[2]?.files).toEqual(["tests/a.test.ts"]);
+
+        watcher.close();
+        expect(runs[2]?.stopped).toBe(true);
+        change("src/a.ts");
+        await settle();
+        expect(runs).toHaveLength(3);
+    });
+
+    test("selections merge, all wins", () => {
+        expect(Watcher.merge(undefined, ["b"])).toEqual(["b"]);
+        expect(Watcher.merge(["b"], ["a", "b"])).toEqual(["a", "b"]);
+        expect(Watcher.merge(["a"], "all")).toBe("all");
+        expect(Watcher.merge("all", ["a"])).toBe("all");
+    });
+
+    test("dependencies find the tests a change concerns, remembering their files", async () => {
+        const graph: Record<string, string[]> = {
+            "a.test.ts": ["a.test.ts", "src/a.ts", "src/shared.ts"],
+            "b.test.ts": ["b.test.ts", "src/b.ts", "src/shared.ts"],
+        };
+        const listed: string[] = [];
+        const dependencies = new Dependencies(async (file) => {
+            listed.push(file);
+            if (!graph[file]) throw new Error("does not compile");
+            return graph[file];
+        });
+        const tests = ["a.test.ts", "b.test.ts", "broken.test.ts"];
+        const related = (...changed: string[]) =>
+            dependencies.related(tests, new Set(changed));
+
+        expect(await related("src/a.ts")).toEqual([
+            "a.test.ts",
+            "broken.test.ts",
+        ]);
+        listed.length = 0;
+        expect(await related("src/shared.ts")).toEqual([
+            "a.test.ts",
+            "b.test.ts",
+            "broken.test.ts",
+        ]);
+        // only the tests whose files changed are listed again
+        listed.length = 0;
+        expect(await related("src/b.ts")).toEqual([
+            "b.test.ts",
+            "broken.test.ts",
+        ]);
+        expect(listed).toEqual(["b.test.ts", "broken.test.ts"]);
+        // a test that drops an import still runs for the change
+        graph["a.test.ts"] = ["a.test.ts"];
+        expect(await related("a.test.ts", "src/a.ts")).toEqual([
+            "a.test.ts",
+            "broken.test.ts",
+        ]);
+        expect(await related("src/a.ts")).toEqual(["broken.test.ts"]);
     });
 });

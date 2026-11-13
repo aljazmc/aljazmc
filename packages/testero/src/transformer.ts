@@ -1,8 +1,8 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, extname, join, sep } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
-import { build, type Loader, type Plugin } from "esbuild";
+import { type BuildOptions, build, type Loader, type Plugin } from "esbuild";
 import Globals from "./globals.js";
 
 /**
@@ -42,8 +42,13 @@ export default class Transformer {
     readonly #directory = mkdtempSync(Transformer.prefix);
     readonly #globals = join(this.#directory, "globals.mjs");
     #count = 0;
+    /** The code of each compiled module by its path, with an inline source map, for coverage. */
+    readonly bundles = new Map<string, string>();
+    readonly #keep: boolean;
 
-    constructor() {
+    /** Keeps the code of the compiled modules in `bundles` when told. */
+    constructor(keep = false) {
+        this.#keep = keep;
         writeFileSync(this.#globals, Globals.source());
     }
 
@@ -51,15 +56,41 @@ export default class Transformer {
     async compile(file: string): Promise<string> {
         const outfile = join(this.#directory, `${++this.#count}.mjs`);
         const { outputFiles } = await build({
-            entryPoints: [file],
+            ...this.#options(file),
             outfile,
+            sourcemap: "inline",
+            sourcesContent: false,
+            // for coverage, code no test imports counts too
+            treeShaking: !this.#keep,
+        });
+        const code = outputFiles[0]?.text ?? "";
+        writeFileSync(outfile, code);
+        if (this.#keep) this.bundles.set(outfile, code);
+        return pathToFileURL(outfile).href;
+    }
+
+    /** The absolute paths of the local files a test file is bundled from, itself included. */
+    async inputs(file: string): Promise<string[]> {
+        const { metafile } = await build({
+            ...this.#options(file),
+            metafile: true,
+        });
+        // other namespaces, like testero-meta, are prefixed with theirs
+        return Object.keys(metafile.inputs)
+            .filter((input) => !/^[\w-]+:/.test(input))
+            .map((input) => resolve(input))
+            .filter((input) => input !== this.#globals);
+    }
+
+    /** What compiling and listing the inputs share. */
+    #options(file: string): BuildOptions & { write: false } {
+        return {
+            entryPoints: [file],
             write: false,
             bundle: true,
             platform: "node",
             format: "esm",
             target: `node${process.versions.node.split(".")[0]}`,
-            sourcemap: "inline",
-            sourcesContent: false,
             inject: [this.#globals],
             // defines replace only unbound names, so a file's own `__dirname` stays
             define: Object.fromEntries([
@@ -77,9 +108,12 @@ export default class Transformer {
             },
             logLevel: "silent",
             plugins: [this.#plugin()],
-        });
-        writeFileSync(outfile, outputFiles[0]?.text ?? "");
-        return pathToFileURL(outfile).href;
+        };
+    }
+
+    /** The esbuild loader of a source file, undefined for files it does not compile. */
+    static loader(path: string): Loader | undefined {
+        return Transformer.#loaders[extname(path)];
     }
 
     /** Removes the compiled files. */

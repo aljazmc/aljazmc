@@ -74,7 +74,7 @@
         "p:syntax": "yarn workspace @aljazmc/syntax npm publish --access public --tolerate-republish",
         "p:testero": "yarn workspace @aljazmc/testero npm publish --access public --tolerate-republish",
         "t:all": "yarn test",
-        "t:coverage": "yarn t:all --coverage",
+        "t:coverage": "yarn b:testero && testero --coverage",
         "t:config": "jest shared/config",
         "t:formatero": "jest packages/formatero",
         "t:lintero": "jest packages/lintero",
@@ -90,7 +90,7 @@
         "tunit:monorepo": "jest packages/monorepo/tests/unit",
         "tunit:testero": "jest packages/testero/tests/unit",
         "test": "jest",
-        "test:w": "jest --watchAll",
+        "test:w": "yarn b:testero && testero --watchAll",
         "typecheck:w": "tsc --noEmit --watch"
     },
     "dependencies": {

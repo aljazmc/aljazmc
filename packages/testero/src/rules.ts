@@ -16,4 +16,13 @@ export interface Rules {
     resetMocks: boolean;
     /** Restores every spy to the original before each test. */
     restoreMocks: boolean;
+    /** Measures which lines and functions of the sources the tests run. */
+    collectCoverage: boolean;
+    /**
+     * Globs of the files coverage is reported for, also when no test loads
+     * them, "!" excludes; empty reports the files the tests load.
+     */
+    collectCoverageFrom: string[];
+    /** Where `lcov.info` is written, relative to the root. */
+    coverageDirectory: string;
 }

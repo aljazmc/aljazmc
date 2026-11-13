@@ -15,6 +15,9 @@ const rules: Rules = {
     clearMocks: false,
     resetMocks: false,
     restoreMocks: false,
+    collectCoverage: false,
+    collectCoverageFrom: [],
+    coverageDirectory: "coverage",
 };
 
 export default {

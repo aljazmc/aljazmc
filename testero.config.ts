@@ -12,5 +12,14 @@ export default {
     rules: {
         testMatch: ["**/tests/**/*.test.ts"],
         clearMocks: true,
+        collectCoverageFrom: [
+            "packages/*/src/**/*.ts",
+            "shared/*/src/**/*.ts",
+            "!**/main.ts",
+            "!**/index.ts",
+            "!packages/*/src/config.ts",
+            "!packages/formatero/src/rules.ts",
+            "!packages/formatero/src/tokens/token.ts",
+        ],
     },
 };

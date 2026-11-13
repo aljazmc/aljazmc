@@ -38,7 +38,7 @@ const HOLE = "\u0003";
 /** What an inline's content is rendered from, see `#inline`. */
 type Content = (children: Md.Inline[], ancestors: Md.Inline[]) => string;
 
-/** Formats Markdown like Biome: keeps the text, normalizes markers, fences, tables and spacing. */
+/** Formats Markdown: keeps the text, normalizes markers, fences, tables and spacing. */
 export default class Markdown {
     readonly #options: Options;
     #source: string[] = [];
@@ -146,7 +146,7 @@ export default class Markdown {
             return previous.type === "Paragraph" && next.type !== "HtmlBlock"
                 ? 1
                 : 0;
-        // like Biome, only some blocks keep a blank line before a list
+        // only some blocks keep a blank line before a list
         if (next.type === "List")
             return [
                 "CodeBlock",
@@ -241,7 +241,7 @@ export default class Markdown {
             ];
         }
         let content = this.#inlines(heading.children, heading.text, []);
-        // like Biome, two spaces or more are a line break it removes, one stays
+        // two spaces or more are a line break it removes, one stays
         if (/[ \t]{2,}$/.test(content)) content = content.trimEnd();
         return [`${"#".repeat(heading.level)}${content ? ` ${content}` : ""}`];
     }
@@ -253,7 +253,7 @@ export default class Markdown {
         item?: Md.ListItem,
     ): string[] {
         if (container === "quote" && this.#options.proseWrap === "preserve") {
-            // like Biome, an indented lazy line joins the line before it,
+            // an indented lazy line joins the line before it,
             // or stays lazy in list items and after a hard break
             const lines: string[] = [];
             for (const [index, line] of this.#inlines(
@@ -325,7 +325,7 @@ export default class Markdown {
     #indentedCode(code: Md.CodeBlock, container: Container): string[] {
         if (container !== "item")
             return code.lines.map((line) => (line === "" ? "" : `    ${line}`));
-        // like Biome, only the first line loses the common indentation, the
+        // only the first line loses the common indentation, the
         // others stay as they are in the source
         const common = Math.min(
             ...code.lines
@@ -375,7 +375,7 @@ export default class Markdown {
     }
 
     /**
-     * Like Biome, a quote keeps the indentation before the `>` of the lines
+     * A quote keeps the indentation before the `>` of the lines
      * whose prefix it prints from the source. A paragraph that continues on
      * another line of the quote makes it print every prefix anew, without
      * indentation, as do wrapped prose after the first line and list items
@@ -528,7 +528,7 @@ export default class Markdown {
                 .join("")}`;
 
         const [header = [], ...body] = rows;
-        // like Biome, `never` drops the padding of tables wider than the line
+        // `never` drops the padding of tables wider than the line
         if (
             this.#options.proseWrap === "never" &&
             Markdown.width(print(header)) > this.#options.lineWidth - width
@@ -599,7 +599,7 @@ export default class Markdown {
         breaks: boolean,
         indents: string[] = [],
         outdent?: Outdent,
-        /** Whether the text of emphasis wraps like the text around it, like Biome outside quotes. */
+        /** Whether the text of emphasis wraps like the text around it outside quotes. */
         emphasis = true,
         /** The whitespace that starts each line in the source, which code spans keep when joined. */
         spaces: string[] = [],
@@ -626,7 +626,7 @@ export default class Markdown {
                     inline.hard &&
                     ancestors.length > 0
                 ) {
-                    // like Biome, a hard break keeps the emphasis around it whole
+                    // a hard break keeps the emphasis around it whole
                     word += inline.raw;
                 } else if (inline.type === "Break") {
                     finish();
@@ -645,7 +645,7 @@ export default class Markdown {
                     wrap !== "preserve" &&
                     inline.raw.includes("\n")
                 ) {
-                    // like Biome, wrapped prose joins the lines of code spans
+                    // wrapped prose joins the lines of code spans
                     let line =
                         text.slice(0, inline.start).split("\n").length - 1;
                     word += Markdown.#code(
@@ -655,7 +655,7 @@ export default class Markdown {
                         ),
                     );
                 } else {
-                    // like Biome, the text of emphasis wraps like the text around it
+                    // the text of emphasis wraps like the text around it
                     if (
                         emphasis &&
                         wrap !== "preserve" &&
@@ -715,7 +715,7 @@ export default class Markdown {
                     .find((next) => next.kind === "word");
                 const lead = outdent?.leads[token.line] ?? 0;
                 // a list marker less indented than the content of its item
-                // would start a list once aligned, like Biome, it is joined
+                // would start a list once aligned, it is joined
                 // to the line before, or kept at the start of its line
                 if (
                     outdent &&
@@ -760,7 +760,7 @@ export default class Markdown {
         return segments.flatMap(({ words, hard }) => {
             const filled: string[] = [];
             let current = "";
-            // like Biome, always puts a word of several lines on lines of its own
+            // always puts a word of several lines on lines of its own
             let alone = false;
             for (const word of words) {
                 const [first = "", ...rest] = word.split("\n");
@@ -776,7 +776,7 @@ export default class Markdown {
                     filled.push(current);
                     current = first;
                 } else current = current ? `${current} ${first}` : first;
-                // like Biome, lines inside links, code and HTML stay
+                // lines inside links, code and HTML stay
                 for (const line of rest) {
                     filled.push(current);
                     current = line;
@@ -891,7 +891,7 @@ export default class Markdown {
                 (ancestor) => ancestor.type === "Image" && ancestor.reference,
             ) ||
             (parent?.type === "Link" && parent.reference) ||
-            // like Biome, emphasis of several lines in a link keeps its delimiter
+            // emphasis of several lines in a link keeps its delimiter
             (ancestors.some(
                 (ancestor) =>
                     ancestor.type === "Link" || ancestor.type === "Image",

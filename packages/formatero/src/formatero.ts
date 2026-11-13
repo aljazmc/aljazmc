@@ -187,7 +187,7 @@ export default class Formatero {
             const rules = { ...shared, ...json };
             // strict JSON forbids trailing commas, only JSONC may have them
             if (file.endsWith(".json")) rules.trailingCommas = "none";
-            // like npm, Biome always expands package.json
+            // like npm, package.json is always expanded
             if (/(?:^|\/)package\.json$/.test(file) && rules.expand === "auto")
                 rules.expand = "always";
             const options = Formatero.#options(
@@ -216,15 +216,15 @@ export default class Formatero {
     }
 
     /**
-     * Formats the code of a fenced block like a file of its language, like
-     * Biome, it stays as written when it has errors or is in another language.
+     * Formats the code of a fenced block like a file of its language, it
+     * stays as written when it has errors or is in another language.
      */
     #embed(code: string, info: string): string | undefined {
         const file = Formatero.#embedded(info);
         if (!file || !this.#enabled(file)) return;
         // a hashbang starts a file, not a block
         if (code.startsWith("#!") && !isMarkdown(file)) return;
-        // like Biome, `js` is JavaScript without JSX
+        // `js` is JavaScript without JSX
         if (/^embed\.c?js$/.test(file))
             try {
                 parse(code, { typescript: false, jsx: false });
@@ -246,7 +246,7 @@ export default class Formatero {
 
     /**
      * Formats the code of a script in HTML at an indentation level, with the
-     * layout of HTML and the other rules of its language, like Biome.
+     * layout of HTML and the other rules of its language.
      */
     #script(
         code: string,
@@ -310,7 +310,7 @@ export default class Formatero {
         });
     }
 
-    /** A file name for the language of an info string, like Biome reads it. */
+    /** A file name for the language of an info string. */
     static #embedded(info: string): string | undefined {
         const language = info.split(/\s/)[0]?.toLowerCase() ?? "";
         if (/^m?js$/.test(language)) return "embed.js";

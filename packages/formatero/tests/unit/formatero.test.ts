@@ -24,7 +24,7 @@ const format = (source: string, file = "a.ts", rules: object = {}) =>
         }),
     ).format(source, file);
 
-/** Inputs with the output Biome 2.6 gives for them, the printer must match it. */
+/** Inputs with their expected output, the printer must match it. */
 const biome: {
     name: string;
     file: string;
@@ -1065,6 +1065,33 @@ describe("formatero", () => {
             ).toThrow(FormatError);
         });
 
+        test("formatero-ignore and biome-ignore suppress formatting alike", () => {
+            const html = { html: { enabled: true } };
+            for (const prefix of ["formatero", "biome"]) {
+                expect(
+                    format(
+                        `<!-- ${prefix}-ignore format: kept -->\n<DIV>x</DIV>\n<DIV>y</DIV>\n`,
+                        "a.html",
+                        html,
+                    ),
+                ).toBe(
+                    `<!-- ${prefix}-ignore format: kept -->\n<DIV>x</DIV>\n<div>y</div>\n`,
+                );
+                const file = `<!-- ${prefix}-ignore-all format: kept -->\n<DIV>x</DIV>\n`;
+                expect(format(file, "a.html", html)).toBe(file);
+                expect(
+                    format(
+                        `/* ${prefix}-ignore format: kept */\na{color:red}\nb{color:red}\n`,
+                        "a.css",
+                    ),
+                ).toBe(
+                    `/* ${prefix}-ignore format: kept */\na{color:red}\nb {\n    color: red;\n}\n`,
+                );
+                const sheet = `/* ${prefix}-ignore-all format: kept */\na{color:red}\n`;
+                expect(format(sheet, "a.css")).toBe(sheet);
+            }
+        });
+
         test("HTML is formatted when enabled, .htm too, styles as CSS", () => {
             const messy = "<DIV>x</DIV>\n";
             expect(format(messy, "a.html")).toBe(messy);
@@ -1074,13 +1101,13 @@ describe("formatero", () => {
             expect(format(messy, "a.HTM", { html: { enabled: true } })).toBe(
                 "<div>x</div>\n",
             );
-            // like Biome, styles are formatted as CSS at the level of the element
+            // styles are formatted as CSS at the level of the element
             expect(
                 format("<style>\na{color:red}\n</style>\n", "a.html", {
                     html: { enabled: true },
                 }),
             ).toBe("<style>\na {\n    color: red;\n}\n</style>\n");
-            // like Biome, HTML ends with a newline unless HTML says otherwise
+            // HTML ends with a newline unless HTML says otherwise
             expect(
                 format("<p></p>", "a.html", {
                     trailingNewline: false,

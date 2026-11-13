@@ -171,7 +171,7 @@ export default class Expressions extends Section {
 
     /**
      * Template literals: an interpolation stays on one line, unless the source
-     * broke it, then it may break at `${` and `}` like Biome does.
+     * broke it, then it may break at `${` and `}`.
      */
     template(quasis: NodeOf<"TemplateElement">[], expressions: Node[]): Doc {
         const parts: Doc[] = [lineSuffixBoundary, "`"];
@@ -184,7 +184,7 @@ export default class Expressions extends Section {
             if (!expression || !next) continue;
 
             let printed: Doc = this.print(expression);
-            // like Biome: on one line, unless the source broke it or it must break
+            // on one line, unless the source broke it or it must break
             if (
                 !this.printer.hasNewlineInRange(quasi.end, next.start) &&
                 !willBreak(printed)

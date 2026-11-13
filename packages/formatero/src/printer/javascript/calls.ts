@@ -246,7 +246,7 @@ export default class Calls extends Section {
         });
     }
 
-    /** Expands a hugged argument's own group, like Biome, rather than wrapping it. */
+    /** Expands a hugged argument's own group, rather than wrapping it. */
     static #expand(doc: Doc): Doc {
         if (
             typeof doc === "object" &&
@@ -445,7 +445,7 @@ export default class Calls extends Section {
         return isChain ? label("member-chain", doc) : doc;
     }
 
-    /** In assignments, members of calls with arguments and of member chains stay attached, like Biome. */
+    /** In assignments, members of calls with arguments and of member chains stay attached. */
     #attached(node: NodeOf<"MemberExpression">, object: Doc): boolean {
         const parent = this.printer.parent();
         const assigned =

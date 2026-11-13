@@ -53,7 +53,7 @@ export interface Markdown extends Shared {
     formatEmbeds: boolean;
 }
 
-/** Biome compatible rules, language sections override the shared ones. */
+/** Formatting rules, language sections override the shared ones. */
 export interface Rules extends Shared {
     /** Globs of the files to format in order, the last match decides, "!" excludes. */
     includes: string[];

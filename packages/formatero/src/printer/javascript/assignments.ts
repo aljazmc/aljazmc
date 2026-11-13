@@ -128,7 +128,7 @@ export default class Assignments extends Section {
         )
             return "never-break-after-operator";
 
-        // like Biome, conditional types on generic types move after `=`
+        // conditional types on generic types move after `=`
         if (right.type === "TSConditionalType") {
             const generic = (type: Node) =>
                 type.type === "TSTypeReference" && type.typeArguments !== null;
@@ -168,7 +168,7 @@ export default class Assignments extends Section {
         return "fluid";
     }
 
-    /** `require("x").y` moves after `=` whole, like Biome does. */
+    /** `require("x").y` moves after `=` whole. */
     static #requireMember(node: Node): boolean {
         let current = node;
         if (!Nodes.isMember(current)) return false;

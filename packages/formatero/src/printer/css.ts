@@ -35,7 +35,13 @@ const WIDE = /^(?:initial|inherit|unset|revert)$/i;
 const MATH =
     /^(?:-[a-z]+-)?(?:calc|min|max|clamp|round|mod|rem|sin|cos|tan|asin|acos|atan|atan2|pow|sqrt|hypot|log|exp|abs|sign)$/i;
 
-/** At-rules Biome knows, the preludes of others stay as written. */
+/** Suppresses formatting of the whole file, `formatero-ignore-all format`. */
+const suppressFile = /^\/\*\s*(?:biome|formatero)-ignore-all\s+format\b/;
+
+/** Suppresses formatting of the next item, `formatero-ignore format`. */
+const suppressItem = /^\/\*\s*(?:biome|formatero)-ignore\s+format\b/;
+
+/** Known at-rules, the preludes of others stay as written. */
 const KNOWN = new Set([
     "charset",
     "color-profile",
@@ -67,7 +73,7 @@ const KNOWN = new Set([
     "view-transition",
 ]);
 
-/** Units Biome knows, it lower-cases them, others keep their case. */
+/** Known units, lower-cased, others keep their case. */
 const UNITS = new Set(
     "em rem ex rex cap rcap ch rch ic ric lh rlh vw svw lvw dvw vh svh lvh dvh vi svi lvi dvi vb svb lvb dvb vmin svmin lvmin dvmin vmax svmax lvmax dvmax cm mm q in pc pt px mozmm rpx cqw cqh cqi cqb cqmin cqmax deg grad rad turn s ms hz khz dpi dpcm dppx x fr".split(
         " ",
@@ -82,7 +88,7 @@ interface Context {
     math?: boolean;
 }
 
-/** Formats CSS like Biome. */
+/** Formats CSS. */
 export default class Css {
     readonly #options: CssOptions;
     #source = "";
@@ -96,12 +102,8 @@ export default class Css {
     /** Formats a stylesheet at an indentation level, throwing a ParseError when it has errors. */
     format(source: string, level = 0): string {
         const sheet = parseCss(source);
-        // like Biome, a suppression of the whole file keeps it as written
-        if (
-            sheet.comments.some((comment) =>
-                /^\/\*\s*biome-ignore-all\s+format\b/.test(comment.value),
-            )
-        )
+        // a suppression of the whole file keeps it as written
+        if (sheet.comments.some((comment) => suppressFile.test(comment.value)))
             return source;
         this.#source = source;
         this.#comments = sheet.comments;
@@ -235,7 +237,7 @@ export default class Css {
             if (entry.type === "Comment") parts.push(this.#comment(entry));
             else if (
                 previous?.type === "Comment" &&
-                /^\/\*\s*biome-ignore\s+format\b/.test(previous.value)
+                suppressItem.test(previous.value)
             ) {
                 for (const comment of this.#commentsIn(entry.start, entry.end))
                     this.#printed.add(comment);
@@ -634,7 +636,7 @@ export default class Css {
     ): Doc {
         const values = node.value;
         const end = node.important?.start ?? node.end;
-        // like Biome, IE filters like `progid:DXImage…` stay as written
+        // IE filters like `progid:DXImage…` stay as written
         if (
             values[0]?.type === "Identifier" &&
             /^progid$/i.test(values[0].value) &&
@@ -1058,7 +1060,7 @@ export default class Css {
         return [join([";", line], docs), trailing ? ifBreak(";") : ""];
     }
 
-    /** Normalizes a number like Biome: lower case, no redundant zeros or plus sign in exponents. */
+    /** Normalizes a number: lower case, no redundant zeros or plus sign in exponents. */
     static #number(raw: string): string {
         return raw
             .toLowerCase()

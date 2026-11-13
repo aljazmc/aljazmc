@@ -1,4 +1,4 @@
-/** Tables from Biome's HTML support, generated from biome 2.6.6. */
+/** Generated tables of HTML elements and their formatting behavior. */
 
 /** HTML tags whose names the formatter lower-cases. */
 export const canonicalTags: ReadonlySet<string> = new Set([

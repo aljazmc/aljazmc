@@ -20,7 +20,7 @@ const paired = (glob: string): boolean => {
 };
 
 /**
- * Translates a section glob like Biome does: `*` and `?` stay in a path
+ * Translates a section glob: `*` and `?` stay in a path
  * segment, `**` crosses them, `[a-z]` and `[!a]` match a character, `{a,b}`
  * and `{1..3}` list alternatives, and a single unmatched brace makes every
  * brace literal. Globs without `/` match files in any folder.
@@ -122,7 +122,7 @@ export function editorconfigGlob(source: string): RegExp {
     return new RegExp(`^${anywhere ? "(?:.*/)?" : ""}${regex}$`);
 }
 
-/** The rules Biome takes from an `.editorconfig` in the root, nested ones are not read. */
+/** The rules taken from an `.editorconfig` in the root, nested ones are not read. */
 export default class EditorConfig {
     readonly #sections: Section[] = [];
 

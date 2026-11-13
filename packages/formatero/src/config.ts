@@ -1,6 +1,6 @@
 import type { Rules } from "./rules.js";
 
-/** Biome's formatter defaults. */
+/** The formatter defaults. */
 const rules: Rules = {
     enabled: true,
     includes: ["**"],
@@ -29,7 +29,7 @@ const rules: Rules = {
         trailingCommas: "none",
     },
     html: {
-        // like Biome, formatting HTML is experimental and off unless enabled
+        // formatting HTML is experimental and off unless enabled
         enabled: false,
         // unlike other languages, HTML ends with a newline unless it is disabled for HTML
         trailingNewline: true,

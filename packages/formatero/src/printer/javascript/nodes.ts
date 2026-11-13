@@ -206,7 +206,7 @@ export default class Nodes {
         });
     }
 
-    /** Arguments that keep a member chain on one line, after Biome's SimpleArgument. */
+    /** Arguments that keep a member chain on one line. */
     static isSimpleCallArgument(node: Node, depth = 0): boolean {
         if (depth >= 2) return false;
         const simple = (child: Node, level = depth) =>

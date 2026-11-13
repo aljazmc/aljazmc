@@ -76,7 +76,7 @@ const integerLength = (descriptor: string) => {
     return dot >= 0 ? dot : Math.max(descriptor.length - 1, 0);
 };
 
-/** The candidates of a `srcset`, one per line when they break, descriptors aligned like Biome. */
+/** The candidates of a `srcset`, one per line when they break, descriptors aligned. */
 export function srcset(value: string): IR | undefined {
     const candidates = parse(value);
     if (!candidates) return undefined;

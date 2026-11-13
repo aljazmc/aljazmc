@@ -1,5 +1,5 @@
 /**
- * Biome's formatting IR and printer, for HTML: unlike Prettier's documents,
+ * A formatting IR and printer, for HTML: unlike Prettier's documents,
  * spaces are pending until text follows, so they never end a line or double,
  * and line breaks at the start of a line do not add empty lines.
  */
@@ -134,7 +134,7 @@ function propagate(ir: IR): boolean {
     }
 }
 
-/** Whether the IR contains a forced break, like Biome's `will_break`. */
+/** Whether the IR contains a forced break. */
 export function willBreak(ir: IR): boolean {
     if (typeof ir === "string") return ir.includes("\n");
     if (Array.isArray(ir)) return ir.some(willBreak);
@@ -200,7 +200,7 @@ function wide(code: number): boolean {
     );
 }
 
-/** Prints IR like Biome's printer. */
+/** Prints IR. */
 export class Printer {
     readonly #options: PrinterOptions;
     #out = "";
@@ -480,7 +480,7 @@ export class Printer {
     }
 }
 
-/** Measures whether content fits on the current line, Biome's `FitsMeasurer`. */
+/** Measures whether content fits on the current line. */
 class Measurer {
     #lineWidth: number;
     #pendingIndent: number;

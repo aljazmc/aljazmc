@@ -284,7 +284,7 @@ export default class Functions extends Section {
 
         return group([
             ...parts,
-            // Biome needs a spare column after `=>` before a parenthesized conditional
+            // a spare column is needed after `=>` before a parenthesized conditional
             shouldAddParens ? reserve(1) : "",
             group([
                 indent([
@@ -367,7 +367,7 @@ export default class Functions extends Section {
                 this.print(node.typeParameters),
                 this.parameters(node, expandArg),
             ];
-            // like Biome, the parameters of arrows break with their return type
+            // the parameters of arrows break with their return type
             parts.push(group([parameters, returnType]));
         }
 

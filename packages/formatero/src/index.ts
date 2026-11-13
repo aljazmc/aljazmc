@@ -13,7 +13,7 @@ const editorconfig = config.rules.useEditorconfig
 const formatero = new Formatero(config.rules);
 const write = process.argv.includes("--write");
 
-/** `.editorconfig` comes between the defaults and the config file, like in Biome. */
+/** `.editorconfig` comes between the defaults and the config file. */
 const formateroFor = (file: string): Formatero =>
     editorconfig
         ? new Formatero(

@@ -72,7 +72,13 @@ type Display =
 
 type NonText = Tree.Element | Tree.Cdata;
 
-/** A child of an element, split like Biome's `HtmlChild`. */
+/** Suppresses formatting of the whole file, `formatero-ignore-all format`. */
+const suppressFile = /^<!--\s*(?:biome|formatero)-ignore-all\s+format\b/;
+
+/** Suppresses formatting of the next node, `formatero-ignore format`. */
+const suppressNode = /^<!--\s*(?:biome|formatero)-ignore\s+format\b/;
+
+/** A child of an element, split into words, whitespace and elements. */
 type Child =
     | { kind: "word"; text: string }
     | { kind: "comment"; text: string }
@@ -83,7 +89,7 @@ type Child =
     | { kind: "nonText"; node: NonText }
     | Verbatim;
 
-/** A node kept as written, after a `biome-ignore format` comment. */
+/** A node kept as written, after a format suppression comment. */
 interface Verbatim {
     kind: "verbatim";
     node: Tree.Child;
@@ -128,7 +134,7 @@ const FORCE_BREAK_CHILDREN = new Set(["html", "head", "ul", "ol", "select"]);
 const STRUCTURAL_FALLBACK = new Set(["audio", "object", "video"]);
 const PRESERVES_CONTENT = new Set(["pre", "plaintext", "xmp", "textarea"]);
 
-/** Formats HTML like Biome. */
+/** Formats HTML. */
 export default class Html {
     readonly #options: HtmlOptions;
     #source = "";
@@ -149,12 +155,8 @@ export default class Html {
         this.#root = root;
         this.#comments = root.comments;
         this.#parents = new Map();
-        // like Biome, a file with `biome-ignore-all format` stays as written
-        if (
-            root.comments.some((comment) =>
-                /^<!--\s*biome-ignore-all\s+format\b/.test(comment.value),
-            )
-        )
+        // a file with a whole-file format suppression stays as written
+        if (root.comments.some((comment) => suppressFile.test(comment.value)))
             return source;
         const link = (children: Tree.Child[], parent: Tree.Element | null) => {
             for (const child of children) {
@@ -304,7 +306,7 @@ export default class Html {
 
     /** Whether a comment suppresses formatting of the next node. */
     static #suppression(comment: string): boolean {
-        return /^<!--\s*biome-ignore\s+format\b/.test(comment);
+        return suppressNode.test(comment);
     }
 
     /** Whether the last comment before a node suppresses its formatting. */
@@ -316,7 +318,7 @@ export default class Html {
         return last !== undefined && Html.#suppression(last.text);
     }
 
-    /** A node as written, with its comments, Biome's `format_verbatim_skipped`. */
+    /** A node as written, with its comments. */
     #verbatim(node: Tree.Child): IR {
         const parts: IR[] = [];
         const before = this.#pieces(this.#before(node), node.start);
@@ -439,7 +441,7 @@ export default class Html {
     }
 
     #doctype(doctype: Tree.Doctype): IR {
-        // like Biome, a declaration that is no doctype cannot be formatted
+        // a declaration that is no doctype cannot be formatted
         if (doctype.keyword.toLowerCase() !== "doctype")
             throw new ParseError("Syntax error.", doctype.start);
         const bare =
@@ -475,7 +477,7 @@ export default class Html {
 
     // ---- children ----
 
-    /** Splits children into words, comments, whitespace and elements, Biome's `html_split_children`. */
+    /** Splits children into words, comments, whitespace and elements. */
     #children(children: Tree.Child[], parent: Tree.Element | null): Child[] {
         const buffer: Child[] = [];
         const entry = (child: Child) => {
@@ -1216,7 +1218,7 @@ export default class Html {
             tag === "script"
                 ? this.#scriptLanguage(element)
                 : tag === "style"
-                  ? // like Biome, styles of any type are CSS
+                  ? // styles of any type are CSS
                     ("css" as const)
                   : undefined;
         const embedded =
@@ -1453,7 +1455,7 @@ export default class Html {
         if (this.#options.bracketSameLine) {
             const slash =
                 always || (element.selfClosing && !(voidElement && !always));
-            // Biome prints a hard space like a pending space
+            // a hard space prints like a pending space
             if (slash) parts.push(space);
         } else if (element.attributes.length >= 1)
             parts.push(always ? softLineOrSpace : softLine);
@@ -1549,7 +1551,7 @@ export default class Html {
         return attributesByTag[tag.toLowerCase()]?.includes(name) ?? false;
     }
 
-    /** An attribute value with Biome's quotes. */
+    /** An attribute value with normalized quotes. */
     static #string(raw: string): IR {
         if (raw.startsWith("`")) return raw;
         const requoted = Html.#requote(raw);

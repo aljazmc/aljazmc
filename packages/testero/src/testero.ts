@@ -64,9 +64,14 @@ export default class Testero {
         }
 
         process.setSourceMapsEnabled(true);
+        // a run within a run, like testero testing itself, shares the process:
+        // only the innermost one, the one running now, takes the stray errors
+        const runs = Testero.#runs();
         const stray = (error: unknown) => {
+            if (runs.at(-1) !== stray) return;
             if (!this.#runner?.fail(error)) this.#stray.push(error);
         };
+        runs.push(stray);
         process.on("uncaughtException", stray);
         process.on("unhandledRejection", stray);
 
@@ -83,10 +88,22 @@ export default class Testero {
             transformer.dispose();
             process.off("uncaughtException", stray);
             process.off("unhandledRejection", stray);
+            runs.splice(runs.indexOf(stray), 1);
         }
 
         this.#reporter.summary(results, performance.now() - start);
         return !results.some(Reporter.failed);
+    }
+
+    /**
+     * The stray error listeners of the runs in progress, innermost last.
+     * Kept on globalThis, as nested runs may come from different copies of this module.
+     */
+    static #runs(): ((error: unknown) => void)[] {
+        const key = Symbol.for("@aljazmc/testero.runs");
+        const global = globalThis as { [key]?: ((error: unknown) => void)[] };
+        global[key] ??= [];
+        return global[key];
     }
 
     async #file(file: string, transformer: Transformer): Promise<FileResult> {

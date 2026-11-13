@@ -173,14 +173,6 @@ export default class Css {
         return atoms.sort((a, b) => a.start - b.start);
     }
 
-    /** Comments between positions, each followed by a space. */
-    #inline(start: number, end: number): Doc[] {
-        return this.#commentsIn(start, end).map((comment) => [
-            this.#comment(comment),
-            " ",
-        ]);
-    }
-
     // Lists of statements and declarations
 
     /** Items and the comments between them, with their blank lines. */

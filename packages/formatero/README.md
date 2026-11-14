@@ -36,6 +36,7 @@ Requires Node.js 22.18+, 24.2+, 25 or 26.
 | `formatero`               | Lists unformatted files, exits with 1 if there are any. |
 | `formatero --config [js]` | Writes the defaults to `formatero.config.ts` (`.js`).   |
 | `formatero --write`       | Formats the files in place.                             |
+| `formatero [paths]`       | Only the files in these files or folders.               |
 
 ## > Configuration
 

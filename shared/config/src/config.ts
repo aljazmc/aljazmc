@@ -7,7 +7,7 @@ import {
     statSync,
     writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import Ignore from "./ignore.js";
 
@@ -185,6 +185,30 @@ export default class Config<Rules extends object = object> {
             merged[key] = Config.merge(base[key], value);
 
         return merged as T;
+    }
+
+    /**
+     * Whether a file, relative to the root, is one of some paths or in one
+     * of them, like the paths a tool is given on its command line, relative
+     * to `base`. Without paths, every file is. A path that does not exist is
+     * an error.
+     */
+    within(
+        paths: readonly string[],
+        base: string = process.cwd(),
+    ): (file: string) => boolean {
+        if (paths.length === 0) return () => true;
+        const relatives = paths.map((path) => {
+            const absolute = resolve(base, path);
+            if (!existsSync(absolute))
+                throw new Error(`${path}: no such file or folder.`);
+            return relative(this.root, absolute).split(sep).join("/");
+        });
+        return (file) =>
+            relatives.some(
+                (path) =>
+                    path === "" || file === path || file.startsWith(`${path}/`),
+            );
     }
 
     /**

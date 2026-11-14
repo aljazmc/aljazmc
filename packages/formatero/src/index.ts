@@ -12,6 +12,16 @@ const editorconfig = config.rules.useEditorconfig
     : undefined;
 const formatero = new Formatero(config.rules);
 const write = process.argv.includes("--write");
+/** The files and folders to format, all without them. */
+let within: (file: string) => boolean;
+try {
+    within = config.within(
+        process.argv.slice(2).filter((arg) => !arg.startsWith("-")),
+    );
+} catch (error) {
+    console.log(`error: ${error instanceof Error ? error.message : error}`);
+    process.exit(1);
+}
 
 /** `.editorconfig` comes between the defaults and the config file. */
 const formateroFor = (file: string): Formatero =>
@@ -26,7 +36,7 @@ const formateroFor = (file: string): Formatero =>
 
 if (
     !formatFiles(
-        config.sources((file) => formatero.formats(file)),
+        config.sources((file) => within(file) && formatero.formats(file)),
         (text, file) => formateroFor(file).format(text, file),
         { write },
     )

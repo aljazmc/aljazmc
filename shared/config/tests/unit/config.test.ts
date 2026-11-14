@@ -202,6 +202,22 @@ describe("config", () => {
         });
     });
 
+    test("within matches files in the given paths, all without paths", () => {
+        const config = new Config({ ignore: [], rules: {} }, root);
+        const files = (paths: string[], base = root) =>
+            [...config.files()].filter(config.within(paths, base)).sort();
+        expect(files([])).toEqual(["c.log", "src/a.ts", "src/bin/b.js"]);
+        expect(files(["src/bin"])).toEqual(["src/bin/b.js"]);
+        expect(files(["c.log", "src/bin/"])).toEqual(["c.log", "src/bin/b.js"]);
+        expect(files(["."])).toHaveLength(3);
+        // relative to where the tool runs
+        expect(files(["bin"], join(root, "src"))).toEqual(["src/bin/b.js"]);
+        // src/b is not a prefix of src/bin
+        expect(() => files(["src/b"])).toThrow(
+            "src/b: no such file or folder.",
+        );
+    });
+
     describe("files", () => {
         /** A config of the temporary root, collecting its warnings. */
         const config = (ignore: string[] = []) => {

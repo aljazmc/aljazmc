@@ -76,9 +76,20 @@ const linteroFor = (file: string): Lintero => {
     return found;
 };
 
+/** The files and folders to lint, all without them. */
+let within: (file: string) => boolean;
+try {
+    within = config.within(
+        process.argv.slice(2).filter((arg) => !arg.startsWith("-")),
+    );
+} catch (error) {
+    console.log(`error: ${error instanceof Error ? error.message : error}`);
+    process.exit(1);
+}
+
 for (const problem of problems) console.log(problem);
 const counts = lintFiles(
-    config.sources((file) => lintero.lints(file)),
+    config.sources((file) => within(file) && lintero.lints(file)),
     linteroFor,
     {
         write: process.argv.includes("--write"),

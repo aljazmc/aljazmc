@@ -34,6 +34,7 @@ Requires Node.js 22.18+, 24.2+, 25 or 26.
 | `lintero --config [js]`    | Writes the defaults to `lintero.config.ts` (`.js`). |
 | `lintero --write`          | Applies the safe fixes, then reports what is left.  |
 | `lintero --write --unsafe` | Applies the unsafe fixes too.                       |
+| `lintero [paths]`          | Only the files in these files or folders.           |
 
 ```text
 warn: src/a.ts:3:8 lint/suspicious/noExplicitAny: Unexpected any. Specify a different type.

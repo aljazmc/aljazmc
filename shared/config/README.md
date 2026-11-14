@@ -12,6 +12,7 @@ types. Each package ships its defaults, and `<package>.config.ts` (or
 | `config.custom`    | What the config file set, before the defaults were merged in.   |
 | `config.files()`   | Lists the files that are not ignored.                           |
 | `config.sources()` | Reads the text files that are not ignored.                      |
+| `config.within()`  | Matches files in the paths given on the command line.           |
 | `Includes`         | Matches `includes` globs: the last match decides, `!` excludes. |
 | `Pattern`          | Matches a single glob.                                          |
 

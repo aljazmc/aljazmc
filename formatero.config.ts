@@ -1,8 +1,4 @@
-import biome from "./biome.json" with { type: "json" };
-
-const { formatter, javascript, json } = biome;
-
-/** Formats this project with the settings of the imported JSON configuration. */
+/** Formats this project. */
 export default {
     ignore: [
         ".cache",
@@ -18,8 +14,18 @@ export default {
         "*.tsbuildinfo",
     ],
     rules: {
-        ...formatter,
-        javascript: javascript.formatter,
-        json: json.formatter,
+        indentStyle: "space",
+        indentWidth: 4,
+        lineEnding: "lf",
+        lineWidth: 80,
+        javascript: {
+            jsxQuoteStyle: "double",
+            quoteStyle: "double",
+            semicolons: "always",
+            trailingCommas: "all",
+        },
+        json: {
+            trailingCommas: "none",
+        },
     },
 };

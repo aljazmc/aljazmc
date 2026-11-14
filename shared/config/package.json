@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/config",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "description": "Shared, dependency-free configuration loader, file finder and glob matcher, bundled into the @aljazmc packages.",
     "keywords": [
         "config",

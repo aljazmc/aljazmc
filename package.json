@@ -1,6 +1,6 @@
 {
     "name": "aljazmc",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "description": "Lightweight npm packages written in modern TypeScript: a formatter, a linter, a monorepo release tool and a test runner.",
     "author": "aljazmc",
     "license": "MIT",

@@ -28,6 +28,7 @@ import Settings, {
     type Project,
 } from "./analysis/settings.js";
 import Suppressions from "./analysis/suppressions.js";
+import organizeImports from "./assist/organize-imports.js";
 import all from "./rules/index.js";
 import type { Edit, Fix, Rule, Rules, Severity } from "./rules.js";
 
@@ -251,6 +252,48 @@ export default class Lintero {
             }
         }
 
+        // like Biome, organizing imports is an assist action of modules
+        const organize = this.#organizeImports();
+        if (organize && !markdown && !html && !css && !language.json) {
+            const organized = organizeImports(
+                parsed.program,
+                parsed.comments,
+                text,
+                organize.options,
+            );
+            const category = "assist/source/organizeImports";
+            if (
+                organized &&
+                !suppressions.suppresses(
+                    category,
+                    lines.line(organized.report),
+                    undefined,
+                )
+            )
+                diagnostics.push({
+                    ...diagnostic(
+                        organized.report,
+                        organized.report,
+                        category,
+                        organize.severity,
+                        organized.exports
+                            ? "Sort these exports."
+                            : "Sort these imports.",
+                    ),
+                    fix: {
+                        message: "Organize imports and exports.",
+                        edits: [
+                            {
+                                start: organized.start,
+                                end: organized.end,
+                                text: organized.text,
+                            },
+                        ],
+                        kind: "safe",
+                    },
+                });
+        }
+
         // scripts in HTML are linted as files of their language
         if (htmlRoot)
             for (const diagnostic of this.#scripts(htmlRoot, file, lines))
@@ -266,6 +309,7 @@ export default class Lintero {
         const known = new Set(
             this.active.map(({ rule }) => `lint/${rule.group}/${rule.name}`),
         );
+        if (this.#organizeImports()) known.add("assist/source/organizeImports");
         // only rules lintero runs can tell whether a suppression is needed
         for (const suppression of suppressions.suppressions)
             if (
@@ -295,6 +339,33 @@ export default class Lintero {
         return diagnostics.sort(
             (a, b) => a.start - b.start || a.category.localeCompare(b.category),
         );
+    }
+
+    /** The severity and options of organizeImports, undefined when it is off. */
+    #organizeImports():
+        | {
+              severity: Severity;
+              options: {
+                  sortBareImports: boolean;
+                  identifierOrder: "natural" | "lexicographic";
+              };
+          }
+        | undefined {
+        const assist = this.#settings.assist;
+        const setting = assist?.actions?.source?.organizeImports ?? "on";
+        if (assist?.enabled === false) return;
+        const level = typeof setting === "string" ? setting : setting.level;
+        if (level === "off") return;
+        const options =
+            typeof setting === "string" ? {} : (setting.options ?? {});
+        return {
+            // unorganized imports fail a check, like with Biome
+            severity: level === "on" ? "error" : level,
+            options: {
+                sortBareImports: options.sortBareImports ?? false,
+                identifierOrder: options.identifierOrder ?? "natural",
+            },
+        };
     }
 
     /** Applies safe fixes, and unsafe ones too when asked, until none apply. */

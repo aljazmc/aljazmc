@@ -8,6 +8,8 @@ import Blocks, { type MarkdownOptions } from "./markdown/blocks.js";
 import type { Options } from "./parser/base.js";
 import Parser from "./parser/statements.js";
 import { type Comment, ParseError } from "./scanner.js";
+import type { Stream } from "./yaml/ast.js";
+import YamlParser from "./yaml/parser.js";
 
 export type * from "./ast.js";
 export type * as Css from "./css/ast.js";
@@ -18,6 +20,7 @@ export type * as Markdown from "./markdown/ast.js";
 export type { Comment, Token } from "./scanner.js";
 export { ParseError } from "./scanner.js";
 export { default as Walker } from "./walker.js";
+export type * as Yaml from "./yaml/ast.js";
 export type { MarkdownOptions, Options };
 
 export interface Parsed {
@@ -73,6 +76,11 @@ export function isHtml(file: string): boolean {
     return /\.html?$/i.test(file);
 }
 
+/** Whether a file is YAML, by its extension. */
+export function isYaml(file: string): boolean {
+    return /\.ya?ml$/i.test(file);
+}
+
 /** Whether a file is CSS, by its extension. */
 export function isCss(file: string): boolean {
     return /\.css$/i.test(file);
@@ -101,6 +109,15 @@ export function parseCssValues(source: string, start = 0, end = source.length) {
     return shallow(() => CssParser.values(source, start, end), {
         position: start,
     });
+}
+
+/**
+ * Parses YAML, with line feeds as line endings, into documents, throwing a
+ * ParseError at the first error.
+ */
+export function parseYaml(source: string): Stream {
+    const parser = new YamlParser(source);
+    return shallow(() => parser.parse(), parser);
 }
 
 /** Parses HTML, throwing a ParseError at the first error. */

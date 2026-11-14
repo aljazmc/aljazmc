@@ -46,6 +46,11 @@ export interface Css extends Shared {
     quoteStyle: Quote;
 }
 
+export interface Yaml extends Shared {
+    /** The preferred quote of quoted scalars, kept when it needs more escapes. */
+    quoteStyle: Quote;
+}
+
 export interface Markdown extends Shared {
     /** Keeps the line breaks of paragraphs, wraps them at the line width, or joins them. */
     proseWrap: "always" | "never" | "preserve";
@@ -64,6 +69,7 @@ export interface Rules extends Shared {
     html: Partial<Shared> & Omit<Html, keyof Shared>;
     css: Partial<Shared> & Omit<Css, keyof Shared>;
     markdown: Partial<Shared> & Omit<Markdown, keyof Shared>;
+    yaml: Partial<Shared> & Omit<Yaml, keyof Shared>;
 }
 
 export interface Rule {

@@ -19,6 +19,7 @@ to extend. Biome 2.6.6 compatible.
 | Markdown                    | Normalizes markers, fences, tables and spacing, and formats fenced code.  |
 | Other text files            | Reindented line by line.                                                  |
 | Suppressions                | `formatero-ignore` comments keep a CSS or HTML item, or file, as written. |
+| YAML                        | Reprints `.yml` and `.yaml` files by their structure, keeping values.     |
 
 ## > Install
 
@@ -93,6 +94,29 @@ export default {
 | `json`       | `trailingCommas`        | `"none"`     | `"all"`, `"none"`                   | Trailing commas, `"all"` in `.jsonc` files only.         |
 | `markdown`   | `formatEmbeds`          | `true`       | boolean                             | Formats fenced code in supported languages.              |
 | `markdown`   | `proseWrap`             | `"preserve"` | `"always"`, `"never"`, `"preserve"` | Wraps paragraphs at the line width, joins or keeps them. |
+| `yaml`       | `bracketSpacing`        | unset        | boolean                             | Spaces in flow sequences too, or in neither.             |
+| `yaml`       | `quoteStyle`            | `"double"`   | `"double"`, `"single"`              | Quotes of scalars, unless the other needs fewer escapes. |
+
+### > YAML
+
+YAML is formatted like Biome formats it:
+
+- Collections are indented by `indentWidth`, sequences under keys too.
+- Single spaces go after `:` and `-` and before comments.
+- Quoted scalars get the preferred quotes when that needs no more escapes.
+- Flow collections are spaced, and broken with trailing commas when long.
+- Block scalars move with their content.
+
+YAML is always indented with spaces, as it has no tabs. Unless `yaml.bracketSpacing` is
+set, flow mappings follow `bracketSpacing` and flow sequences have no
+spaces, like Biome's defaults.
+
+Two things differ from Biome on purpose:
+
+- When the indentation of a key with an indentation indicator, like `|2`, changes, its content moves along with it.
+  Biome leaves the content where it was, which changes the value.
+- A comment deeper than an entry, after its block scalar, stays at the entry's indentation.
+  Biome moves it to the first column, and moves it back when it formats the result again.
 
 ### > Suppressions
 
@@ -131,6 +155,7 @@ source
 | `src/printer/javascript`  | Prints JavaScript, JSX, JSON and TypeScript trees.               |
 | `src/printer/layout.ts`   | Lays documents out within the line width (Wadler's algorithm).   |
 | `src/printer/markdown.ts` | Prints Markdown blocks, and fenced code by its language.         |
+| `src/printer/yaml.ts`     | Prints YAML documents, block and flow collections and scalars.   |
 | `src/tokens`, `src/rules` | Token stream and rules for files that do not parse.              |
 
 ## > License

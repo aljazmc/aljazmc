@@ -4,6 +4,7 @@ import {
     isCss,
     isHtml,
     isMarkdown,
+    isYaml,
     Lines,
     language as languageOf,
     ParseError,
@@ -13,6 +14,7 @@ import Css from "./printer/css.js";
 import Html from "./printer/html/index.js";
 import JavaScript, { type Options } from "./printer/javascript/index.js";
 import Markdown from "./printer/markdown.js";
+import Yaml from "./printer/yaml.js";
 import ArrowParentheses from "./rules/arrow-parentheses.js";
 import Indentation from "./rules/indentation.js";
 import QuoteProperties from "./rules/quote-properties.js";
@@ -29,6 +31,7 @@ import type {
     Rule,
     Rules,
     Shared,
+    Yaml as YamlRules,
 } from "./rules.js";
 import Code from "./tokens/code.js";
 
@@ -66,7 +69,8 @@ export default class Formatero {
     }
 
     #enabled(file: string): boolean {
-        const { enabled, javascript, json, markdown, html, css } = this.#rules;
+        const { enabled, javascript, json, markdown, html, css, yaml } =
+            this.#rules;
         const language = languageOf(file);
         const section = isMarkdown(file)
             ? markdown
@@ -74,7 +78,9 @@ export default class Formatero {
               ? html
               : isCss(file)
                 ? css
-                : language && (language.json ? json : javascript);
+                : isYaml(file)
+                  ? yaml
+                  : language && (language.json ? json : javascript);
         return section?.enabled ?? enabled;
     }
 
@@ -91,11 +97,14 @@ export default class Formatero {
             markdown,
             html,
             css,
+            yaml,
             includes,
             useEditorconfig,
             ...shared
         } = this.#rules;
         const language = languageOf(file);
+
+        if (isYaml(file)) return this.#yaml(source, { ...shared, ...yaml });
 
         if (isCss(file)) {
             const rules = { ...shared, ...css };
@@ -262,6 +271,7 @@ export default class Formatero {
             css,
             markdown: _markdown,
             html: _html,
+            yaml: _yaml,
             includes: _includes,
             useEditorconfig: _useEditorconfig,
             ...shared
@@ -291,6 +301,41 @@ export default class Formatero {
             if (Formatero.#lost(error)) throw new FormatError(error.message);
             throw error;
         }
+    }
+
+    /**
+     * Formats YAML. Its indentation is spaces, as YAML has no tabs, and its
+     * flow mappings have spaces inside unless `bracketSpacing` turns them
+     * off, its flow sequences only when it is set for YAML.
+     */
+    #yaml(
+        source: string,
+        rules: Shared & Omit<YamlRules, keyof Shared>,
+    ): string {
+        const bom = source.startsWith("\uFEFF") ? "\uFEFF" : "";
+        const text = source.slice(bom.length).replace(/\r\n?/g, "\n");
+        const spacing = this.#rules.yaml.bracketSpacing;
+        let printed: string;
+        try {
+            printed = new Yaml({
+                lineWidth: rules.lineWidth,
+                indentWidth: rules.indentWidth,
+                quote: rules.quoteStyle === "single" ? "'" : '"',
+                bracketSpacing: {
+                    mapping: spacing ?? rules.bracketSpacing,
+                    sequence: spacing ?? false,
+                },
+            }).format(text);
+        } catch (error) {
+            if (!(error instanceof ParseError)) throw error;
+            if (rules.formatWithErrors) return source;
+            const lines = new Lines(text);
+            const { position } = error;
+            throw new FormatError(
+                `${lines.line(position)}:${lines.column(position)} ${error.message}`,
+            );
+        }
+        return this.#finish(bom + printed, rules);
     }
 
     /** Whether an error is a printer refusing to lose a comment. */
@@ -332,6 +377,7 @@ export default class Formatero {
             return "embed.jsonc";
         if (/^(?:md|markdown)$/.test(language)) return "embed.md";
         if (/^html?$/.test(language)) return "embed.html";
+        if (/^ya?ml$/.test(language)) return "embed.yml";
         if (language === "css") return "embed.css";
     }
 

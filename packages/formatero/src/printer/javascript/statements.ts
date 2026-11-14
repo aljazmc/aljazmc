@@ -197,9 +197,25 @@ export default class Statements extends Section {
             const before =
                 statements[statements.indexOf(next) - 1] ?? statement;
             parts.push(hardline);
-            if (this.printer.isNextLineEmpty(before.end)) parts.push(hardline);
+            if (
+                this.printer.isNextLineEmpty(before.end) ||
+                this.printer.isNextLineEmpty(this.#contentEnd(before.end))
+            )
+                parts.push(hardline);
         }
         return parts;
+    }
+
+    /**
+     * Where the code before a statement's semicolons ends. Without semicolons,
+     * a `;` guarding the next line, as in `}\n\n;(a)`, ends the statement
+     * before it, after the blank line between the two.
+     */
+    #contentEnd(end: number): number {
+        const { source } = this.printer;
+        let index = end;
+        while (index > 0 && /[\s;]/.test(source[index - 1] as string)) index--;
+        return index;
     }
 
     #statementSemi(node: NodeOf<"ExpressionStatement">): Doc {

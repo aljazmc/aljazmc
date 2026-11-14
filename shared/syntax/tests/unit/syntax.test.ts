@@ -4,6 +4,7 @@ import {
     isCss,
     isHtml,
     isMarkdown,
+    isYaml,
     Lines,
     language,
     type Markdown,
@@ -13,7 +14,9 @@ import {
     parseExpression,
     parseHtml,
     parseMarkdown,
+    parseYaml,
     tagOf,
+    type Yaml,
 } from "../../src/index.ts";
 
 /** The types of nodes, nested like the tree, for short expectations. */
@@ -424,6 +427,116 @@ describe("syntax", () => {
             expect((sheet.children[1] as Css.Rule).block.children).toHaveLength(
                 1,
             );
+        });
+    });
+
+    describe("yaml", () => {
+        const root = (source: string) =>
+            parseYaml(source).documents[0]?.root as Yaml.Node;
+
+        test("files by extension", () => {
+            expect(isYaml("a.yml")).toBe(true);
+            expect(isYaml("a/b.YAML")).toBe(true);
+            expect(isYaml("a.json")).toBe(false);
+        });
+
+        test("block collections, compact ones in sequences and indentless sequences", () => {
+            const mapping = root(
+                "a:\n  - b: 1\n    c: 2\n  - - d\ne:\n- f\n",
+            ) as Yaml.Mapping;
+            expect(mapping.type).toBe("Mapping");
+            const [a, e] = mapping.entries;
+            const items = ((a as Yaml.MappingEntry).value as Yaml.Sequence)
+                .items;
+            expect(items.map((item) => item.value?.type)).toEqual([
+                "Mapping",
+                "Sequence",
+            ]);
+            expect(
+                ((items[0] as Yaml.SequenceItem).value as Yaml.Mapping).entries,
+            ).toHaveLength(2);
+            expect(e?.value?.type).toBe("Sequence");
+        });
+
+        test("scalars keep their lines, quotes and properties", () => {
+            const mapping = root(
+                "a: one\n  two\n\n  three\nb: !!str &x 'c''s' # d\n",
+            ) as Yaml.Mapping;
+            const [a, b] = mapping.entries;
+            expect(a?.value).toMatchObject({
+                style: "plain",
+                lines: ["one", "two", "", "three"],
+            });
+            expect(b?.value).toMatchObject({
+                style: "single",
+                lines: ["'c''s'"],
+                properties: "!!str &x",
+                comment: { value: "# d" },
+            });
+        });
+
+        test("block scalars know the indentation of their content", () => {
+            const mapping = root(
+                "a: |+\n    x\n      y\n\nb: >2-\n   z\n",
+            ) as Yaml.Mapping;
+            const [a, b] = mapping.entries;
+            expect(a?.value).toMatchObject({
+                header: "|+",
+                indentation: 4,
+                // kept trailing lines are content
+                lines: ["    x", "      y", ""],
+            });
+            expect(b?.value).toMatchObject({ indicator: 2, indentation: 2 });
+        });
+
+        test("comments go with the entries after them, deeper ones into the ones before", () => {
+            const mapping = root(
+                "a: 1\n    # inner\n# before b\nb:\n  c: 2\n  # end of b\n",
+            ) as Yaml.Mapping;
+            const [a, b] = mapping.entries;
+            expect(a?.inner.map(({ comment }) => comment.value)).toEqual([
+                "# inner",
+            ]);
+            expect(b?.leading.map(({ comment }) => comment.value)).toEqual([
+                "# before b",
+            ]);
+            expect(
+                (
+                    (b as Yaml.MappingEntry).value as Yaml.Mapping
+                ).endComments.map(({ comment }) => comment.value),
+            ).toEqual(["# end of b"]);
+        });
+
+        test("documents, directives and flow collections", () => {
+            const stream = parseYaml(
+                "%YAML 1.2\n--- # start\n{a: [b, c], d}\n...\n---\ne\n",
+            );
+            expect(stream.documents).toHaveLength(2);
+            const [first] = stream.documents;
+            expect(first?.prelude.map(({ text }) => text)).toEqual([
+                "%YAML 1.2",
+            ]);
+            expect(first?.startComment?.value).toBe("# start");
+            expect(first?.explicitEnd).toBe(true);
+            const flow = first?.root as Yaml.FlowMapping;
+            expect(flow.items.map((item) => item.pair)).toEqual([true, false]);
+            expect(flow.items[0]?.value?.type).toBe("FlowSequence");
+        });
+
+        test("errors are at their place", () => {
+            const error = (source: string) => {
+                try {
+                    parseYaml(source);
+                } catch (caught) {
+                    return caught instanceof ParseError
+                        ? caught.position
+                        : undefined;
+                }
+            };
+            expect(error("a:\n\tb: 1\n")).toBe(3);
+            expect(error("a: b: c\n")).toBe(4);
+            expect(error("a: 1\n  b: 2\n")).toBe(7);
+            expect(error("[a\n")).toBe(0);
         });
     });
 

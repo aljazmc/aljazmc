@@ -4,8 +4,12 @@ import { lintFiles } from "../../src/files.ts";
 import Lintero from "../../src/lintero.ts";
 import type { Rules } from "../../src/rules.ts";
 
+/** The settings, without assist actions unless they are given, like `biome lint`. */
 const settings = (rules: object = {}): Rules =>
-    Config.merge(defaults.rules, rules);
+    Config.merge(
+        Config.merge(defaults.rules, { assist: { enabled: false } }),
+        rules,
+    );
 
 const lint = (source: string, file = "a.ts", rules: object = {}) =>
     new Lintero(settings(rules))
@@ -13843,6 +13847,149 @@ const biome: {
     },
 ];
 
+/** Modules, and how Biome organizes their imports and exports. */
+const organized: { name: string; source: string; expected: string }[] = [
+    {
+        name: "sources by kind: URLs, protocols, packages, aliases, then paths by distance",
+        source: 'import sibling from "./file.js";\nimport internal from "#alias";\nimport fs from "fs";\nimport { test } from "node:test";\nimport path from "node:path";\nimport { mock } from "node:test";\nimport parent from "../parent.js";\nimport scopedLibUsingJsr from "jsr:@scoped/lib";\nimport data from "https://example.org";\nimport { B, A, b, a10, a9 } from "lib";\nimport scopedLib from "@scoped/lib";\nimport abs from "/abs/x.js";\nimport up2 from "../../up2.js";\nimport dot from ".";\nimport dotdot from "..";\nimport tilde from "~/x";\nimport dollar from "$lib";\nimport at from "@/comp";\nimport pct from "%x";\nimport u2 from "http://x.org";\nimport proto from "//cdn.org/x";\nexport { Y } from "dep";\nexport * from "./inner.js";\nexport { X } from "dep";\n',
+        expected:
+            'import u2 from "http://x.org";\nimport data from "https://example.org";\nimport scopedLibUsingJsr from "jsr:@scoped/lib";\nimport path from "node:path";\nimport { mock, test } from "node:test";\nimport scopedLib from "@scoped/lib";\nimport fs from "fs";\nimport { A, a9, a10, B, b } from "lib";\nimport internal from "#alias";\nimport at from "@/comp";\nimport pct from "%x";\nimport dollar from "$lib";\nimport tilde from "~/x";\nimport abs from "/abs/x.js";\nimport proto from "//cdn.org/x";\nimport up2 from "../../up2.js";\nimport dotdot from "..";\nimport parent from "../parent.js";\nimport dot from ".";\nimport sibling from "./file.js";\n\nexport { X, Y } from "dep";\nexport * from "./inner.js";\n',
+    },
+    {
+        name: "names in braces in natural order, by their local names",
+        source: 'import { b, B, a, A, _x, $y, Z, aB, ab, Ab, a10, a9, a1b, a01, é, z } from "names";\nimport { type T, default as d, x as y, "str" as s } from "m";\n',
+        expected:
+            'import { default as d, "str" as s, type T, x as y } from "m";\nimport { _x, $y, A, Ab, a, a1b, a9, a01, a10, aB, ab, B, b, Z, z, é } from "names";\n',
+    },
+    {
+        name: "imports of a source merge when one statement can say both",
+        source: 'import type { T1 } from "package";\nimport type { T2 } from "package";\nimport * as ns from "package";\nimport D1 from "package";\nimport D2 from "package";\nimport { A } from "package";\nimport { B } from "package";\nimport { type T3 } from "package";\n',
+        expected:
+            'import type { T1, T2 } from "package";\nimport D1, * as ns from "package";\nimport D2, { A, B, type T3 } from "package";\n',
+    },
+    {
+        name: "attached comments move with imports, detached ones split chunks, headers stay",
+        source: '// header comment\nimport F from "f";\n// attached e\nimport E from "e";\nimport D from "d"; // trailing d\n// detached\n\n// attached b\nimport B from "b";\nimport A from "a";\n',
+        expected:
+            '// header comment\n\nimport D from "d"; // trailing d\n// attached e\nimport E from "e";\nimport F from "f";\n\n// detached\n\nimport A from "a";\n// attached b\nimport B from "b";\n',
+    },
+    {
+        name: "statements and bare imports split chunks, exports sort apart from imports",
+        source: 'import B from "b";\n\nimport A from "a";\nimport "side";\nimport Z from "z";\nimport Y from "y";\nconst x = 1;\nimport M from "m";\nimport L from "l";\nexport { e } from "e";\nexport { d } from "d";\nexport const k = 1;\n',
+        expected:
+            'import A from "a";\nimport B from "b";\nimport "side";\nimport Y from "y";\nimport Z from "z";\n\nconst x = 1;\n\nimport L from "l";\nimport M from "m";\n\nexport { d } from "d";\nexport { e } from "e";\nexport const k = 1;\n',
+    },
+    {
+        name: "a statement after a chunk starts with a blank line",
+        source: 'import A from "a";\nconst x = 1;\n',
+        expected: 'import A from "a";\n\nconst x = 1;\n',
+    },
+    {
+        name: "a chunk after a statement starts with a blank line",
+        source: 'const x = 1;\nimport B from "b";\nimport A from "a";\n',
+        expected: 'const x = 1;\n\nimport A from "a";\nimport B from "b";\n',
+    },
+    {
+        name: "a blank line stays with an import that does not move",
+        source: 'import B from "b";\nimport A from "a";\n\nimport C from "c";\n',
+        expected:
+            'import A from "a";\nimport B from "b";\n\nimport C from "c";\n',
+    },
+    {
+        name: "a blank line goes with an import that moves",
+        source: 'import A from "a";\n\nimport C from "c";\nimport B from "b";\n',
+        expected:
+            'import A from "a";\nimport B from "b";\nimport C from "c";\n',
+    },
+    {
+        name: "the header of a module stays first when its first import moves",
+        source: '/** doc */\nimport B from "b";\nimport A from "a";\n',
+        expected: '/** doc */\n\nimport A from "a";\nimport B from "b";\n',
+    },
+    {
+        name: "comments after imports on their line move with them",
+        source: 'import B from "b"; /* b */\nimport A from "a"; // a\n',
+        expected: 'import A from "a"; // a\nimport B from "b"; /* b */\n',
+    },
+    {
+        name: "comments in braces move with their names",
+        source: 'import {\n    b, // bee\n    a,\n} from "x";\n',
+        expected: 'import {\n    a,\n    b, // bee\n} from "x";\n',
+    },
+    {
+        name: "comments before merged imports are kept",
+        source: 'import { A } from "p";\n// about B\nimport { B } from "p";\n',
+        expected: '// about B\nimport { A, B } from "p";\n',
+    },
+    {
+        name: "imports with attributes come first and do not merge",
+        source: 'import { A } from "p" with { type: "json" };\nimport { B } from "p" with { type: "json" };\nimport { C } from "p";\n',
+        expected:
+            'import { A } from "p" with { type: "json" };\nimport { B } from "p" with { type: "json" };\nimport { C } from "p";\n',
+    },
+    {
+        name: "attributes are sorted by key",
+        source: 'import x from "y" with { b: "1", a: "2" };\n',
+        expected: 'import x from "y" with { a: "2", b: "1" };\n',
+    },
+    {
+        name: "exports of a source by kind, named ones merged",
+        source: 'export * as ns from "p";\nexport { a } from "p";\nexport * from "p";\nexport type { T } from "p";\nexport { type U } from "p";\n',
+        expected:
+            'export type { T } from "p";\nexport * as ns from "p";\nexport * from "p";\nexport { a, type U } from "p";\n',
+    },
+    {
+        name: "imports of a source by kind, types first",
+        source: 'import type T from "p";\nimport type * as NS from "p";\nimport type { U } from "p";\nimport D, * as N from "p";\nimport * as M from "p";\n',
+        expected:
+            'import type * as NS from "p";\nimport type T from "p";\nimport type { U } from "p";\nimport * as M from "p";\nimport D, * as N from "p";\n',
+    },
+    {
+        name: "no blank line is needed before an export declaration",
+        source: 'import A from "a";\nexport const k = 1;\n',
+        expected: 'import A from "a";\nexport const k = 1;\n',
+    },
+    {
+        name: "local exports sort and merge too",
+        source: "export { b };\nexport { a };\n",
+        expected: "export { a, b };\n",
+    },
+    {
+        name: "re-exports come before local exports in a chunk",
+        source: 'import A from "a";\nexport { b } from "b";\nexport { x };\n',
+        expected:
+            'import A from "a";\n\nexport { b } from "b";\nexport { x };\n',
+    },
+    {
+        name: "an export declaration before exports needs no blank line",
+        source: 'export const k = 1;\nexport { b } from "b";\n',
+        expected: 'export const k = 1;\nexport { b } from "b";\n',
+    },
+    {
+        name: "a blank line after directives stays",
+        source: '"use strict";\n\nimport B from "b";\nimport A from "a";\n',
+        expected: '"use strict";\n\nimport A from "a";\nimport B from "b";\n',
+    },
+    {
+        name: "blank lines settle over passes like Biome's",
+        source: 'foo();\nimport C from "c";\n\nimport B from "b";\nimport A from "a";\n',
+        expected:
+            'foo();\n\nimport A from "a";\n\nimport B from "b";\nimport C from "c";\n',
+    },
+    {
+        name: "export declarations split chunks of exports",
+        source: 'export { b } from "b";\nexport const k = 1;\nexport { a } from "a";\n',
+        expected:
+            'export { b } from "b";\nexport const k = 1;\nexport { a } from "a";\n',
+    },
+    {
+        name: "a hashbang is not a header",
+        source: '#!/usr/bin/env node\nimport B from "b";\nimport A from "a";\n',
+        expected:
+            '#!/usr/bin/env node\nimport A from "a";\nimport B from "b";\n',
+    },
+];
+
 describe("lintero", () => {
     describe("reports like Biome", () => {
         test.each(biome)(
@@ -14350,6 +14497,141 @@ describe("lintero", () => {
             expect(
                 lintero.fix('a["b"] = c?.["d"] + e[ "f" ];\n', "a.js", true),
             ).toBe("a.b = c?.d + e.f;\n");
+        });
+    });
+
+    describe("organizeImports", () => {
+        // the action alone, without the rules
+        const assist = { preset: "none", assist: { enabled: true } };
+        const organize = (source: string, rules: object = {}) =>
+            new Lintero(settings({ ...assist, ...rules })).fix(source, "a.ts");
+
+        test.each(organized)("$name", ({ source, expected }) => {
+            const lintero = new Lintero(settings(assist));
+            const diagnostics = lintero
+                .lint(source, "a.ts")
+                .filter(({ category }) => category.startsWith("assist"));
+            expect(diagnostics).toHaveLength(source === expected ? 0 : 1);
+            expect(organize(source)).toBe(expected);
+            expect(organize(expected)).toBe(expected);
+        });
+
+        test("reports unsorted chunks where they start, as errors with a safe fix", () => {
+            expect(
+                lint(
+                    'foo();\n\nimport B from "b";\nimport A from "a";\n',
+                    "a.ts",
+                    assist,
+                ),
+            ).toEqual([
+                "3:1 assist/source/organizeImports Sort these imports.",
+            ]);
+            expect(
+                lint(
+                    'export * from "b";\nexport * from "a";\n',
+                    "a.ts",
+                    assist,
+                ),
+            ).toEqual([
+                "1:1 assist/source/organizeImports Sort these exports.",
+            ]);
+            const [diagnostic] = new Lintero(settings(assist)).lint(
+                'import B from "b";\nimport A from "a";\n',
+                "a.ts",
+            );
+            expect(diagnostic?.severity).toBe("error");
+            expect(diagnostic?.fix?.kind).toBe("safe");
+        });
+
+        test("is on by default, and off with assist or the action off", () => {
+            const source = 'import B from "b";\nimport A from "a";\n';
+            const all = (rules: Rules) =>
+                new Lintero(rules).lint(source, "a.ts").length;
+            expect(all(Config.merge(defaults.rules, { preset: "none" }))).toBe(
+                1,
+            );
+            expect(all(settings(assist))).toBe(1);
+            expect(
+                all(
+                    settings({
+                        ...assist,
+                        assist: {
+                            enabled: true,
+                            actions: { source: { organizeImports: "off" } },
+                        },
+                    }),
+                ),
+            ).toBe(0);
+            expect(
+                lint(source, "a.ts", {
+                    preset: "none",
+                    assist: {
+                        enabled: true,
+                        actions: { source: { organizeImports: "warn" } },
+                    },
+                }),
+            ).toEqual([
+                "1:1 assist/source/organizeImports Sort these imports.",
+            ]);
+            // only modules, not JSON
+            expect(lint("[1]\n", "a.json", assist)).toEqual([]);
+        });
+
+        test("identifierOrder and sortBareImports", () => {
+            const options = (options: object) => ({
+                preset: "none",
+                assist: {
+                    enabled: true,
+                    actions: {
+                        source: {
+                            organizeImports: { level: "on", options },
+                        },
+                    },
+                },
+            });
+            expect(
+                organize(
+                    'import { a10, a9, B, a } from "x";\n',
+                    options({ identifierOrder: "lexicographic" }),
+                ),
+            ).toBe('import { B, a, a10, a9 } from "x";\n');
+            expect(
+                organize(
+                    'import "b";\nimport A from "a";\n',
+                    options({ sortBareImports: true }),
+                ),
+            ).toBe('import A from "a";\nimport "b";\n');
+            expect(organize('import "b";\nimport A from "a";\n')).toBe(
+                'import "b";\nimport A from "a";\n',
+            );
+        });
+
+        test("suppressions, which are unused when nothing is to sort", () => {
+            const source =
+                '// biome-ignore assist/source/organizeImports: kept\nimport B from "b";\nimport A from "a";\n';
+            expect(lint(source, "a.ts", assist)).toEqual([]);
+            expect(
+                lint(
+                    '// lintero-ignore assist/source/organizeImports: kept\nimport A from "a";\n',
+                    "a.ts",
+                    assist,
+                ),
+            ).toEqual([
+                "1:1 suppressions/unused Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.",
+            ]);
+        });
+
+        test("comments of merged imports are kept, which Biome drops", () => {
+            expect(
+                organize(
+                    'import { b } from "x"; // b\n// a\nimport { a } from "x"; // after a\n',
+                ),
+            ).toBe('// a\nimport { a, b } from "x"; // b // after a\n');
+        });
+
+        test("comments outside braces keep a statement as it is", () => {
+            const source = 'import /* d */ D, { b, a } from "x";\n';
+            expect(organize(source)).toBe(source);
         });
     });
 

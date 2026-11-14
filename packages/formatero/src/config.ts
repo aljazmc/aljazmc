@@ -44,6 +44,9 @@ const rules: Rules = {
         proseWrap: "preserve",
         formatEmbeds: true,
     },
+    yaml: {
+        quoteStyle: "double",
+    },
 };
 
 export default {

@@ -158,7 +158,7 @@ export default class Suppressions {
                 );
                 return;
             }
-            if (kind === "lint") {
+            if (kind === "lint" || kind === "assist") {
                 categories.push(category);
                 instances.push(match[3]?.trim());
             }

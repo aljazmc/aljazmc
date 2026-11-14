@@ -938,6 +938,198 @@ const biome: {
         expected:
             "const f = <T>(a: T) => a;\nconst g =\n    <T>(a: T) =>\n    (b: T) =>\n        a;\n",
     },
+    {
+        name: "keeps a blank line before a semicolon guarding the next statement",
+        file: "a.ts",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "const a = {\n    b: 1,\n}\n\n;(globalThis as any).x = a\nlet c = 1\n\n;[1, 2].map(f)\nd()\n;(e)\nfoo();\n\n;(x)\ny = 1 // c\n\n;(z)\n",
+        expected:
+            "const a = {\n    b: 1,\n};\n\n(globalThis as any).x = a;\nlet c = 1;\n\n[1, 2].map(f);\nd();\ne;\nfoo();\n\nx;\ny = 1; // c\n\nz;\n",
+    },
+    {
+        name: "YAML: collections are indented by their structure, sequences under keys too",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a:\n  b: 1\n  c:\n    d:    2\n    e :  x\nlist:\n- one\n- two\nnested:\n  - name: x\n    uses: y\n    with:\n      k: v\n  -   name: z\ndeep:\n  - - a\n    - b\n  - - c\n",
+        expected:
+            "a:\n    b: 1\n    c:\n        d: 2\n        e: x\nlist:\n    - one\n    - two\nnested:\n    - name: x\n      uses: y\n      with:\n          k: v\n    - name: z\ndeep:\n    - - a\n      - b\n    - - c\n",
+    },
+    {
+        name: "YAML: single spaces after colons and before comments, preferred quotes, one blank line",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "# header\n\n\nkey: value   # trailing\n# own line\nother: 'single'\ndq: \"double\"\nsq2: 'it''s'\ndq2: \"say \\\"hi\\\"\"\nplain: hello world\nempty:\ntilde: ~\nnum: 010\nbool: yes\n\n\n\nlast: 1\n",
+        expected:
+            '# header\n\nkey: value # trailing\n# own line\nother: "single"\ndq: "double"\nsq2: "it\'s"\ndq2: \'say "hi"\'\nplain: hello world\nempty:\ntilde: ~\nnum: 010\nbool: yes\n\nlast: 1\n',
+    },
+    {
+        name: "YAML: flow collections are spaced, broken with trailing commas when long",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "flowm: {a: 1, b: 2}\nflows: [ a, b, c ]\nemptym: {}\nemptys: [ ]\nlongflow: [aaaaaaaaaaaa, bbbbbbbbbbbbbbb, cccccccccccccccc, dddddddddddddddd, eeeeeeeeeeeeeee]\nnestedflow: {a: [1, 2], b: {c: d}}\n",
+        expected:
+            "flowm: { a: 1, b: 2 }\nflows: [a, b, c]\nemptym: {}\nemptys: []\nlongflow:\n    [\n        aaaaaaaaaaaa,\n        bbbbbbbbbbbbbbb,\n        cccccccccccccccc,\n        dddddddddddddddd,\n        eeeeeeeeeeeeeee,\n    ]\nnestedflow: { a: [1, 2], b: { c: d } }\n",
+    },
+    {
+        name: "YAML: block scalars move with their content, its own indentation kept",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "lit: |\n  line one\n    indented\n  line three\nfold: >-\n  folded\n  text\nkeep: |+\n  x\n\nind: |2\n    two extra\nseq:\n  - |\n    in seq\nrun: |\n    echo hi\n    echo there\n",
+        expected:
+            "lit: |\n    line one\n      indented\n    line three\nfold: >-\n    folded\n    text\nkeep: |+\n    x\n\nind: |2\n    two extra\nseq:\n    - |\n        in seq\nrun: |\n    echo hi\n    echo there\n",
+    },
+    {
+        name: "YAML: directives, documents, anchors, aliases, tags and explicit keys",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "%YAML 1.2\n---\nanchor: &a\n  x: 1\nref: *a\nmerge:\n  <<: *a\n  y: 2\ntagged: !!str 123\ncustom: !mytag\n  k: v\n? complex key\n: complex value\n---\nsecond: doc\n...\n",
+        expected:
+            "%YAML 1.2\n---\nanchor: &a\n    x: 1\nref: *a\nmerge:\n    <<: *a\n    y: 2\ntagged: !!str 123\ncustom: !mytag\n    k: v\ncomplex key: complex value\n---\nsecond: doc\n...\n",
+    },
+    {
+        name: "YAML: long scalars stay on their line, multi-line ones continue a level deeper",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: 'key: this is a very long plain scalar value that goes well beyond the eighty character line width limit for sure\nmulti: first line\n  continues here\n  and here\nquoted: "first\n  second"\nurl: http://example.com:8080/path\ncolon: "a: b"\n',
+        expected:
+            'key: this is a very long plain scalar value that goes well beyond the eighty character line width limit for sure\nmulti: first line\n    continues here\n    and here\nquoted: "first\n    second"\nurl: http://example.com:8080/path\ncolon: "a: b"\n',
+    },
+    {
+        name: "YAML: comments go with the entry after them, or deeper ones into the one before",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a: # after key\n  b: 1\n    # misindented comment\n  c: 2\n# column zero comment inside a\n  d: 3\n\nseq:\n  # before first\n  - x   # trailing x\n\n  - y\n      # deep comment\n  - z\n# end\n",
+        expected:
+            "a: # after key\n    b: 1\n        # misindented comment\n    c: 2\n    # column zero comment inside a\n    d: 3\n\nseq:\n    # before first\n    - x # trailing x\n\n    - y\n        # deep comment\n    - z\n# end\n",
+    },
+    {
+        name: "YAML: top level sequences with compact collections and empty items",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "- top\n- level: map\n  other: x\n-   - nested\n- &anc\n  k: v\n- !tag x\n- [a, {b: c}]\n- {a: b}\n-\n  late: start\n- \"\"\n- ''\n",
+        expected:
+            '- top\n- level: map\n  other: x\n- - nested\n- &anc\n  k: v\n- !tag x\n- [a, { b: c }]\n- { a: b }\n- late: start\n- ""\n- ""\n',
+    },
+    {
+        name: "YAML: blank lines and comments between items stay, a long flow moves to the next line",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "key:\n  - a\n  -\n    b: 1\n\n  # comment before c\n\n  - c\nlong_key_with_flow_mapping: {alpha: one, beta: two, gamma: three, delta: four, e: 5}\nstr: 'a very long single quoted string that will go beyond the line width of eighty chars'\nplain_hash: a#b c # real comment\nfold: >\n  This is a folded paragraph that is quite long and might be rewrapped by the formatter if it wanted to.\n  short\nlit_trailing: |\n  x\n\n\nafter: 1\n",
+        expected:
+            'key:\n    - a\n    - b: 1\n\n    # comment before c\n\n    - c\nlong_key_with_flow_mapping:\n    { alpha: one, beta: two, gamma: three, delta: four, e: 5 }\nstr: "a very long single quoted string that will go beyond the line width of eighty chars"\nplain_hash: a#b c # real comment\nfold: >\n    This is a folded paragraph that is quite long and might be rewrapped by the formatter if it wanted to.\n    short\nlit_trailing: |\n    x\n\nafter: 1\n',
+    },
+    {
+        name: "YAML: documents keep their markers and comments",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "---\n# doc comment\na: 1\n---\n---\nb: 2\n",
+        expected: "---\n# doc comment\na: 1\n---\n---\nb: 2\n",
+    },
+    {
+        name: "YAML: properties on a document start go on the next line",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "--- !tag\na: 1\n--- # comment on marker\nb: 2\n...\n# after end\n---\nc: 3\n",
+        expected:
+            "---\n!tag\na: 1\n--- # comment on marker\nb: 2\n...\n# after end\n---\nc: 3\n",
+    },
+    {
+        name: "YAML: explicit keys become implicit ones when they can",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "? very long explicit key that is really quite long and goes past the line width limit here\n: v\n? - seq key\n: v2\n? a\n?  b\nplain: >2-\n   x\nnested:\n- a\n- b:\n  - c\nanchored_seq: &s\n- 1\n",
+        expected:
+            "very long explicit key that is really quite long and goes past the line width limit here: v\n? - seq key\n: v2\na:\nb:\nplain: >2-\n   x\nnested:\n    - a\n    - b:\n          - c\nanchored_seq: &s\n    - 1\n",
+    },
+    {
+        name: "YAML: properties and flow collections get single spaces",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: 'a:    &anchor    value\nb: !!int    "3"\nc: [ ]\nd: { }\ne: [a,b,  c]\nf: {a: 1,b: 2}\ng: { a, b }\nh: [a: 1, b]\ni: [[1, 2], [3]]\n"j": "k"\n',
+        expected:
+            'a: &anchor value\nb: !!int "3"\nc: []\nd: {}\ne: [a, b, c]\nf: { a: 1, b: 2 }\ng: { a, b }\nh: [a: 1, b]\ni: [[1, 2], [3]]\n"j": "k"\n',
+    },
+    {
+        name: "YAML: deeper indentation and extra spaces are normalized",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: 'key: value with trailing spaces    \nk2:  "x"    # c\nk3:\n    deeply: indented\n    by: four\nseq:\n    -   a\n    -    b: 1\n         c: 2\n',
+        expected:
+            'key: value with trailing spaces\nk2: "x" # c\nk3:\n    deeply: indented\n    by: four\nseq:\n    - a\n    - b: 1\n      c: 2\n',
+    },
+    {
+        name: "YAML: scalars on the line after their key join it, items align after their dash",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "seq:\n  - multi line\n    plain scalar\n  - \"quoted\n    multi\"\n  - lit: |\n      content\n    other: >\n      folded\n  - |\n    direct\nk:\n  v\nk2: # c\n  - a\nk3: | # header comment\n  text\nk4: # only\nk5:\n- &a\n  - x\n- !t\n  k: v\n- [aaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccccc, dddddddddddddd]\n- {a: [aaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccccc, dddddddddddddd]}\n- 'single'\n",
+        expected:
+            'seq:\n    - multi line\n      plain scalar\n    - "quoted\n      multi"\n    - lit: |\n          content\n      other: >\n          folded\n    - |\n        direct\nk: v\nk2: # c\n    - a\nk3: | # header comment\n    text\nk4: # only\nk5:\n    - &a\n      - x\n    - !t\n      k: v\n    - [\n          aaaaaaaaaaaaaaaaaaaa,\n          bbbbbbbbbbbbbbbbbbbbbb,\n          cccccccccccccccccccccc,\n          dddddddddddddd,\n      ]\n    - {\n          a:\n              [\n                  aaaaaaaaaaaaaaaaaaaa,\n                  bbbbbbbbbbbbbbbbbbbbbb,\n                  cccccccccccccccccccccc,\n                  dddddddddddddd,\n              ],\n      }\n    - "single"\n',
+    },
+    {
+        name: "YAML: keys get the preferred quotes, complex explicit keys stay",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "'single key': 1\n? [a, b]\n: flow key\n? |\n  block key\n: v\n? \"quoted explicit\"\n: q\n? &a anch\n: x\n? # comment\n  k\n: v\n",
+        expected:
+            '"single key": 1\n[a, b]: flow key\n? |\n    block key\n: v\n"quoted explicit": q\n&a anch: x\n? # comment\n  k\n: v\n',
+    },
+    {
+        name: "YAML: empty items, comments after dashes and compact mappings in sequences",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "- a\n-\n- b\n- # comment only\n- c:\n  d: 1\n- ? x\n  : y\n- key: value\n  # comment in item map\n  key2: value2\n-\n  # leading comment in item\n  key: v\n",
+        expected:
+            "- a\n-\n- b\n-  # comment only\n- c:\n  d: 1\n- x: y\n- key: value\n  # comment in item map\n  key2: value2\n- # leading comment in item\n  key: v\n",
+    },
+    {
+        name: "YAML: a comment between a key and its value keeps the value on its own line",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "key:\n  # between\n  value\ne: 1\n",
+        expected: "key:\n    # between\n    value\ne: 1\n",
+    },
+    {
+        name: "YAML: keys of a set stay explicit",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "--- !!set\n? a\n? b\n",
+        expected: "---\n!!set\n? a\n? b\n",
+    },
+    {
+        name: "YAML: keys of a nested set stay explicit, of other tags not",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "s: !!set\n  ? a\n  ? b\nt: !set\n  ? a\n",
+        expected: "s: !!set\n    ? a\n    ? b\nt: !set\n    a:\n",
+    },
+    {
+        name: "YAML: a comment deeper than an entry with a nested mapping goes into it",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a:\n  b:\n    c: 1\n   # col3\nd: 1\n",
+        expected: "a:\n    b:\n        c: 1\n        # col3\nd: 1\n",
+    },
+    {
+        name: "YAML: a comment deeper than an entry with a nested sequence goes into it",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "k:\n    - a\n  # col2\nz: 1\n",
+        expected: "k:\n    - a\n    # col2\nz: 1\n",
+    },
+    {
+        name: "YAML: a comment after a block scalar at its entry's indentation stays there",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a:\n  b: |\n    text\n  # at b level\n  c: 1\n",
+        expected: "a:\n    b: |\n        text\n    # at b level\n    c: 1\n",
+    },
+    {
+        name: "YAML: a comment ending a mapping after a block scalar stays in it",
+        file: "a.yml",
+        rules: { indentStyle: "space", indentWidth: 4 },
+        input: "a:\n  b: >-\n    text\n  # end of a\nz: 1\n",
+        expected: "a:\n    b: >-\n        text\n    # end of a\nz: 1\n",
+    },
 ];
 
 describe("formatero", () => {
@@ -1268,9 +1460,89 @@ describe("formatero", () => {
         });
 
         test("text files are reindented line by line, a tab is one level", () => {
-            expect(format("a:\n  b:\n\t\tc\n", "a.yml")).toBe(
+            expect(format("a:\n  b:\n\t\tc\n", "a.toml")).toBe(
                 "a:\n    b:\n        c\n",
             );
+        });
+    });
+
+    describe("yaml", () => {
+        const yaml = (source: string, rules: object = {}, file = "a.yml") =>
+            format(source, file, rules);
+
+        test("invalid YAML is reported where it is, or left as it is with formatWithErrors", () => {
+            expect(() => yaml("a:\n\tb: 1\n")).toThrow(
+                "2:1 Tabs are not allowed for indentation in YAML.",
+            );
+            expect(() => yaml("a: b: c\n")).toThrow(FormatError);
+            expect(() => yaml('a: "b\n')).toThrow(/^1:4 Unterminated string/);
+            expect(() => yaml("a: [b, c\n")).toThrow(/^1:4 Unterminated flow/);
+            expect(() => yaml("a: 1\n- b\n")).toThrow(/^2:1 /);
+            expect(() => yaml("a: &x *y\n")).toThrow(/cannot have a tag/);
+            expect(yaml("a:\n\tb:  1\n", { formatWithErrors: true })).toBe(
+                "a:\n\tb:  1\n",
+            );
+        });
+
+        test("content after an indentation indicator moves with its key", () => {
+            // the indicator counts from the key's indentation
+            expect(yaml("a:\n  b: |2\n      x\n     y\n")).toBe(
+                "a:\n    b: |2\n        x\n       y\n",
+            );
+            expect(yaml("- |1\n   x\n")).toBe("- |1\n   x\n");
+            expect(yaml("--- |2\n   x\n")).toBe("---\n|2\n   x\n");
+        });
+
+        test("quotes are the preferred ones unless they need more escapes", () => {
+            const single = { yaml: { quoteStyle: "single" } };
+            expect(yaml('a: "x"\nb: "it\'s"\nc: "\\t"\n', single)).toBe(
+                'a: \'x\'\nb: "it\'s"\nc: "\\t"\n',
+            );
+            expect(yaml("a: 'x'\nb: 'say \"hi\"'\nc: 'C:\\a'\n")).toBe(
+                "a: \"x\"\nb: 'say \"hi\"'\nc: 'C:\\a'\n",
+            );
+        });
+
+        test("flow mappings are spaced by bracketSpacing, flow sequences only by YAML's own", () => {
+            const source = "a: {b: 1}\nc: [d]\n";
+            expect(yaml(source)).toBe("a: { b: 1 }\nc: [d]\n");
+            expect(yaml(source, { bracketSpacing: false })).toBe(
+                "a: {b: 1}\nc: [d]\n",
+            );
+            expect(yaml(source, { yaml: { bracketSpacing: true } })).toBe(
+                "a: { b: 1 }\nc: [ d ]\n",
+            );
+        });
+
+        test("line endings, a byte order mark and tabs", () => {
+            expect(yaml("a:\r\n  b: 1\r\n")).toBe("a:\n    b: 1\n");
+            expect(yaml("a:\n  b: 1\n", { lineEnding: "crlf" })).toBe(
+                "a:\r\n    b: 1\r\n",
+            );
+            expect(yaml("\uFEFFa:   1\n")).toBe("\uFEFFa: 1\n");
+            // YAML is never indented with tabs
+            expect(yaml("a:\n  b: 1\n", { indentStyle: "tab" })).toBe(
+                "a:\n    b: 1\n",
+            );
+            expect(yaml("")).toBe("");
+        });
+
+        test("in its own files, Markdown blocks and only when enabled", () => {
+            expect(yaml("a:   1\n", {}, "a.yaml")).toBe("a: 1\n");
+            expect(format("```yaml\na:\n  b:   1\n```\n", "a.md", {})).toBe(
+                "```yaml\na:\n    b: 1\n```\n",
+            );
+            expect(yaml("a:   1\n", { yaml: { enabled: false } })).toBe(
+                "a:   1\n",
+            );
+        });
+
+        test("comments keep their order and formatting is stable", () => {
+            const source =
+                "a:\n  - - x\n\n   # deeper\n  - |+\n    y\n#x\n    # z\nb: 1\n";
+            const once = yaml(source);
+            expect(yaml(once)).toBe(once);
+            expect(once.indexOf("#x")).toBeLessThan(once.indexOf("# z"));
         });
     });
 

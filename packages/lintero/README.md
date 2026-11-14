@@ -10,6 +10,7 @@ understand, easy to customize and easy to extend. Biome 2.6.6 compatible.
 
 | Feature            | Description                                                                   |
 | ------------------ | ----------------------------------------------------------------------------- |
+| Assist             | Organizes imports and exports like Biome, checked and fixed like rules.       |
 | Automatic fixes    | `--write` applies safe fixes, `--write --unsafe` also the unsafe ones.        |
 | Domains            | Framework rules turn on when the closest `package.json` depends on them.      |
 | Embedded languages | Scripts and styles in HTML are linted as files of their own language.         |
@@ -66,21 +67,23 @@ export default {
 };
 ```
 
-| Option                                | Default         | Description                                                    |
-| ------------------------------------- | --------------- | -------------------------------------------------------------- |
-| `a11y`, `complexity`, …, `suspicious` |                 | Level or configuration of a [rule group](#-rules).             |
-| `css.cssModules`                      |                 | Allows CSS Modules syntax, unset only in `.module.css` files.  |
-| `css.enabled`                         | `true`          | Lints `.css` files and the styles of HTML files.               |
-| `domains`                             | `{}`            | `"recommended"`, `"all"` or `"none"` per [domain](#-domains).  |
-| `enabled`                             | `true`          | Lints files at all.                                            |
-| `html.enabled`                        | `true`          | Lints `.html` and `.htm` files and their scripts.              |
-| `includes`                            | `["**"]`        | Globs of files to lint, the last match decides, `!` excludes.  |
-| `javascript.enabled`                  | `true`          | Lints JavaScript, JSX and TypeScript files.                    |
-| `javascript.globals`                  | `[]`            | Global names that exist, for the rules about undeclared names. |
-| `javascript.jsxRuntime`               | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.          |
-| `json.enabled`                        | `true`          | Lints JSON files.                                              |
-| `markdown.enabled`                    | `true`          | Lints `.md` and `.markdown` files.                             |
-| `preset`                              | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.      |
+| Option                                  | Default         | Description                                                    |
+| --------------------------------------- | --------------- | -------------------------------------------------------------- |
+| `a11y`, `complexity`, …, `suspicious`   |                 | Level or configuration of a [rule group](#-rules).             |
+| `assist.actions.source.organizeImports` | `"on"`          | Level or configuration of [organizing imports](#-assist).      |
+| `assist.enabled`                        | `true`          | Runs the assist actions.                                       |
+| `css.cssModules`                        |                 | Allows CSS Modules syntax, unset only in `.module.css` files.  |
+| `css.enabled`                           | `true`          | Lints `.css` files and the styles of HTML files.               |
+| `domains`                               | `{}`            | `"recommended"`, `"all"` or `"none"` per [domain](#-domains).  |
+| `enabled`                               | `true`          | Lints files at all.                                            |
+| `html.enabled`                          | `true`          | Lints `.html` and `.htm` files and their scripts.              |
+| `includes`                              | `["**"]`        | Globs of files to lint, the last match decides, `!` excludes.  |
+| `javascript.enabled`                    | `true`          | Lints JavaScript, JSX and TypeScript files.                    |
+| `javascript.globals`                    | `[]`            | Global names that exist, for the rules about undeclared names. |
+| `javascript.jsxRuntime`                 | `"transparent"` | `"reactClassic"` for JSX that needs `React` in scope.          |
+| `json.enabled`                          | `true`          | Lints JSON files.                                              |
+| `markdown.enabled`                      | `true`          | Lints `.md` and `.markdown` files.                             |
+| `preset`                                | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.      |
 
 ### > Levels
 
@@ -113,6 +116,53 @@ depends on its package.
 | `test`        | `ava` 2+, `jest` 26+, `mocha` 8+ or `vitest` 1+ | 4     |
 | `turborepo`   | `turbo` 1+                                      | 1     |
 | `vue`         | `vue` 3+                                        | 4     |
+
+### > Assist
+
+`assist/source/organizeImports` sorts the imports and exports of
+JavaScript and TypeScript modules like Biome's action of the same name.
+An unorganized chunk is an error, and `--write` organizes it.
+
+Chunks are runs of imports, or of exports with a source and `export { a }`.
+Statements, a switch between imports and exports, bare imports like
+`import "a"`, and comments followed by a blank line split them.
+
+Within a chunk:
+
+- Sources are sorted by kind: URLs, protocols like `node:`, packages,
+  aliases like `#a` or `@/a`, then paths, nearest last.
+- Each kind is in natural order, `A < a < a9 < a10 < B`.
+- Statements of a source merge when one statement can say both.
+- Names in braces and attributes are sorted.
+- Comments directly above a statement move with it.
+
+A blank line separates a chunk from statements before and after it.
+
+| Option            | Default     | Values                         | Description                                       |
+| ----------------- | ----------- | ------------------------------ | ------------------------------------------------- |
+| `identifierOrder` | `"natural"` | `"lexicographic"`, `"natural"` | How names in braces and attributes are compared.  |
+| `sortBareImports` | `false`     | boolean                        | Sorts `import "a"` with the others, not in place. |
+
+```js
+export default {
+    rules: {
+        assist: {
+            actions: {
+                source: {
+                    organizeImports: {
+                        level: "on",
+                        options: { identifierOrder: "lexicographic" },
+                    },
+                },
+            },
+        },
+    },
+};
+```
+
+Biome's `groups` option is not supported.
+
+When statements merge, Biome drops the comments of the second one, but lintero keeps them.
 
 ### > Suppressions
 
@@ -506,6 +556,7 @@ source
 | `src/analysis/semantic.ts`     | Scopes, bindings and references, telling types from values.        |
 | `src/analysis/settings.ts`     | Resolves presets, domains, groups and rules to the rules that run. |
 | `src/analysis/suppressions.ts` | Reads suppression comments and reports unused or malformed ones.   |
+| `src/assist`                   | Assist actions, like organizing imports.                           |
 | `src/rules`                    | One file per rule, sharing a single traversal.                     |
 
 ## > License

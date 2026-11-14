@@ -15,6 +15,7 @@ problem.
 | JavaScript, JSX, TypeScript | `language`, `parse`           | ESTree, with Babel-style literals and TypeScript nodes.                            |
 | JSON                        | `language`, `parse`           | ESTree expressions.                                                                |
 | Markdown                    | `isMarkdown`, `parseMarkdown` | CommonMark blocks and inlines, with GitHub's tables, task lists and strikethrough. |
+| YAML                        | `isYaml`, `parseYaml`         | Documents of block and flow collections and scalars, with comments in place.       |
 
 | Helper                           | Description                                                 |
 | -------------------------------- | ----------------------------------------------------------- |
@@ -33,12 +34,14 @@ import {
     parseCss,
     parseHtml,
     parseMarkdown,
+    parseYaml,
 } from "@aljazmc/syntax";
 
 const { program, comments } = parse("let a = <b />;", language("a.tsx"));
 const sheet = parseCss("a > .b:hover { color: red; }\n");
 const page = parseHtml('<p class="a">Hi <b>there</b></p>\n');
 const doc = parseMarkdown("# Title\n\n- [x] done\n");
+const stream = parseYaml("a:\n  - b: 1 # c\n");
 ```
 
 ## > License

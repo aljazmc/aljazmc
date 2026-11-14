@@ -15,5 +15,5 @@ export default {
         "yarn.lock",
         "*.tsbuildinfo",
     ],
-    rules: { ...linter, ...rules },
+    rules: { ...linter, ...rules, assist: biome.assist },
 };

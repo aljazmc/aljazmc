@@ -14,6 +14,10 @@ const rules: Rules = {
     json: {
         enabled: true,
     },
+    assist: {
+        enabled: true,
+        actions: { source: { organizeImports: "on" } },
+    },
     markdown: {
         enabled: true,
     },

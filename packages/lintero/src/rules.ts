@@ -57,6 +57,26 @@ export type GroupConfiguration =
           [rule: string]: RuleConfiguration | Preset | boolean | undefined;
       };
 
+/** Options of the organizeImports action. */
+export interface OrganizeImportsOptions {
+    /** Sorts bare imports, like `import "a"`, with the others. */
+    sortBareImports?: boolean;
+    /** How names in braces and import attributes are compared. */
+    identifierOrder?: "natural" | "lexicographic";
+}
+
+/** The assist actions, like Biome's `assist`. */
+export interface Assist {
+    enabled: boolean;
+    actions: {
+        source: {
+            organizeImports:
+                | Level
+                | { level: Level; options?: OrganizeImportsOptions };
+        };
+    };
+}
+
 /** The linter settings: linter.*, linter.rules.*, javascript.* and json.linter. */
 export interface Rules {
     enabled: boolean;
@@ -81,6 +101,8 @@ export interface Rules {
         jsxRuntime: "reactClassic" | "transparent";
     };
     json: { enabled: boolean };
+    /** Actions like organizing imports, checked and fixed like rules. */
+    assist: Assist;
     markdown: { enabled: boolean };
     html: { enabled: boolean };
     css: {

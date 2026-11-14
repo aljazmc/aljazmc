@@ -1,6 +1,6 @@
 {
     "name": "@aljazmc/lintero",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "description": "A simple, dependency-free linter for CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript, with 287 rules, automatic fixes and organized imports. Biome 2.6.6 compatible.",
     "author": "aljazmc",
     "license": "MIT",

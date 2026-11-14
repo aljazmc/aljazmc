@@ -14,25 +14,30 @@ outside this repository, except esbuild for testero, and are published by
 
 ## > Packages
 
-| Package                         | Description                                                        | npm                                                                    |
-| ------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| [formatero](packages/formatero) | Formats CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript. | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
-| [lintero](packages/lintero)     | Lints the same languages with 287 rules and automatic fixes.       | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
-| [monorepo](packages/monorepo)   | Versions packages by conventional commits, fixes rebased tags.     | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
-| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, JSX and TypeScript.            | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
+| Package                         | Description                                                                 | npm                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [formatero](packages/formatero) | Formats CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML.    | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
+| [lintero](packages/lintero)     | Lints the same languages but YAML with 287 rules, fixes and sorted imports. | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
+| [monorepo](packages/monorepo)   | Versions packages by conventional commits, fixes rebased tags.              | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
+| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, JSX and TypeScript.                     | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
 
 ## > Shared code
 
 Bundled into the packages by esbuild, and published for their types.
 
-| Package                          | Description                                                       |
-| -------------------------------- | ----------------------------------------------------------------- |
-| [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs. |
-| [@aljazmc/syntax](shared/syntax) | Parses CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript. |
+| Package                          | Description                                                             |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs.       |
+| [@aljazmc/syntax](shared/syntax) | Parses CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML. |
 
 ## > Development
 
 Requires only Docker with Compose, everything else runs in a container.
+
+The repository checks itself with its own packages: formatero formats it,
+lintero lints it and organizes its imports, and testero runs its tests.
+Scripts build the package they run first, so they also work in a fresh
+clone.
 
 | Command                                                         | Description                                              |
 | --------------------------------------------------------------- | -------------------------------------------------------- |
@@ -52,13 +57,19 @@ prefixes also have `<prefix>:all`.
 | `c:`     | Lints, tests, builds and exports the types. |
 | `ct:`    | Checks the types.                           |
 | `et:`    | Exports the types as declaration files.     |
-| `l:`     | Lints.                                      |
-| `lw:`    | Lints and writes the safe fixes.            |
-| `lwu:`   | Lints and writes the unsafe fixes too.      |
+| `l:`     | Checks the formatting and lints.            |
+| `lw:`    | Writes the safe fixes and the formatting.   |
+| `lwu:`   | Writes the unsafe fixes too.                |
 | `p:`     | Publishes to npm.                           |
 | `t:`     | Runs the tests.                             |
 | `te2e:`  | Runs the end-to-end tests.                  |
 | `tunit:` | Runs the unit tests.                        |
+
+| Script        | Description                                     |
+| ------------- | ----------------------------------------------- |
+| `t:coverage`  | Runs all tests and reports the coverage.        |
+| `test:w`      | Runs all tests again whenever a file changes.   |
+| `typecheck:w` | Checks the types again whenever a file changes. |
 
 ### > CI/CD
 

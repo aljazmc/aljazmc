@@ -1,7 +1,7 @@
 # > syntax
 
 Shared, dependency-free scanner and recursive descent parser for CSS,
-HTML, JavaScript, JSON, JSX, Markdown and TypeScript, bundled into
+HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML, bundled into
 `@aljazmc/formatero` and `@aljazmc/lintero` and published for their
 types. Invalid sources throw a `ParseError` with the position of the
 problem.

@@ -3,7 +3,8 @@
 # > lintero
 
 A simple, dependency-free linter for CSS, HTML, JavaScript, JSON, JSX,
-Markdown and TypeScript, with 287 rules and automatic fixes. Easy to
+Markdown and TypeScript, with 287 rules, automatic fixes and organized
+imports. Easy to
 understand, easy to customize and easy to extend. Biome 2.6.6 compatible.
 
 ## > Features
@@ -544,7 +545,8 @@ Code that is likely a mistake. 90 rules.
 source
 ├─> @aljazmc/syntax   parses it into a syntax tree
 ├─> src/analysis      finds scopes, references, control flow and the rules that run
-└─> src/rules         visit the tree in one traversal, reporting problems and fixes
+├─> src/rules         visit the tree in one traversal, reporting problems and fixes
+└─> src/assist        organizes the imports and exports of modules
 ```
 
 | Module                         | Description                                                        |

@@ -3,7 +3,7 @@
 # > formatero
 
 A simple, dependency-free formatter for CSS, HTML, JavaScript, JSON, JSX,
-Markdown and TypeScript. Easy to understand, easy to customize and easy
+Markdown, TypeScript and YAML. Easy to understand, easy to customize and easy
 to extend. Biome 2.6.6 compatible.
 
 ## > Features
@@ -43,7 +43,7 @@ Requires Node.js 22.18+, 24.2+, 25 or 26.
 `formatero.config.ts` (or `.js`) in the current directory overrides the
 defaults: objects are merged deeply, anything else, like `ignore`, is
 replaced. Language sections (`css`, `html`, `javascript`, `json`,
-`markdown`) can override any shared option for their language.
+`markdown`, `yaml`) can override any shared option for their language.
 
 ```js
 export default {

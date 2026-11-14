@@ -11,11 +11,17 @@
         "directory": "packages/formatero"
     },
     "keywords": [
-        "customizable",
         "formatter",
+        "code formatter",
+        "javascript",
         "typescript",
-        "modern",
-        "modular"
+        "jsx",
+        "json",
+        "css",
+        "html",
+        "markdown",
+        "yaml",
+        "zero-dependency"
     ],
     "engines": {
         "node": "^22.18.0 || ^24.2.0 || ^25 || ^26"

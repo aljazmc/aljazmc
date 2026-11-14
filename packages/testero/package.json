@@ -11,13 +11,13 @@
         "directory": "packages/testero"
     },
     "keywords": [
-        "customizable",
-        "jest",
         "test runner",
-        "tester",
-        "typescript",
-        "modern",
-        "modular"
+        "testing",
+        "unit testing",
+        "coverage",
+        "watch mode",
+        "mocks",
+        "typescript"
     ],
     "engines": {
         "node": "^22.18.0 || ^24.2.0 || ^25 || ^26"

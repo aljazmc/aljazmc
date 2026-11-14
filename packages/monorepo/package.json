@@ -11,11 +11,15 @@
         "directory": "packages/monorepo"
     },
     "keywords": [
-        "customizable",
         "monorepo",
-        "typescript",
-        "modern",
-        "modular"
+        "release",
+        "versioning",
+        "semver",
+        "conventional commits",
+        "git tags",
+        "rebase",
+        "workspaces",
+        "zero-dependency"
     ],
     "engines": {
         "node": "^22.18.0 || ^24.2.0 || ^25 || ^26"

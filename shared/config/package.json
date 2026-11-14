@@ -2,6 +2,14 @@
     "name": "@aljazmc/config",
     "version": "0.3.3",
     "description": "Shared, dependency-free configuration loader, file finder and glob matcher, bundled into the @aljazmc packages.",
+    "keywords": [
+        "config",
+        "configuration loader",
+        "glob",
+        "ignore patterns",
+        "file finder",
+        "zero-dependency"
+    ],
     "author": "aljazmc",
     "license": "MIT",
     "type": "module",

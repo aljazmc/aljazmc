@@ -1,7 +1,7 @@
 {
     "name": "@aljazmc/testero",
     "version": "0.5.1",
-    "description": "A simple, Jest-like test runner for JavaScript, TypeScript and JSX, compiling tests with esbuild. Easy to understand, easy to customize and easy to extend.",
+    "description": "A simple, Jest-like test runner for JavaScript, JSX and TypeScript, with coverage and watch mode, compiling tests with esbuild, its only dependency.",
     "author": "aljazmc",
     "license": "MIT",
     "type": "module",

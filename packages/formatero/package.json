@@ -1,7 +1,7 @@
 {
     "name": "@aljazmc/formatero",
     "version": "0.9.0",
-    "description": "A simple formatter for JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS. Easy to understand, easy to customize and easy to extend.",
+    "description": "A simple, dependency-free formatter for CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML. Biome 2.6.6 compatible.",
     "author": "aljazmc",
     "license": "MIT",
     "type": "module",

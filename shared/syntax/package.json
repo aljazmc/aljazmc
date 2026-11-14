@@ -1,7 +1,7 @@
 {
     "name": "@aljazmc/syntax",
     "version": "0.7.0",
-    "description": "Shared, dependency-free JavaScript, TypeScript, JSX, JSON, Markdown, HTML and CSS parser for @aljazmc packages.",
+    "description": "Shared, dependency-free parser for CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML, bundled into @aljazmc/formatero and @aljazmc/lintero.",
     "author": "aljazmc",
     "license": "MIT",
     "type": "module",

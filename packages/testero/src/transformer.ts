@@ -11,8 +11,8 @@ import Globals from "./globals.js";
  * like `describe` and `expect` are injected where the file uses them.
  */
 export default class Transformer {
-    /** Packages test files import the globals from, like with Jest. */
-    static readonly modules = ["@jest/globals", "@aljazmc/testero"];
+    /** The module test files may import the globals from. */
+    static readonly modules = ["@aljazmc/testero/globals"];
 
     static readonly #loaders: Record<string, Loader> = {
         ".js": "js",

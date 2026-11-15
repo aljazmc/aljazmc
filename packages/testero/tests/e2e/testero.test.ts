@@ -242,11 +242,11 @@ describe("testero", () => {
         expect(passed).toBe(true);
     });
 
-    test("globals can be imported like from @jest/globals, mocks included", async () => {
+    test("globals can be imported from @aljazmc/testero/globals, mocks included", async () => {
         write(
             "tests/globals.test.js",
             [
-                'import { expect, jest, test } from "@jest/globals";',
+                'import { expect, jest, test } from "@aljazmc/testero/globals";',
                 "",
                 'test("mocks", () => {',
                 "    const fn = jest.fn().mockReturnValue(1);",

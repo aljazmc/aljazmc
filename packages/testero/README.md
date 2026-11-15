@@ -14,7 +14,7 @@ extend.
 | Async tests        | Tests and hooks may return promises or take a `done` callback.          |
 | Coverage           | Lines and functions the tests ran, from V8, as a table and `lcov.info`. |
 | Isolation          | Each file is bundled on its own, with fresh imports and restored spies. |
-| Jest compatibility | Same globals, matchers and config names, `@jest/globals` imports work.  |
+| Jest compatibility | Same globals, matchers and config names.                                |
 | Mocks              | `fn`, `spyOn` and clearing, resetting and restoring of all mocks.       |
 | Readable failures  | Message, diff of expected and received values, and the failing code.    |
 | TypeScript types   | `@aljazmc/testero/globals` replaces `@types/jest`.                      |
@@ -99,7 +99,11 @@ describe("add", () => {
 | `testero`, `jest`                                  | Mocks, and `setTimeout` for the tests of a file.                      |
 
 For the types, add `"@aljazmc/testero/globals"` to `compilerOptions.types`
-in `tsconfig.json`.
+in `tsconfig.json`, or import the globals from it in test files:
+
+```ts
+import { describe, expect, jest, test } from "@aljazmc/testero/globals";
+```
 
 ## > Configuration
 

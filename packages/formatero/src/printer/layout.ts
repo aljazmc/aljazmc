@@ -24,13 +24,15 @@ interface Command {
 export default class Layout {
     readonly #options: LayoutOptions;
     readonly #groupModes = new Map<symbol, Mode>();
+    /** Each indentation with one more indent. */
+    readonly #indented = new WeakMap<Indentation, Indentation>();
 
     constructor(options: LayoutOptions) {
         this.#options = options;
     }
 
     static width(text: string): number {
-        if (/^[\x20-\x7e]*$/.test(text)) return text.length;
+        if (Layout.#printable(text)) return text.length;
         let width = 0;
         for (const char of text) {
             const code = char.codePointAt(0) ?? 0;
@@ -38,6 +40,15 @@ export default class Layout {
             width += Layout.#wide(code) ? 2 : 1;
         }
         return width;
+    }
+
+    /** Whether all of the text is printable ASCII, `/^[\x20-\x7e]*$/`. */
+    static #printable(text: string): boolean {
+        for (let index = 0; index < text.length; index++) {
+            const code = text.charCodeAt(index);
+            if (code < 0x20 || code > 0x7e) return false;
+        }
+        return true;
     }
 
     static #wide(code: number): boolean {
@@ -449,7 +460,15 @@ export default class Layout {
         indentation: Indentation,
         part: Indentation["queue"][number],
     ): Indentation {
-        return this.#make([...indentation.queue, part]);
+        if (part.type !== "indent")
+            return this.#make([...indentation.queue, part]);
+        // the same indentation, nested once more, is asked for again and again
+        let indented = this.#indented.get(indentation);
+        if (!indented) {
+            indented = this.#make([...indentation.queue, part]);
+            this.#indented.set(indentation, indented);
+        }
+        return indented;
     }
 
     #align(indentation: Indentation, width: number): Indentation {
@@ -468,19 +487,16 @@ export default class Layout {
         let tabs = 0;
         let spaces = 0;
 
-        const flushTabs = () => {
-            value += "\t".repeat(tabs);
-            length += indentWidth * tabs;
-        };
-        const flushSpaces = () => {
-            value += " ".repeat(spaces);
-            length += spaces;
-        };
-
+        // pending alignment is flushed inline, closures here slow every indent
         for (const part of queue) {
             if (part.type === "indent") {
-                if (useTabs) flushTabs();
-                else flushSpaces();
+                if (useTabs) {
+                    value += "\t".repeat(tabs);
+                    length += indentWidth * tabs;
+                } else {
+                    value += " ".repeat(spaces);
+                    length += spaces;
+                }
                 tabs = 0;
                 spaces = 0;
                 value += useTabs ? "\t" : " ".repeat(indentWidth);
@@ -490,7 +506,8 @@ export default class Layout {
                 spaces += part.width;
             }
         }
-        flushSpaces();
+        value += " ".repeat(spaces);
+        length += spaces;
 
         return { value, length, queue };
     }

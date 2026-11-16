@@ -724,13 +724,16 @@ export default class Calls extends Section {
         return groups;
     }
 
+    static #isFactory(name: string): boolean {
+        return /^[A-Z]|^[$_]+$/.test(name);
+    }
+
     /** Short heads like `this`, `$` or `Factory` stay on the line of the first call. */
     #shouldMerge<T extends { node: Node }>(
         groups: T[][],
         isExpressionStatement: boolean,
     ): boolean {
         if (groups.length < 2 || (groups[1] as T[]).length === 0) return false;
-        const isFactory = (name: string) => /^[A-Z]|^[$_]+$/.test(name);
         const first = groups[1]?.[0]?.node;
         const hasComputed =
             first !== undefined &&
@@ -743,7 +746,7 @@ export default class Calls extends Section {
             return (
                 node.type === "ThisExpression" ||
                 (node.type === "Identifier" &&
-                    (isFactory(node.name) ||
+                    (Calls.#isFactory(node.name) ||
                         (isExpressionStatement &&
                             node.name.length <= this.options.indentWidth) ||
                         hasComputed))
@@ -753,7 +756,7 @@ export default class Calls extends Section {
         return (
             Nodes.isMember(last) &&
             last.property.type === "Identifier" &&
-            (isFactory(last.property.name) || hasComputed)
+            (Calls.#isFactory(last.property.name) || hasComputed)
         );
     }
 

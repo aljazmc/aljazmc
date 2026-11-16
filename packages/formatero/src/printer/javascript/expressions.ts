@@ -146,6 +146,8 @@ export default class Expressions extends Section {
     string(raw: string, quote: string = this.options.quote): string {
         if (this.options.json) return raw;
         const content = raw.slice(1, -1);
+        // without quotes or escapes, the preferred quote encloses it as it is
+        if (!/["'\\]/.test(content)) return quote + content + quote;
         const alternate = quote === '"' ? "'" : '"';
         const count = (char: string) => content.split(char).length - 1;
         const enclosing = count(quote) > count(alternate) ? alternate : quote;

@@ -168,9 +168,7 @@ export default class Comments {
         // a comment just inside grouping parentheses, on the line of the
         // code before it, goes where the printer puts it: outside of them,
         // around the node they wrap; one on a line of its own stays
-        const ownLine = /(?:^|\n)[^\S\n]*$/.test(
-            this.#source.slice(0, comment.start),
-        );
+        const ownLine = this.#startsLine(comment.start);
         for (;;) {
             const parent = path.at(-2);
             if (!parent || ownLine) break;
@@ -223,7 +221,21 @@ export default class Comments {
                 start = context.comment.start;
             }
         }
-        return /(?:^|\n)[^\S\n]*$/.test(this.#source.slice(0, start));
+        return this.#startsLine(start);
+    }
+
+    /**
+     * Whether only whitespace other than line breaks is between the start
+     * of the line and an offset, like `/(?:^|\n)[^\S\n]*$/` on the source
+     * before it, without copying and scanning all of it.
+     */
+    #startsLine(offset: number): boolean {
+        for (let index = offset - 1; index >= 0; index--) {
+            const char = this.#source[index] as string;
+            if (char === "\n") return true;
+            if (char !== " " && char !== "\t" && !/\s/.test(char)) return false;
+        }
+        return true;
     }
 
     /** Whether the comment, or the last of the comments after it on its line, ends a line. */

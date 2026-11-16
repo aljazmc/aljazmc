@@ -29,6 +29,8 @@ export default abstract class BaseParser {
     protected previous = 0;
     /** Whether `in` is a binary operator here (not in a for-in head). */
     protected allowIn = true;
+    /** Lines and columns of the source, made by the first error. */
+    #lines: Lines | undefined;
 
     constructor(source: string, options: Options) {
         this.source = source;
@@ -153,7 +155,9 @@ export default abstract class BaseParser {
     }
 
     protected raise(message: string, position: number): never {
-        const lines = new Lines(this.source);
+        // speculative parses raise often, the source never changes
+        this.#lines ??= new Lines(this.source);
+        const lines = this.#lines;
         throw new ParseError(
             `${message} (${lines.line(position)}:${lines.column(position)})`,
             position,

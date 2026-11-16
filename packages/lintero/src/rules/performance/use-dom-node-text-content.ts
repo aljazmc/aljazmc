@@ -61,21 +61,23 @@ export default rule({
         return {
             MemberExpression(node) {
                 const { property } = node;
-                if (typed(node.object)) return;
+                // the name first, it is cheaper than looking up the binding
                 if (
                     !node.computed &&
                     property.type === "Identifier" &&
                     property.name === "innerText"
-                )
+                ) {
+                    if (typed(node.object)) return;
                     context.report(
                         property,
                         message,
                         replace(property, "textContent"),
                     );
-                else if (
+                } else if (
                     node.computed &&
                     property.type === "StringLiteral" &&
-                    Nodes.string(property) === "innerText"
+                    Nodes.string(property) === "innerText" &&
+                    !typed(node.object)
                 )
                     context.report(
                         property,

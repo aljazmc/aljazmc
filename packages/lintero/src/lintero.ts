@@ -646,10 +646,10 @@ export default class Lintero {
                 ][]) {
                     const [type, exit] = key.split(":") as [string, string?];
                     const handlers = exit ? leave : enter;
-                    handlers.set(type, [
-                        ...(handlers.get(type) ?? []),
-                        handler,
-                    ]);
+                    // in the order of the rules, without copying each time
+                    const list = handlers.get(type);
+                    if (list) list.push(handler);
+                    else handlers.set(type, [handler]);
                 }
                 return { active, context };
             });
@@ -733,8 +733,10 @@ export default class Lintero {
         };
         link(source.program);
 
+        // the handlers of every node, looked up once
+        const all = enter.get("*") ?? [];
         const visit = (node: Node) => {
-            for (const handler of enter.get("*") ?? []) handler(node);
+            for (const handler of all) handler(node);
             for (const handler of enter.get(node.type) ?? []) handler(node);
             for (const child of children.get(node) ?? []) visit(child);
             for (const handler of leave.get(node.type) ?? []) handler(node);

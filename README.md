@@ -1,27 +1,63 @@
-![NPM Downloads by package author](https://img.shields.io/npm-stat/dy/aljazmc)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/aljazmc/aljazmc/.github%2Fworkflows%2Fcicd.yml)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/aljazmc/aljazmc)
-![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)\
-![GitHub commit activity](https://img.shields.io/github/commit-activity/y/aljazmc/aljazmc)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/aljazmc/aljazmc)
+# aljazmc
 
-# > aljazmc
+[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![npm downloads](https://img.shields.io/npm-stat/dy/aljazmc?logo=npm&color=cb3837&label=npm%20downloads)](https://www.npmjs.com/~aljazmc)
+[![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![esbuild](https://img.shields.io/badge/esbuild-0.28-ffcf00?logo=esbuild&logoColor=black)](https://esbuild.github.io/)
+[![Yarn 4](https://img.shields.io/badge/Yarn-4-2c8ebb?logo=yarn&logoColor=white)](https://yarnpkg.com/)
+[![Docker only](https://img.shields.io/badge/development-Docker%20only-2496ed?logo=docker&logoColor=white)](#development)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fe5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/)
 
 Lightweight npm packages written in modern TypeScript: a formatter, a
 linter, a monorepo release tool and a test runner. They depend on nothing
 outside this repository, except esbuild for testero, and are published by
 [aljazmc on npm](https://www.npmjs.com/~aljazmc).
 
-## > Packages
+## Features
 
-| Package                         | Description                                                                 | npm                                                                    |
-| ------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [formatero](packages/formatero) | Formats CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML.    | [@aljazmc/formatero](https://www.npmjs.com/package/@aljazmc/formatero) |
-| [lintero](packages/lintero)     | Lints the same languages but YAML with 287 rules, fixes and sorted imports. | [@aljazmc/lintero](https://www.npmjs.com/package/@aljazmc/lintero)     |
-| [monorepo](packages/monorepo)   | Versions packages by conventional commits, fixes rebased tags.              | [@aljazmc/monorepo](https://www.npmjs.com/package/@aljazmc/monorepo)   |
-| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, JSX and TypeScript.                     | [@aljazmc/testero](https://www.npmjs.com/package/@aljazmc/testero)     |
+- **Four tools, no dependencies.** A formatter, a linter, a test runner and
+  a release tool that depend on nothing outside this repository, except
+  esbuild for testero.
+- **Eight languages.** formatero formats CSS, HTML, JavaScript, JSON, JSX,
+  Markdown, TypeScript and YAML; lintero lints all of them but YAML with
+  287 rules, fixes and sorted imports.
+- **One parser.** Every tool shares `@aljazmc/syntax`, bundled in by
+  esbuild.
+- **Checked by itself.** formatero formats this repository, lintero lints
+  it and testero runs its tests.
+- **Released by CI.** On every push to `main`, monorepo versions, tags and
+  publishes the packages that changed, from their conventional commits.
 
-## > Shared code
+## Quick start
+
+```sh
+npm install --save-dev @aljazmc/formatero @aljazmc/lintero
+npx formatero            # lists unformatted files
+npx formatero --write    # formats them in place
+```
+
+The packages need Node.js 22.18+, 24.2+, 25 or 26; each package's README
+lists its commands and options.
+
+To work on the packages, clone the repository and let Docker do the rest:
+
+```sh
+git clone https://github.com/aljazmc/aljazmc.git
+cd aljazmc
+./project.sh start
+```
+
+## Packages
+
+| Package                         | Description                                                                 | npm                                                                                                                                                                           |
+| ------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [formatero](packages/formatero) | Formats CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML.    | [![@aljazmc/formatero](https://img.shields.io/npm/v/@aljazmc/formatero?label=%40aljazmc%2Fformatero&color=cb3837&logo=npm)](https://www.npmjs.com/package/@aljazmc/formatero) |
+| [lintero](packages/lintero)     | Lints the same languages but YAML with 287 rules, fixes and sorted imports. | [![@aljazmc/lintero](https://img.shields.io/npm/v/@aljazmc/lintero?label=%40aljazmc%2Flintero&color=cb3837&logo=npm)](https://www.npmjs.com/package/@aljazmc/lintero)         |
+| [monorepo](packages/monorepo)   | Versions packages by conventional commits, fixes rebased tags.              | [![@aljazmc/monorepo](https://img.shields.io/npm/v/@aljazmc/monorepo?label=%40aljazmc%2Fmonorepo&color=cb3837&logo=npm)](https://www.npmjs.com/package/@aljazmc/monorepo)     |
+| [testero](packages/testero)     | Runs Jest-like tests in JavaScript, JSX and TypeScript.                     | [![@aljazmc/testero](https://img.shields.io/npm/v/@aljazmc/testero?label=%40aljazmc%2Ftestero&color=cb3837&logo=npm)](https://www.npmjs.com/package/@aljazmc/testero)         |
+
+## Shared code
 
 Bundled into the packages by esbuild, and published for their types.
 
@@ -30,7 +66,7 @@ Bundled into the packages by esbuild, and published for their types.
 | [@aljazmc/config](shared/config) | Loads `<package>.config.ts` files, finds files and matches globs.       |
 | [@aljazmc/syntax](shared/syntax) | Parses CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML. |
 
-## > Development
+## Development
 
 Requires only Docker with Compose, everything else runs in a container.
 
@@ -46,7 +82,7 @@ clone.
 | `docker compose run --rm node yarn <script>`                    | Runs any script of `package.json`.                       |
 | `docker compose run --rm node node packages/<name>/bin/main.js` | Runs a package on this repository.                       |
 
-### > Scripts
+### Scripts
 
 Scripts are named `<prefix>:<package>`, like `c:lintero`, and most
 prefixes also have `<prefix>:all`.
@@ -71,7 +107,7 @@ prefixes also have `<prefix>:all`.
 | `test:w`      | Runs all tests again whenever a file changes.   |
 | `typecheck:w` | Checks the types again whenever a file changes. |
 
-### > CI/CD
+### CI/CD
 
 ```
 push to main
@@ -80,7 +116,7 @@ push to main
 └─> yarn p:all         publishes the versions not yet on npm, dependencies first
 ```
 
-### > Layout
+### Layout
 
 | Path                  | Description                                                |
 | --------------------- | ---------------------------------------------------------- |
@@ -89,6 +125,6 @@ push to main
 | `project.sh`          | Creates the container and runs the checks.                 |
 | `shared/<name>/`      | Code bundled into the packages.                            |
 
-## > License
+## License
 
 MIT, see [LICENSE](LICENSE).

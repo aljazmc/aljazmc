@@ -1,13 +1,43 @@
-![Custom](https://img.shields.io/badge/project_status-mostly_working-green) ![Custom](https://img.shields.io/badge/breaking_changes-common-red) ![NPM Downloads](https://img.shields.io/npm/dm/%40aljazmc%2Flintero) ![GitHub package.json version](https://img.shields.io/github/package-json/v/aljazmc/aljazmc?filename=packages%2Flintero%2Fpackage.json&color=green) ![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)
+# lintero
 
-# > lintero
+[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![npm](https://img.shields.io/npm/v/@aljazmc/lintero?logo=npm&color=cb3837)](https://www.npmjs.com/package/@aljazmc/lintero)
+[![npm downloads](https://img.shields.io/npm/dm/@aljazmc/lintero?logo=npm&color=cb3837&label=downloads)](https://www.npmjs.com/package/@aljazmc/lintero)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/node/v/@aljazmc/lintero?logo=nodedotjs&logoColor=white&color=5fa04e)](https://nodejs.org/)
+[![Third-party dependencies: none](https://img.shields.io/badge/third--party%20dependencies-none-brightgreen)](package.json)
+[![Biome 2.6.6 compatible](https://img.shields.io/badge/Biome-2.6.6%20compatible-60a5fa?logo=biome&logoColor=white)](https://biomejs.dev/linter/)
+[![Rules: 287](https://img.shields.io/badge/rules-287-8b5cf6)](#rules)
+[![Tests](https://img.shields.io/badge/tests-1839%20passing-brightgreen)](#tests)
+[![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-A simple, dependency-free linter for CSS, HTML, JavaScript, JSON, JSX,
-Markdown and TypeScript, with 287 rules, automatic fixes and organized
-imports. Easy to
-understand, easy to customize and easy to extend. Biome 2.6.6 compatible.
+A dependency-free linter for CSS, HTML, JavaScript, JSON, JSX, Markdown
+and TypeScript, written in TypeScript. It has 287 of
+[Biome](https://biomejs.dev/) 2.6.6's rules, with the same names, options
+and messages, and organizes imports like Biome's assist does.
 
-## > Features
+```sh
+npx @aljazmc/lintero --write
+```
+
+## Features
+
+- **287 rules in 8 groups.** Accessibility, complexity, correctness,
+  performance, security, style and suspicious code, plus nursery rules
+  that are still settling.
+- **Biome compatible.** Same rule names, configuration and diagnostics,
+  checked against Biome's own results in 1,781 test cases.
+- **Fixes.** `--write` applies the safe fixes, `--write --unsafe` the ones
+  that may change what the code does.
+- **Organized imports.** Sorts and merges imports and exports like Biome's
+  `organizeImports`, and keeps the comments Biome drops.
+- **Framework aware.** React, Next.js, Vue, Qwik, Solid, test runners and
+  more: their rules turn on when `package.json` depends on them.
+- **Embedded languages.** Scripts and styles in HTML are linted as files
+  of their own language.
+- **Nothing else to install.** No third-party packages: the parser is
+  [`@aljazmc/syntax`](../../shared/syntax), bundled in, and every rule
+  shares a single traversal of the syntax tree.
 
 | Feature            | Description                                                                   |
 | ------------------ | ----------------------------------------------------------------------------- |
@@ -19,15 +49,18 @@ understand, easy to customize and easy to extend. Biome 2.6.6 compatible.
 | Languages          | CSS, HTML, JavaScript, JSON, JSX, Markdown and TypeScript.                    |
 | Suppressions       | `lintero-ignore` comments per line, range or file, with unused ones reported. |
 
-## > Install
+## Quick start
 
 ```sh
 npm install --save-dev @aljazmc/lintero
+npx lintero --config            # writes the defaults to lintero.config.ts
+npx lintero                     # reports problems
+npx lintero --write             # applies the safe fixes
 ```
 
 Requires Node.js 22.18+, 24.2+, 25 or 26.
 
-## > Usage
+## Usage
 
 | Command                    | Description                                         |
 | -------------------------- | --------------------------------------------------- |
@@ -44,7 +77,7 @@ warn: src/a.ts:3:8 lint/suspicious/noExplicitAny: Unexpected any. Specify a diff
 Safe fixes keep what the code does. Unsafe fixes may change it, so review
 them before keeping them.
 
-## > Configuration
+## Configuration
 
 `lintero.config.ts` (or `.js`) in the current directory overrides the
 defaults: objects are merged deeply, anything else, like `ignore`, is
@@ -71,12 +104,12 @@ export default {
 
 | Option                                  | Default         | Description                                                    |
 | --------------------------------------- | --------------- | -------------------------------------------------------------- |
-| `a11y`, `complexity`, …, `suspicious`   |                 | Level or configuration of a [rule group](#-rules).             |
-| `assist.actions.source.organizeImports` | `"on"`          | Level or configuration of [organizing imports](#-assist).      |
+| `a11y`, `complexity`, …, `suspicious`   |                 | Level or configuration of a [rule group](#rules).              |
+| `assist.actions.source.organizeImports` | `"on"`          | Level or configuration of [organizing imports](#assist).       |
 | `assist.enabled`                        | `true`          | Runs the assist actions.                                       |
 | `css.cssModules`                        |                 | Allows CSS Modules syntax, unset only in `.module.css` files.  |
 | `css.enabled`                           | `true`          | Lints `.css` files and the styles of HTML files.               |
-| `domains`                               | `{}`            | `"recommended"`, `"all"` or `"none"` per [domain](#-domains).  |
+| `domains`                               | `{}`            | `"recommended"`, `"all"` or `"none"` per [domain](#domains).   |
 | `enabled`                               | `true`          | Lints files at all.                                            |
 | `html.enabled`                          | `true`          | Lints `.html` and `.htm` files and their scripts.              |
 | `includes`                              | `["**"]`        | Globs of files to lint, the last match decides, `!` excludes.  |
@@ -87,7 +120,7 @@ export default {
 | `markdown.enabled`                      | `true`          | Lints `.md` and `.markdown` files.                             |
 | `preset`                                | `"recommended"` | The rules that run: `"recommended"`, `"all"` or `"none"`.      |
 
-### > Levels
+### Levels
 
 A group takes a level for all its rules, like `style: "error"`, or an
 object with a `preset` and a level or configuration per rule. A rule
@@ -100,7 +133,7 @@ and the rule's `options`.
 | `"off"`                       | Turns the rule off.                                       |
 | `"on"`                        | Turns the rule on with its own severity.                  |
 
-### > Domains
+### Domains
 
 A domain's recommended rules turn on when the closest `package.json`
 depends on its package.
@@ -119,7 +152,7 @@ depends on its package.
 | `turborepo`   | `turbo` 1+                                      | 1     |
 | `vue`         | `vue` 3+                                        | 4     |
 
-### > Assist
+### Assist
 
 `assist/source/organizeImports` sorts the imports and exports of
 JavaScript and TypeScript modules like Biome's action of the same name.
@@ -166,7 +199,7 @@ Biome's `groups` option is not supported.
 
 When statements merge, Biome drops the comments of the second one, but lintero keeps them.
 
-### > Suppressions
+### Suppressions
 
 ```js
 // lintero-ignore lint/suspicious/noDebugger: suppresses the line of the next token
@@ -179,24 +212,24 @@ Markdown and HTML use `<!-- lintero-ignore … -->`, CSS uses
 covers its content. Suppressions that suppress nothing are reported. `biome-ignore` is accepted
 as a synonym of `lintero-ignore`.
 
-## > Rules
+## Rules
 
 Each rule has a group, a severity and a fix (safe, unsafe or none).
 Recommended rules run by default, the others with `preset: "all"` or with
 the domain named in the last column.
 
-| Group                        | Description                                      | Rules |
-| ---------------------------- | ------------------------------------------------ | ----- |
-| [a11y](#-a11y)               | Accessibility of JSX and HTML.                   | 38    |
-| [complexity](#-complexity)   | Code that can be simpler, with the same result.  | 36    |
-| [correctness](#-correctness) | Code that is certainly wrong.                    | 70    |
-| [nursery](#-nursery)         | New rules that may still change, off by default. | 23    |
-| [performance](#-performance) | Code that is slower or bigger than needed.       | 7     |
-| [security](#-security)       | Code that opens the way to attacks.              | 6     |
-| [style](#-style)             | A consistent way to write the same thing.        | 17    |
-| [suspicious](#-suspicious)   | Code that is likely a mistake.                   | 90    |
+| Group                       | Description                                      | Rules |
+| --------------------------- | ------------------------------------------------ | ----- |
+| [a11y](#a11y)               | Accessibility of JSX and HTML.                   | 38    |
+| [complexity](#complexity)   | Code that can be simpler, with the same result.  | 36    |
+| [correctness](#correctness) | Code that is certainly wrong.                    | 70    |
+| [nursery](#nursery)         | New rules that may still change, off by default. | 23    |
+| [performance](#performance) | Code that is slower or bigger than needed.       | 7     |
+| [security](#security)       | Code that opens the way to attacks.              | 6     |
+| [style](#style)             | A consistent way to write the same thing.        | 17    |
+| [suspicious](#suspicious)   | Code that is likely a mistake.                   | 90    |
 
-### > a11y
+### a11y
 
 Accessibility of JSX and HTML: elements, ARIA roles and attributes, keyboard use. 38 rules.
 
@@ -241,7 +274,7 @@ Accessibility of JSX and HTML: elements, ARIA roles and attributes, keyboard use
 | `useValidAutocomplete`                     | Requires valid values for `autocomplete`.                                                 | error    | none   | yes         |
 | `useValidLang`                             | Requires a valid language code in `lang`.                                                 | error    | none   | yes         |
 
-### > complexity
+### complexity
 
 Code that can be simpler, with the same result. 36 rules.
 
@@ -284,7 +317,7 @@ Code that can be simpler, with the same result. 36 rules.
 | `useRegexLiterals`                 | Prefers regular expression literals to `new RegExp` with literal strings.                | warn     | safe   | yes         |
 | `useSimpleNumberKeys`              | Prefers plain decimal numbers as object keys, to `0x1` or `1e3`.                         | warn     | safe   | yes         |
 
-### > correctness
+### correctness
 
 Code that is certainly wrong, or does not do what it seems to. 70 rules.
 
@@ -361,7 +394,7 @@ Code that is certainly wrong, or does not do what it seems to. 70 rules.
 | `useValidTypeof`                     | Requires `typeof` to be compared with valid type names, like `"string"`.                   | error    | unsafe | yes             |
 | `useYield`                           | Requires generator functions to `yield`.                                                   | error    | none   | yes             |
 
-### > nursery
+### nursery
 
 New rules that may still change. No preset enables them, only their own level does. 23 rules.
 
@@ -391,7 +424,7 @@ New rules that may still change. No preset enables them, only their own level do
 | `useSingleTopLevelHeading`               | Disallows more than one top-level heading in a document.                                   | info     | none   | no          |
 | `useTopLevelHeading`                     | Requires documents to start with a level 1 heading.                                        | info     | none   | no          |
 
-### > performance
+### performance
 
 Code that is slower or bigger than it needs to be. 7 rules.
 
@@ -405,7 +438,7 @@ Code that is slower or bigger than it needs to be. 7 rules.
 | `useDomNodeTextContent`          | Prefers `textContent` to `innerText`, which forces a layout.                               | warn     | unsafe | yes         |
 | `useGoogleFontPreconnect`        | Requires `rel="preconnect"` on links to Google Fonts.                                      | info     | safe   | `next`      |
 
-### > security
+### security
 
 Code that opens the way to attacks. 6 rules.
 
@@ -418,7 +451,7 @@ Code that opens the way to attacks. 6 rules.
 | `noScriptUrl`                           | Disallows `javascript:` URLs.                                                    | error    | none | yes         |
 | `useIframeSandbox`                      | Requires a `sandbox` on iframes.                                                 | error    | none | no          |
 
-### > style
+### style
 
 A consistent way to write the same thing. 17 rules.
 
@@ -442,7 +475,7 @@ A consistent way to write the same thing. 17 rules.
 | `useTemplate`                   | Prefers template literals to string concatenation.                                      | info     | unsafe | yes         |
 | `useVueMultiWordComponentNames` | Requires Vue component names of several words, so they cannot clash with HTML elements. | info     | none   | `vue`       |
 
-### > suspicious
+### suspicious
 
 Code that is likely a mistake. 90 rules.
 
@@ -539,7 +572,7 @@ Code that is likely a mistake. 90 rules.
 | `useIterableCallbackReturn`         | Requires `map`, `filter` and similar callbacks to return, and `forEach` ones not to.    | error    | none   | yes             |
 | `useNamespaceKeyword`               | Prefers `namespace` to the outdated `module` keyword for TypeScript namespaces.         | error    | safe   | yes             |
 
-## > How it works
+## How it works
 
 ```
 source
@@ -562,6 +595,28 @@ source
 | `src/assist`                   | Assist actions, like organizing imports.                           |
 | `src/rules`                    | One file per rule, sharing a single traversal.                     |
 
-## > License
+## Tests
+
+```sh
+docker compose run --rm node yarn t:lintero       # all 1,839 tests
+docker compose run --rm node yarn tunit:lintero   # the unit tests only
+```
+
+1,839 tests, run by [testero](../testero). Most of them are table-driven
+with `test.each`, so one `test` in the source can be many tests in the
+results:
+
+| Suite                | Tests | Checks                                                              |
+| -------------------- | ----- | ------------------------------------------------------------------- |
+| `reports like Biome` | 1,781 | Each rule reports Biome's diagnostics, at the same line and column. |
+| `settings`           | 6     | Presets, groups, levels and domains resolve to the right rules.     |
+| `scopes`             | 2     | Bindings and references, telling types from values.                 |
+| `files`              | 7     | Finding, linting and fixing files on disk.                          |
+| `suppressions`       | 4     | `lintero-ignore` comments, and unused or malformed ones reported.   |
+| `fixes`              | 5     | Safe and unsafe fixes, and the code they write.                     |
+| `organizeImports`    | 31    | Sorting and merging imports and exports like Biome.                 |
+| `regressions`        | 2     | Bugs found once, kept from coming back.                             |
+
+## License
 
 MIT, see [LICENSE](LICENSE).

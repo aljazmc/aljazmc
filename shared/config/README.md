@@ -1,11 +1,27 @@
-# > config
+# @aljazmc/config
 
-Shared, dependency-free configuration loader, file finder and glob
-matcher, bundled into every `@aljazmc` package and published for their
-types. Each package ships its defaults, and `<package>.config.ts` (or
-`.js`) in the current directory overrides them key by key.
+[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![npm](https://img.shields.io/npm/v/@aljazmc/config?logo=npm&color=cb3837)](https://www.npmjs.com/package/@aljazmc/config)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](package.json)
+[![Bundled](https://img.shields.io/badge/bundled%20into-formatero%20·%20lintero%20·%20monorepo%20·%20testero-6e7781)](../../README.md#packages)
+[![Tests](https://img.shields.io/badge/tests-28%20passing-brightgreen)](#tests)
+[![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-## > Features
+The configuration loader, file finder and glob matcher every `@aljazmc`
+tool shares. Each tool ships its defaults, and `<tool>.config.ts` (or
+`.js`) in the current directory overrides them key by key. esbuild bundles
+this code into each package; it is published on npm only for its types.
+
+## Features
+
+- **TypeScript config files.** `<tool>.config.ts` or `.js`, merged deeply
+  over the defaults, with `--config` writing the defaults out.
+- **gitignore-like ignores.** Names, root-anchored paths, folder-only
+  patterns, `**` and `{a,b}` alternatives.
+- **Biome-style includes.** The last matching glob decides, `!` excludes.
+- **Robust file walking.** Follows symlinks, skips binary files, and warns
+  about broken links, unreadable folders and files that are not UTF-8.
 
 | Export / member    | Description                                                     |
 | ------------------ | --------------------------------------------------------------- |
@@ -16,7 +32,7 @@ types. Each package ships its defaults, and `<package>.config.ts` (or
 | `Includes`         | Matches `includes` globs: the last match decides, `!` excludes. |
 | `Pattern`          | Matches a single glob.                                          |
 
-## > Ignore patterns
+## Ignore patterns
 
 ```js
 // testero.config.js
@@ -45,6 +61,21 @@ Symlinks are followed. Binary files are skipped. Broken symlinks,
 unreadable folders and files that are not UTF-8 are skipped with a
 warning.
 
-## > License
+## Tests
+
+```sh
+docker compose run --rm node yarn t:config
+```
+
+28 tests, run by [testero](../../packages/testero), in three files:
+`ignore.test.ts` and `includes.test.ts` for the patterns, and
+`config.test.ts` for loading and merging config files, `--config` and
+finding files on a temporary folder, symlinks and unreadable files
+included.
+
+A change here is bundled into every package, so run the tests of the
+packages too: `yarn t:all`.
+
+## License
 
 MIT, see [LICENSE](LICENSE).

@@ -1,12 +1,30 @@
-# > syntax
+# @aljazmc/syntax
 
-Shared, dependency-free scanner and recursive descent parser for CSS,
-HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML, bundled into
-`@aljazmc/formatero` and `@aljazmc/lintero` and published for their
-types. Invalid sources throw a `ParseError` with the position of the
-problem.
+[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![npm](https://img.shields.io/npm/v/@aljazmc/syntax?logo=npm&color=cb3837)](https://www.npmjs.com/package/@aljazmc/syntax)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](package.json)
+[![ESTree](https://img.shields.io/badge/AST-ESTree-f7df1e?logo=javascript&logoColor=black)](https://github.com/estree/estree)
+[![CommonMark + GFM](https://img.shields.io/badge/Markdown-CommonMark%20%2B%20GFM-000000?logo=markdown&logoColor=white)](https://github.github.com/gfm/)
+[![Bundled](https://img.shields.io/badge/bundled%20into-formatero%20·%20lintero-6e7781)](../../README.md#packages)
+[![Tests](https://img.shields.io/badge/tests-31%20passing-brightgreen)](#tests)
+[![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-## > Features
+The scanner and recursive descent parsers behind formatero and lintero,
+for CSS, HTML, JavaScript, JSON, JSX, Markdown, TypeScript and YAML, in
+plain TypeScript. esbuild bundles this code into both packages; it is
+published on npm only for its types.
+
+## Features
+
+- **Eight languages, one package.** Every parser is hand-written, with no
+  generated grammars and no dependencies.
+- **ESTree trees.** JavaScript, JSX, TypeScript and JSON parse to ESTree,
+  with Babel-style literals and TypeScript nodes.
+- **Comments kept.** Every parser keeps the comments, and HTML its
+  whitespace, as a formatter needs them.
+- **Precise errors.** Invalid sources throw a `ParseError` with the line
+  and column of the problem; CSS can recover and list them instead.
 
 | Language                    | Entry points                  | Tree                                                                               |
 | --------------------------- | ----------------------------- | ---------------------------------------------------------------------------------- |
@@ -25,7 +43,7 @@ problem.
 | `tagOf`                          | The known tag of an element name, like `div` for `DIV`.     |
 | `Walker`                         | Lists the child nodes of a node in source order.            |
 
-## > Usage
+## Usage
 
 ```ts
 import {
@@ -44,6 +62,21 @@ const doc = parseMarkdown("# Title\n\n- [x] done\n");
 const stream = parseYaml("a:\n  - b: 1 # c\n");
 ```
 
-## > License
+## Tests
+
+```sh
+docker compose run --rm node yarn t:syntax
+```
+
+31 tests, run by [testero](../../packages/testero), each checking many
+sources: JavaScript, JSX and TypeScript, Markdown blocks and inlines by
+CommonMark, HTML, CSS and YAML, and regressions. formatero and lintero
+test the parser further, through 1,898 cases of their own that compare
+with Biome.
+
+A change here is bundled into formatero and lintero, so run their tests
+too: `yarn t:formatero` and `yarn t:lintero`.
+
+## License
 
 MIT, see [LICENSE](LICENSE).

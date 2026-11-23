@@ -1,13 +1,39 @@
-![Custom](https://img.shields.io/badge/project_status-mostly_working-green) ![Custom](https://img.shields.io/badge/breaking_changes-common-red) ![NPM Downloads](https://img.shields.io/npm/dm/%40aljazmc%2Ftestero) ![GitHub package.json version](https://img.shields.io/github/package-json/v/aljazmc/aljazmc?filename=packages%2Ftestero%2Fpackage.json&color=green) ![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)
+# testero
 
-# > testero
+[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![npm](https://img.shields.io/npm/v/@aljazmc/testero?logo=npm&color=cb3837)](https://www.npmjs.com/package/@aljazmc/testero)
+[![npm downloads](https://img.shields.io/npm/dm/@aljazmc/testero?logo=npm&color=cb3837&label=downloads)](https://www.npmjs.com/package/@aljazmc/testero)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/node/v/@aljazmc/testero?logo=nodedotjs&logoColor=white&color=5fa04e)](https://nodejs.org/)
+[![Dependencies: esbuild only](https://img.shields.io/badge/dependencies-esbuild%20only-ffcf00?logo=esbuild&logoColor=black)](https://esbuild.github.io/)
+[![Jest compatible](https://img.shields.io/badge/Jest-compatible-c21325?logo=jest&logoColor=white)](https://jestjs.io/)
+[![Tests](https://img.shields.io/badge/tests-59%20passing-brightgreen)](#tests)
+[![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-A simple, [Jest](https://jestjs.io)-like test runner for JavaScript, JSX
-and TypeScript, compiling tests with [esbuild](https://esbuild.github.io),
-its only dependency. Easy to understand, easy to customize and easy to
-extend.
+A [Jest](https://jestjs.io)-like test runner for JavaScript, JSX and
+TypeScript, written in TypeScript. It compiles tests with
+[esbuild](https://esbuild.github.io), its only third-party dependency, and
+speaks Jest's globals, matchers, mocks and config names, so Jest suites
+without module mocks, fake timers or snapshots run as they are.
 
-## > Features
+```sh
+npx @aljazmc/testero --coverage
+```
+
+## Features
+
+- **Jest's API.** `describe`, `test`, `expect` with Jest's matchers,
+  asymmetric matchers, `.each`, `.only`, `.skip`, hooks and `jest.fn`,
+  under the same names.
+- **TypeScript and JSX out of the box.** Every test file is bundled by
+  esbuild, with no Babel or ts-jest to set up.
+- **Coverage.** Lines and functions the tests ran, from V8 and source
+  maps, as a table and `lcov.info`.
+- **Watch mode.** Reruns the tests a change concerns, following imports.
+- **Readable failures.** The message, a diff of the expected and received
+  values, and the failing line of code.
+- **Self-hosted.** It runs all 2,141 tests of this repository, its own
+  included.
 
 | Feature            | Description                                                             |
 | ------------------ | ----------------------------------------------------------------------- |
@@ -20,15 +46,18 @@ extend.
 | TypeScript types   | `@aljazmc/testero/globals` replaces `@types/jest`.                      |
 | Watch mode         | Reruns the tests of changed files, or all of them, as files change.     |
 
-## > Install
+## Quick start
 
 ```sh
 npm install --save-dev @aljazmc/testero
+npx testero --config     # writes the defaults to testero.config.ts
+npx testero              # runs every test file
+npx testero --watch      # reruns the tests a change concerns
 ```
 
 Requires Node.js 22.18+, 24.2+, 25 or 26.
 
-## > Usage
+## Usage
 
 | Command                 | Description                                         |
 | ----------------------- | --------------------------------------------------- |
@@ -66,7 +95,7 @@ All files      |   66.66 |      50 |
 ---------------|---------|---------|------------------
 ```
 
-## > Writing tests
+## Writing tests
 
 ```ts
 import { add } from "../src/math.ts";
@@ -105,7 +134,7 @@ in `tsconfig.json`, or import the globals from it in test files:
 import { describe, expect, jest, test } from "@aljazmc/testero/globals";
 ```
 
-## > Configuration
+## Configuration
 
 `testero.config.ts` (or `.js`) in the current directory overrides the
 defaults, using Jest's names: objects are merged deeply, anything else,
@@ -132,7 +161,7 @@ export default {
 | `testTimeout`         | `5000`                            | Milliseconds a test or hook may take.                                                             |
 | `verbose`             | `false`                           | Lists every test, not only the failing ones.                                                      |
 
-## > How it works
+## How it works
 
 ```
 test file
@@ -161,6 +190,28 @@ mocks, fake timers or snapshots. Coverage counts lines and functions, not
 statements or branches; functions inside one that never ran are not
 counted, as V8 does not know them yet.
 
-## > License
+## Tests
+
+```sh
+docker compose run --rm node yarn t:testero       # all 59 tests
+docker compose run --rm node yarn tunit:testero   # 47 unit tests
+docker compose run --rm node yarn te2e:testero    # 12 end-to-end tests
+```
+
+testero tests itself: the build in `bin/` runs the tests of the sources
+in `src/`.
+
+- **Unit tests** cover value formatting and diffs, deep equality, the
+  matchers, mocks, `.each`, the runner with its hooks, focus and
+  timeouts, the arguments, coverage and the watcher.
+- **End-to-end tests** run testero on test files written to a temporary
+  folder: compiling TypeScript, failure output with code frames,
+  `import.meta` and `__dirname`, imported globals, patterns, coverage
+  with `lcov.info`, and the inputs watch mode follows.
+
+The same runner runs all 2,141 tests of this repository, see the
+[root README](../../README.md#development).
+
+## License
 
 MIT, see [LICENSE](LICENSE).

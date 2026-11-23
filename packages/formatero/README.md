@@ -1,12 +1,39 @@
-![Custom](https://img.shields.io/badge/project_status-mostly_working-green) ![Custom](https://img.shields.io/badge/breaking_changes-common-red) ![NPM Downloads](https://img.shields.io/npm/dm/%40aljazmc%2Fformatero) ![GitHub package.json version](https://img.shields.io/github/package-json/v/aljazmc/aljazmc?filename=packages%2Fformatero%2Fpackage.json&color=green) ![GitHub License](https://img.shields.io/github/license/aljazmc/aljazmc)
+# formatero
 
-# > formatero
+[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![npm](https://img.shields.io/npm/v/@aljazmc/formatero?logo=npm&color=cb3837)](https://www.npmjs.com/package/@aljazmc/formatero)
+[![npm downloads](https://img.shields.io/npm/dm/@aljazmc/formatero?logo=npm&color=cb3837&label=downloads)](https://www.npmjs.com/package/@aljazmc/formatero)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/node/v/@aljazmc/formatero?logo=nodedotjs&logoColor=white&color=5fa04e)](https://nodejs.org/)
+[![Third-party dependencies: none](https://img.shields.io/badge/third--party%20dependencies-none-brightgreen)](package.json)
+[![Biome 2.6.6 compatible](https://img.shields.io/badge/Biome-2.6.6%20compatible-60a5fa?logo=biome&logoColor=white)](https://biomejs.dev/formatter/)
+[![Tests](https://img.shields.io/badge/tests-152%20passing-brightgreen)](#tests)
+[![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-A simple, dependency-free formatter for CSS, HTML, JavaScript, JSON, JSX,
-Markdown, TypeScript and YAML. Easy to understand, easy to customize and easy
-to extend. Biome 2.6.6 compatible.
+A dependency-free code formatter for CSS, HTML, JavaScript, JSON, JSX,
+Markdown, TypeScript and YAML, written in TypeScript. It takes the same
+options as [Biome](https://biomejs.dev/) 2.6.6 and prints the same output,
+so a project formatted by Biome stays as it is.
 
-## > Features
+```sh
+npx @aljazmc/formatero --write
+```
+
+## Features
+
+- **Eight languages, one tool.** CSS, HTML, JavaScript, JSON, JSX,
+  Markdown, TypeScript and YAML, plus fenced code in Markdown and scripts
+  and styles in HTML, each by the rules of its own language.
+- **Biome compatible.** The same output and the same option names,
+  checked against Biome's output in 117 test cases.
+- **Lays out like Prettier and Biome.** Sources are reprinted from a
+  syntax tree and broken to fit `lineWidth` with Wadler's algorithm.
+- **Tolerates errors.** With `formatWithErrors`, files that do not parse
+  are still formatted by their tokens.
+- **Respects `.editorconfig`.** Indentation, line endings and the final
+  newline can come from it.
+- **Nothing else to install.** No third-party packages: the parser is
+  [`@aljazmc/syntax`](../../shared/syntax), bundled in.
 
 | Feature                     | Description                                                               |
 | --------------------------- | ------------------------------------------------------------------------- |
@@ -21,15 +48,18 @@ to extend. Biome 2.6.6 compatible.
 | Suppressions                | `formatero-ignore` comments keep a CSS or HTML item, or file, as written. |
 | YAML                        | Reprints `.yml` and `.yaml` files by their structure, keeping values.     |
 
-## > Install
+## Quick start
 
 ```sh
 npm install --save-dev @aljazmc/formatero
+npx formatero --config   # writes the defaults to formatero.config.ts
+npx formatero            # lists unformatted files
+npx formatero --write    # formats them in place
 ```
 
 Requires Node.js 22.18+, 24.2+, 25 or 26.
 
-## > Usage
+## Usage
 
 | Command                   | Description                                             |
 | ------------------------- | ------------------------------------------------------- |
@@ -38,7 +68,7 @@ Requires Node.js 22.18+, 24.2+, 25 or 26.
 | `formatero --write`       | Formats the files in place.                             |
 | `formatero [paths]`       | Only the files in these files or folders.               |
 
-## > Configuration
+## Configuration
 
 `formatero.config.ts` (or `.js`) in the current directory overrides the
 defaults: objects are merged deeply, anything else, like `ignore`, is
@@ -57,7 +87,7 @@ export default {
 };
 ```
 
-### > Shared options
+### Shared options
 
 | Option              | Default  | Values                             | Description                                                     |
 | ------------------- | -------- | ---------------------------------- | --------------------------------------------------------------- |
@@ -76,7 +106,7 @@ export default {
 | `trailingNewline`   | `true`   | boolean                            | Ends every file with a newline.                                 |
 | `useEditorconfig`   | `false`  | boolean                            | Reads `.editorconfig`, the config file still overrides it.      |
 
-### > Language options
+### Language options
 
 | Section      | Option                  | Default      | Values                              | Description                                              |
 | ------------ | ----------------------- | ------------ | ----------------------------------- | -------------------------------------------------------- |
@@ -98,7 +128,7 @@ export default {
 | `yaml`       | `bracketSpacing`        | unset        | boolean                             | Spaces in flow sequences too, or in neither.             |
 | `yaml`       | `quoteStyle`            | `"double"`   | `"double"`, `"single"`              | Quotes of scalars, unless the other needs fewer escapes. |
 
-### > YAML
+### YAML
 
 YAML is formatted like Biome formats it:
 
@@ -108,18 +138,20 @@ YAML is formatted like Biome formats it:
 - Flow collections are spaced, and broken with trailing commas when long.
 - Block scalars move with their content.
 
-YAML is always indented with spaces, as it has no tabs. Unless `yaml.bracketSpacing` is
-set, flow mappings follow `bracketSpacing` and flow sequences have no
-spaces, like Biome's defaults.
+YAML is always indented with spaces, as it has no tabs. Unless
+`yaml.bracketSpacing` is set, flow mappings follow `bracketSpacing` and
+flow sequences have no spaces, like Biome's defaults.
 
 Two things differ from Biome on purpose:
 
-- When the indentation of a key with an indentation indicator, like `|2`, changes, its content moves along with it.
-  Biome leaves the content where it was, which changes the value.
-- A comment deeper than an entry, after its block scalar, stays at the entry's indentation.
-  Biome moves it to the first column, and moves it back when it formats the result again.
+- When the indentation of a key with an indentation indicator, like `|2`,
+  changes, its content moves along with it. Biome leaves the content where
+  it was, which changes the value.
+- A comment deeper than an entry, after its block scalar, stays at the
+  entry's indentation. Biome moves it to the first column, and moves it
+  back when it formats the result again.
 
-### > Suppressions
+### Suppressions
 
 In CSS and HTML, a suppression comment keeps the next item, or the whole
 file, as written. `biome-ignore` is accepted as a synonym of
@@ -135,7 +167,7 @@ file, as written. `biome-ignore` is accepted as a synonym of
 /* formatero-ignore-all format: keeps the whole file as written */
 ```
 
-## > How it works
+## How it works
 
 ```
 source
@@ -159,6 +191,30 @@ source
 | `src/printer/yaml.ts`     | Prints YAML documents, block and flow collections and scalars.   |
 | `src/tokens`, `src/rules` | Token stream and rules for files that do not parse.              |
 
-## > License
+## Tests
+
+```sh
+docker compose run --rm node yarn t:formatero       # all 152 tests
+docker compose run --rm node yarn tunit:formatero   # the unit tests only
+```
+
+152 tests, run by [testero](../testero). Most of them are table-driven
+with `test.each`, so one `test` in the source can be many tests in the
+results:
+
+| Suite               | Tests | Checks                                                      |
+| ------------------- | ----- | ----------------------------------------------------------- |
+| `prints like Biome` | 117   | Each input prints as Biome prints it, and formats stably.   |
+| `layout`            | 3     | Groups, indentation and line breaks within the line width.  |
+| `errors`            | 2     | Files that do not parse, formatted with `formatWithErrors`. |
+| `files`             | 9     | Finding, checking and writing files on disk.                |
+| `editorconfig`      | 3     | Options read from `.editorconfig` and overridden by config. |
+| `lines`, `yaml`     | 10    | Line endings, final newlines and YAML's own cases.          |
+| `regressions`       | 7     | Bugs found once, kept from coming back.                     |
+
+Every Biome case is formatted twice: the expected output must come out
+unchanged, so formatting is idempotent.
+
+## License
 
 MIT, see [LICENSE](LICENSE).

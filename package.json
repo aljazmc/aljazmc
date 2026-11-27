@@ -76,7 +76,7 @@
         "p:syntax": "yarn workspace @aljazmc/syntax npm publish --access public --tolerate-republish",
         "p:testero": "yarn workspace @aljazmc/testero npm publish --access public --tolerate-republish",
         "t:all": "yarn test",
-        "t:github": "yarn b:testero && testero .github",
+        "t:github": "yarn b:testero && yarn b:formatero && yarn b:lintero && testero .github",
         "t:coverage": "yarn b:testero && yarn b:formatero && yarn b:lintero && testero --coverage",
         "t:config": "yarn b:testero && testero shared/config",
         "t:formatero": "yarn b:testero && yarn b:formatero && testero packages/formatero",

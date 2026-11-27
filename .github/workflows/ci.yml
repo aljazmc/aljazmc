@@ -143,6 +143,11 @@ jobs:
                   node-version: "latest"
 
             - name: Run the quick start of README.md
+              env:
+                  # the runner's npm installs only versions older than some
+                  # days, which gave formatero's placeholder of March; the
+                  # README promises the latest
+                  npm_config_min_release_age: "0"
               run: |
                   awk '/^## Quick start/ { start = 1 }
                       start && /^```sh/ { block = 1; next }
@@ -175,6 +180,15 @@ jobs:
                       esac
                       echo "::endgroup::"
                   done 3< "$RUNNER_TEMP/quickstart.sh"
+                  # the versions npm installed are the latest
+                  for name in formatero lintero; do
+                      installed=$(node -p "require('./node_modules/@aljazmc/$name/package.json').version")
+                      latest=$(npm view "@aljazmc/$name" version)
+                      echo "@aljazmc/$name $installed, the latest is $latest" > "$output"
+                      cat "$output"
+                      [ "$installed" = "$latest" ] ||
+                          fail "npm installed an older version than the latest"
+                  done
                   # after the quick start, every file is formatted
                   npx formatero > "$output" 2>&1 < /dev/null ||
                       fail "after the quick start, npx formatero exited with $?"

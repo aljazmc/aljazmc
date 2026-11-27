@@ -1,6 +1,6 @@
 # aljazmc
 
-[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![CI](https://github.com/aljazmc/aljazmc/actions/workflows/ci.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![npm downloads](https://img.shields.io/npm-stat/dy/aljazmc?logo=npm&color=cb3837&label=npm%20downloads)](https://www.npmjs.com/~aljazmc)
 [![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)

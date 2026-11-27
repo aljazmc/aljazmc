@@ -1,0 +1,28 @@
+name: Setup
+description: Installs yarn, NodeJS and the dependencies, after the checkout
+
+runs:
+    using: composite
+    steps:
+        - name: Prepare '/opt/hostedtoolcache'
+          shell: bash
+          run: |
+              sudo mkdir -p /opt/hostedtoolcache
+              sudo chown -R "$(whoami)" /opt/hostedtoolcache
+
+        - name: Install package manager
+          shell: bash
+          run: |
+              corepack enable
+              corepack install
+              yarn install --mode update-lockfile
+
+        - name: Setup NodeJS
+          uses: actions/setup-node@v6
+          with:
+              node-version: "latest"
+              cache: "yarn"
+
+        - name: Install dependencies
+          shell: bash
+          run: yarn install --immutable

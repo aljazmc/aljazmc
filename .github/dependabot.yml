@@ -4,7 +4,7 @@ version: 2
 # commits, see monorepo.config.ts, "build" and "ci" bump nothing, "fix" does
 updates:
     - package-ecosystem: github-actions
-      directory: /
+      directories: ["/", "/.github/actions/*"]
       schedule:
           interval: weekly
       commit-message:

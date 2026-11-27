@@ -1,0 +1,87 @@
+name: Publish
+run-name: Publish quickie by @${{ github.actor }}
+
+on:
+    # after a passing CI run of a push to main
+    workflow_run:
+        workflows: [CI]
+        types: [completed]
+        branches: [main]
+    # run by hand from the Actions tab
+    workflow_dispatch:
+
+permissions:
+    id-token: write
+    # pushing the version commits and tags
+    contents: write
+
+# one release at a time, a newer one waits for the older one
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
+jobs:
+    publish:
+        if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+        runs-on: ubuntu-latest
+        env:
+            NODE_ENV: development
+            NODE_NO_WARNINGS: "1"
+
+        steps:
+            # main, not the commit CI checked, so that HEAD is a branch to push
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  ref: main
+                  fetch-depth: 0
+
+            - name: Setup
+              uses: ./.github/actions/setup
+
+            # monorepo moves tags a rebase left behind, then bumps the versions of the
+            # packages changed since their last version by conventional commits, see
+            # monorepo.config.ts, each committed and tagged, and pushes it all;
+            # pushes of the workflow token start no runs, so this does not loop
+            - name: Version changed packages
+              id: version
+              env:
+                  CHECKED: ${{ github.event.workflow_run.head_sha || github.sha }}
+              run: |
+                  # only the latest commit is released, an older run leaves it to the newer one
+                  if [ "$(git rev-parse HEAD)" != "$CHECKED" ] ||
+                      [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$CHECKED" ]; then
+                      echo "::notice::main moved on, the run of its latest commit releases it."
+                      echo "skip=true" | tee -a "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  yarn b:monorepo
+                  node packages/monorepo/bin/main.js --push
+
+            # a package is published when its package.json version is not on npm yet,
+            # after the packages it depends on, see yarn p:all; each is checked first,
+            # as the version commits are newer than the commit CI checked
+            - name: Publish new versions
+              if: steps.version.outputs.skip != 'true'
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  if [ -z "$NODE_AUTH_TOKEN" ]; then
+                      echo "::error::The NPM_TOKEN secret is not set."
+                      exit 1
+                  fi
+                  for dir in shared/*/ packages/*/; do
+                      p=$(basename "$dir")
+                      name=$(node -p "require('./${dir}package.json').name")
+                      version=$(node -p "require('./${dir}package.json').version")
+                      if [ -n "$(npm view "$name@$version" version 2>/dev/null)" ]; then
+                          echo "$name@$version is already on npm."
+                          continue
+                      fi
+                      echo "::group::check $name@$version"
+                      yarn "c:$p"
+                      echo "::endgroup::"
+                  done
+                  yarn p:all

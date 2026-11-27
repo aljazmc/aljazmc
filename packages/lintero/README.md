@@ -1,6 +1,6 @@
 # lintero
 
-[![CI/CD](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/cicd.yml)
+[![CI](https://github.com/aljazmc/aljazmc/actions/workflows/ci.yml/badge.svg)](https://github.com/aljazmc/aljazmc/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@aljazmc/lintero?logo=npm&color=cb3837)](https://www.npmjs.com/package/@aljazmc/lintero)
 [![npm downloads](https://img.shields.io/npm/dm/@aljazmc/lintero?logo=npm&color=cb3837&label=downloads)](https://www.npmjs.com/package/@aljazmc/lintero)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

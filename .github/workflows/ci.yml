@@ -149,25 +149,38 @@ jobs:
                       block && /^```/ { exit }
                       block' README.md > "$RUNNER_TEMP/quickstart.sh"
                   cat "$RUNNER_TEMP/quickstart.sh"
+                  output="$RUNNER_TEMP/output.txt"
+                  # a failure as an annotation, with the end of what was printed
+                  fail() {
+                      echo "::error title=Quick start::$1: $(tail -c 800 "$output" | tr '\n' '|')"
+                      exit 1
+                  }
                   cd "$(mktemp -d)"
                   printf '{ "name": "quickstart", "private": true }\n' > package.json
                   printf 'const answer = { value: 42 }\n' > answer.ts
-                  while read -r line; do
+                  echo "Node.js $(node -v), npm $(npm -v), in $PWD"
+                  while read -r line <&3; do
                       command=${line%%#*}
                       [ -n "${command// /}" ] || continue
                       echo "::group::$command"
                       # listing exits with 1 while there are unformatted files
                       status=0
-                      bash -c "$command" || status=$?
+                      bash -c "$command" > "$output" 2>&1 < /dev/null || status=$?
+                      cat "$output"
                       case "$command" in
-                          *--write*|npm*) [ "$status" -eq 0 ] ;;
-                          *) [ "$status" -le 1 ] ;;
+                          *--write*|npm*) [ "$status" -eq 0 ] ||
+                              fail "$command exited with $status" ;;
+                          *) [ "$status" -le 1 ] ||
+                              fail "$command exited with $status" ;;
                       esac
                       echo "::endgroup::"
-                  done < "$RUNNER_TEMP/quickstart.sh"
+                  done 3< "$RUNNER_TEMP/quickstart.sh"
                   # after the quick start, every file is formatted
-                  npx formatero
-                  grep -q 'const answer = { value: 42 };' answer.ts
+                  npx formatero > "$output" 2>&1 < /dev/null ||
+                      fail "after the quick start, npx formatero exited with $?"
+                  cp answer.ts "$output"
+                  grep -q 'const answer = { value: 42 };' answer.ts ||
+                      fail "answer.ts is not formatted"
 
     # a failing scheduled run opens an issue, or comments on the open one
     report:

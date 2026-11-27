@@ -137,17 +137,15 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v7
 
+            # a Node.js the packages support: on another, like the 27 alpha
+            # "latest" gave, npm picks the newest version whose engines allow
+            # it, the placeholders of March
             - name: Setup NodeJS
               uses: actions/setup-node@v7
               with:
-                  node-version: "latest"
+                  node-version: "26"
 
             - name: Run the quick start of README.md
-              env:
-                  # the runner's npm installs only versions older than some
-                  # days, which gave formatero's placeholder of March; the
-                  # README promises the latest
-                  npm_config_min_release_age: "0"
               run: |
                   awk '/^## Quick start/ { start = 1 }
                       start && /^```sh/ { block = 1; next }

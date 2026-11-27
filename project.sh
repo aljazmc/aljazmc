@@ -55,7 +55,7 @@ if [[ ! -f docker-compose.yml ]]; then
     cat << EOF > docker-compose.yml
 services:
     node:
-        image: aljazmc/corepack-alpine
+        image: aljazmc/node-alpine
         working_dir: $PWD
         volumes:
             - .:$PWD

@@ -43,9 +43,29 @@ const isDigit = (char: string | undefined) =>
     char !== undefined && char >= "0" && char <= "9";
 const isHex = (char: string | undefined) =>
     char !== undefined && /^[0-9a-fA-F]$/.test(char);
+/**
+ * The non-ASCII code points of names, as CSS Syntax Level 3 lists them and
+ * Biome reads them; a surrogate is half of one from U+10000.
+ */
+export const isNonAsciiName = (code: number) =>
+    code === 0xb7 ||
+    (code >= 0xc0 && code <= 0xd6) ||
+    (code >= 0xd8 && code <= 0xf6) ||
+    (code >= 0xf8 && code <= 0x37d) ||
+    (code >= 0x37f && code <= 0x1fff) ||
+    code === 0x200c ||
+    code === 0x200d ||
+    code === 0x203f ||
+    code === 0x2040 ||
+    (code >= 0x2070 && code <= 0x218f) ||
+    (code >= 0x2c00 && code <= 0x2fef) ||
+    (code >= 0x3001 && code <= 0xdfff) ||
+    (code >= 0xf900 && code <= 0xfdcf) ||
+    (code >= 0xfdf0 && code <= 0xfffd);
 const isNameStart = (char: string | undefined) =>
     char !== undefined &&
-    (/^[A-Za-z_]$/.test(char) || char.charCodeAt(0) >= 0x80);
+    (/^[A-Za-z_]$/.test(char) ||
+        (char.charCodeAt(0) >= 0x80 && isNonAsciiName(char.charCodeAt(0))));
 const isName = (char: string | undefined) =>
     char !== undefined && (isNameStart(char) || isDigit(char) || char === "-");
 export const isWhitespace = (char: string | undefined) =>
@@ -55,6 +75,24 @@ export const isWhitespace = (char: string | undefined) =>
     char === "\r" ||
     char === "\f";
 
+/**
+ * Why Biome rejects a character outside strings, comments and urls, which
+ * it then skips like whitespace: a form feed or vertical tab, or a
+ * non-ASCII character that cannot be in a name. A control or format
+ * character shows as U+FFFD, as Biome prints it.
+ */
+const rejected = (char: string | undefined): string | undefined => {
+    if (char === "\f" || char === "\v")
+        return "The CSS standard only allows tabs, whitespace, carriage return and line feed whitespace.";
+    if (char === undefined) return;
+    const code = char.charCodeAt(0);
+    if (code < 0x80 || isNonAsciiName(code)) return;
+    const shown =
+        /[\p{Cc}\p{Cf}]/u.test(char) && !/\p{White_Space}/u.test(char)
+            ? "\ufffd"
+            : char;
+    return `unexpected character \`${shown}\``;
+};
 /** Splits CSS into tokens like CSS Syntax Level 3, collecting comments. */
 export default class Tokenizer {
     readonly source: string;
@@ -197,8 +235,14 @@ export default class Tokenizer {
 
         if (char === undefined) return token("eof");
 
-        if (isWhitespace(char)) {
-            while (isWhitespace(source[this.#position])) this.#position++;
+        if (isWhitespace(char) || rejected(char)) {
+            for (;;) {
+                const next = source[this.#position];
+                const message = rejected(next);
+                if (message) this.#fail(message, this.#position);
+                else if (!isWhitespace(next)) break;
+                this.#position++;
+            }
             return token("whitespace");
         }
 

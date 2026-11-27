@@ -13265,7 +13265,10 @@ const biome: {
         rule: "suspicious/noIrregularWhitespace",
         file: "a.css",
         source: "a {\u00a0color: red; }\n",
-        expected: ["1:4 Irregular whitespace found."],
+        expected: [
+            "1:4 Irregular whitespace found.",
+            "1:4 unexpected character `\u00a0`",
+        ],
     },
     {
         rule: "suspicious/noEmptySource",

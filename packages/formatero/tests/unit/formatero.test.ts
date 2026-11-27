@@ -1216,6 +1216,22 @@ describe("formatero", () => {
                 format("<p></p>\n<script>const = 1</script>\n", "a.html", html),
             ).toThrow(/^2:15 /);
         });
+
+        test("CSS with characters Biome rejects is not formatted, like Biome", () => {
+            expect(() => format("a { color: red; }\n", "a.css")).toThrow(
+                "1:4 unexpected character ` `",
+            );
+            expect(() => format("a {​color: red; }\n", "a.css")).toThrow(
+                "1:4 unexpected character `�`",
+            );
+            expect(() => format("a {\fcolor: red; }\n", "a.css")).toThrow(
+                "1:4 The CSS standard only allows tabs, whitespace, carriage return and line feed whitespace.",
+            );
+            // characters of names, and any in strings and comments, are fine
+            expect(format('a {é: " "; /*   */ }\n', "a.css")).toBe(
+                'a {\n    é: " "; /*   */\n}\n',
+            );
+        });
     });
 
     describe("files", () => {

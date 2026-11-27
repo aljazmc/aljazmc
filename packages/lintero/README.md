@@ -8,7 +8,7 @@
 [![Third-party dependencies: none](https://img.shields.io/badge/third--party%20dependencies-none-brightgreen)](package.json)
 [![Biome 2.6.6 compatible](https://img.shields.io/badge/Biome-2.6.6%20compatible-60a5fa?logo=biome&logoColor=white)](https://biomejs.dev/linter/)
 [![Rules: 287](https://img.shields.io/badge/rules-287-8b5cf6)](#rules)
-[![Tests](https://img.shields.io/badge/tests-1839%20passing-brightgreen)](#tests)
+[![Tests](https://img.shields.io/badge/tests-3971%20passing-brightgreen)](#tests)
 [![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 A dependency-free linter for CSS, HTML, JavaScript, JSON, JSX, Markdown
@@ -26,7 +26,7 @@ npx @aljazmc/lintero --write
   performance, security, style and suspicious code, plus nursery rules
   that are still settling.
 - **Biome compatible.** Same rule names, configuration and diagnostics,
-  checked against Biome's own results in 1,781 test cases.
+  checked against what Biome 2.6.6 itself reports for 1,969 test cases.
 - **Fixes.** `--write` applies the safe fixes, `--write --unsafe` the ones
   that may change what the code does.
 - **Organized imports.** Sorts and merges imports and exports like Biome's
@@ -198,6 +198,10 @@ export default {
 Biome's `groups` option is not supported.
 
 When statements merge, Biome drops the comments of the second one, but lintero keeps them.
+
+Like Biome, a module is reported once, where its first issue is: a chunk out of order, names
+or attributes out of order, or a missing blank line. One issue is named, like
+`Sort the imported names.`, more are `Some imports or exports are not organized.`
 
 ### Suppressions
 
@@ -598,24 +602,38 @@ source
 ## Tests
 
 ```sh
-docker compose run --rm node yarn t:lintero       # all 1,839 tests
+docker compose run --rm node yarn t:lintero       # all 3,971 tests
 docker compose run --rm node yarn tunit:lintero   # the unit tests only
+docker compose run --rm node yarn te2e:lintero    # the end-to-end tests only
+docker compose run --rm node yarn record:lintero  # records Biome 2.6.6 again
 ```
 
-1,839 tests, run by [testero](../testero). Most of them are table-driven
+3,971 tests, run by [testero](../testero). Most of them are table-driven
 with `test.each`, so one `test` in the source can be many tests in the
 results:
 
 | Suite                | Tests | Checks                                                              |
 | -------------------- | ----- | ------------------------------------------------------------------- |
-| `reports like Biome` | 1,781 | Each rule reports Biome's diagnostics, at the same line and column. |
+| `reports like Biome` | 1,902 | Each rule reports Biome's diagnostics, at the same line and column. |
 | `settings`           | 6     | Presets, groups, levels and domains resolve to the right rules.     |
 | `scopes`             | 2     | Bindings and references, telling types from values.                 |
 | `files`              | 7     | Finding, linting and fixing files on disk.                          |
 | `suppressions`       | 4     | `lintero-ignore` comments, and unused or malformed ones reported.   |
 | `fixes`              | 5     | Safe and unsafe fixes, and the code they write.                     |
-| `organizeImports`    | 31    | Sorting and merging imports and exports like Biome.                 |
+| `organizeImports`    | 73    | Sorting and merging imports and exports like Biome.                 |
 | `regressions`        | 2     | Bugs found once, kept from coming back.                             |
+
+The cases are in `tests/biome.ts`. The end-to-end test runs the built command line on
+each of them, in a project of its own, and compares what it prints, how it exits and
+what `--write` writes with what Biome 2.6.6 itself did, recorded in
+`tests/e2e/biome-2.6.6.json` by `yarn record:lintero`. Recording installs Biome into
+`.cache/`, never into the project; run it after adding or changing a case.
+
+| Suite                          | Tests | Checks                                                            |
+| ------------------------------ | ----- | ----------------------------------------------------------------- |
+| `reports what Biome reports`   | 1,902 | The diagnostics and the exit code of each case are Biome's.       |
+| `organizes imports like Biome` | 67    | `--write` writes what `biome check --write` does, reported there. |
+| the recording                  | 1     | Every case is recorded.                                           |
 
 ## License
 

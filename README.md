@@ -101,11 +101,13 @@ prefixes also have `<prefix>:all`.
 | `te2e:`  | Runs the end-to-end tests.                  |
 | `tunit:` | Runs the unit tests.                        |
 
-| Script        | Description                                     |
-| ------------- | ----------------------------------------------- |
-| `t:coverage`  | Runs all tests and reports the coverage.        |
-| `test:w`      | Runs all tests again whenever a file changes.   |
-| `typecheck:w` | Checks the types again whenever a file changes. |
+| Script             | Description                                            |
+| ------------------ | ------------------------------------------------------ |
+| `record:formatero` | Records what Biome 2.6.6 prints for formatero's cases. |
+| `record:lintero`   | Records what Biome 2.6.6 reports for lintero's cases.  |
+| `t:coverage`       | Runs all tests and reports the coverage.               |
+| `test:w`           | Runs all tests again whenever a file changes.          |
+| `typecheck:w`      | Checks the types again whenever a file changes.        |
 
 ### CI/CD
 

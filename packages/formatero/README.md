@@ -7,7 +7,7 @@
 [![Node.js](https://img.shields.io/node/v/@aljazmc/formatero?logo=nodedotjs&logoColor=white&color=5fa04e)](https://nodejs.org/)
 [![Third-party dependencies: none](https://img.shields.io/badge/third--party%20dependencies-none-brightgreen)](package.json)
 [![Biome 2.6.6 compatible](https://img.shields.io/badge/Biome-2.6.6%20compatible-60a5fa?logo=biome&logoColor=white)](https://biomejs.dev/formatter/)
-[![Tests](https://img.shields.io/badge/tests-152%20passing-brightgreen)](#tests)
+[![Tests](https://img.shields.io/badge/tests-270%20passing-brightgreen)](#tests)
 [![TypeScript 7](https://img.shields.io/badge/TypeScript-7%20strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 A dependency-free code formatter for CSS, HTML, JavaScript, JSON, JSX,
@@ -25,7 +25,7 @@ npx @aljazmc/formatero --write
   Markdown, TypeScript and YAML, plus fenced code in Markdown and scripts
   and styles in HTML, each by the rules of its own language.
 - **Biome compatible.** The same output and the same option names,
-  checked against Biome's output in 117 test cases.
+  checked against what Biome 2.6.6 itself prints for 117 test cases.
 - **Lays out like Prettier and Biome.** Sources are reprinted from a
   syntax tree and broken to fit `lineWidth` with Wadler's algorithm.
 - **Tolerates errors.** With `formatWithErrors`, files that do not parse
@@ -194,11 +194,13 @@ source
 ## Tests
 
 ```sh
-docker compose run --rm node yarn t:formatero       # all 152 tests
+docker compose run --rm node yarn t:formatero       # all 270 tests
 docker compose run --rm node yarn tunit:formatero   # the unit tests only
+docker compose run --rm node yarn te2e:formatero    # the end-to-end tests only
+docker compose run --rm node yarn record:formatero  # records Biome 2.6.6 again
 ```
 
-152 tests, run by [testero](../testero). Most of them are table-driven
+270 tests, run by [testero](../testero). Most of them are table-driven
 with `test.each`, so one `test` in the source can be many tests in the
 results:
 
@@ -206,7 +208,7 @@ results:
 | ------------------- | ----- | ----------------------------------------------------------- |
 | `prints like Biome` | 117   | Each input prints as Biome prints it, and formats stably.   |
 | `layout`            | 3     | Groups, indentation and line breaks within the line width.  |
-| `errors`            | 2     | Files that do not parse, formatted with `formatWithErrors`. |
+| `errors`            | 3     | Files that do not parse, formatted with `formatWithErrors`. |
 | `files`             | 9     | Finding, checking and writing files on disk.                |
 | `editorconfig`      | 3     | Options read from `.editorconfig` and overridden by config. |
 | `lines`, `yaml`     | 10    | Line endings, final newlines and YAML's own cases.          |
@@ -214,6 +216,18 @@ results:
 
 Every Biome case is formatted twice: the expected output must come out
 unchanged, so formatting is idempotent.
+
+The cases are in `tests/biome.ts`. The end-to-end test runs the built command line on
+each of them, in a project of its own: checking must fail where `biome format` does,
+`--write` must write what `biome format --write` wrote, and checking again must pass.
+What Biome 2.6.6 itself did is recorded in `tests/e2e/biome-2.6.6.json` by
+`yarn record:formatero`, which installs Biome into `.cache/`, never into the project; run
+it after adding or changing a case.
+
+| Suite                        | Tests | Checks                                           |
+| ---------------------------- | ----- | ------------------------------------------------ |
+| `formats what Biome formats` | 117   | The check, the write and the output are Biome's. |
+| the recording                | 1     | Every case is recorded.                          |
 
 ## License
 

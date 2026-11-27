@@ -26,8 +26,9 @@ outside this repository, except esbuild for testero, and are published by
   esbuild.
 - **Checked by itself.** formatero formats this repository, lintero lints
   it and testero runs its tests.
-- **Released by CI.** On every push to `main`, monorepo versions, tags and
-  publishes the packages that changed, from their conventional commits.
+- **Released by CI.** After every passing push to `main`, CI versions,
+  publishes, tags and releases on GitHub each package that changed, from
+  its conventional commits, without committing anything.
 
 ## Quick start
 
@@ -105,6 +106,7 @@ prefixes also have `<prefix>:all`.
 | ------------------ | ------------------------------------------------------ |
 | `record:formatero` | Records what Biome 2.6.6 prints for formatero's cases. |
 | `record:lintero`   | Records what Biome 2.6.6 reports for lintero's cases.  |
+| `c:github`         | Lints and tests the release script.                    |
 | `t:coverage`       | Runs all tests and reports the coverage.               |
 | `test:w`           | Runs all tests again whenever a file changes.          |
 | `typecheck:w`      | Checks the types again whenever a file changes.        |
@@ -112,11 +114,26 @@ prefixes also have `<prefix>:all`.
 ### CI/CD
 
 ```
-push to main
-├─> yarn c:<package>   checks each changed package
-├─> monorepo --push    bumps, commits, tags and pushes the versions
-└─> yarn p:all         publishes the versions not yet on npm, dependencies first
+push to main, ci.yml
+├─> yarn c:<package>   checks each changed package, and the release script
+├─> coverage           all tests, with the coverage in the job summary
+└─> quickstart         the quick start above, with the packages from npm
+
+a passing ci.yml on main, release.yml
+├─> release.ts plan    the versions due, from conventional commits since each tag
+├─> yarn c:<package>   checks each with its version written in
+├─> npm publish        publishes it, a dependency before what uses it
+├─> git tag            tags it @aljazmc/<name>@<version> and pushes the tag
+└─> gh release         a GitHub release with notes from its commits
 ```
+
+Versions live in the tags only: `package.json` keeps `0.0.0-development`,
+and no version is ever committed. `feat` releases a minor version; `fix`,
+`perf`, `docs`, `chore` and `revert` a patch; a breaking change a major one,
+before 1.0.0 a minor one; `style`, `test`, `build` and `ci` nothing. A
+commit counts for each package whose folder, or bundled `shared/` code, it
+changes. Every Monday CI checks everything again and opens an issue when
+that fails.
 
 ### Layout
 

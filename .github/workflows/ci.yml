@@ -2,13 +2,18 @@ name: CI
 run-name: CI quickie by @${{ github.actor }}
 
 on:
-    # a passing run of a push to main starts publish.yml
+    # a passing run of a push to main starts release.yml
     push:
         branches: [main]
     pull_request:
         branches: [main]
         # package.json for the dependency updates Dependabot opens
-        paths: [".github/**", "package.json", "packages/**", "shared/**"]
+        paths:
+            [".github/**", "package.json", "packages/**", "shared/**", "*.md"]
+    # every Monday: everything, so a new Node, Yarn or npm that breaks the
+    # packages is found before a user finds it; a failure opens an issue
+    schedule:
+        - cron: "23 5 * * 1"
     # run by hand from the Actions tab: checks everything
     workflow_dispatch:
 
@@ -19,13 +24,14 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+    NODE_ENV: development
+    NODE_NO_WARNINGS: "1"
+
 jobs:
+    # lints, tests, builds and exports the types of each changed package
     ci:
         runs-on: ubuntu-latest
-        env:
-            NODE_ENV: development
-            NODE_NO_WARNINGS: "1"
-
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
@@ -65,6 +71,10 @@ jobs:
                       echo "check=$check"
                   } | tee -a "$GITHUB_OUTPUT"
 
+            # the script that plans the releases, and its tests
+            - name: Check the release script
+              run: yarn c:github
+
             - name: Check shared code
               if: steps.changes.outputs.shared == 'true'
               run: |
@@ -82,3 +92,102 @@ jobs:
                       node "packages/$p/bin/main.js"
                       echo "::endgroup::"
                   done
+
+    # all tests with the coverage of the sources, in the job summary, with
+    # lcov.info kept as an artifact
+    coverage:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup
+              uses: ./.github/actions/setup
+
+            - name: Measure the coverage
+              run: |
+                  yarn t:coverage | tee coverage.txt
+                  {
+                      awk -F'|' '/All files/ {
+                          gsub(/ /, "", $2); gsub(/ /, "", $3)
+                          printf "Coverage of the sources: %s %% of functions, %s %% of lines.\n\n", $2, $3
+                      }' coverage.txt
+                      echo "<details><summary>Every source</summary>"
+                      echo
+                      echo '```'
+                      grep '|' coverage.txt
+                      echo '```'
+                      echo "</details>"
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Keep the coverage report
+              if: always()
+              uses: actions/upload-artifact@v7
+              with:
+                  name: coverage
+                  path: coverage/
+                  if-no-files-found: ignore
+
+    # the quick start of README.md as written, with the packages from npm:
+    # installing them, listing the unformatted files, formatting them, after
+    # which nothing is left to list
+    quickstart:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup NodeJS
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "latest"
+
+            - name: Run the quick start of README.md
+              run: |
+                  awk '/^## Quick start/ { start = 1 }
+                      start && /^```sh/ { block = 1; next }
+                      block && /^```/ { exit }
+                      block' README.md > "$RUNNER_TEMP/quickstart.sh"
+                  cat "$RUNNER_TEMP/quickstart.sh"
+                  cd "$(mktemp -d)"
+                  printf '{ "name": "quickstart", "private": true }\n' > package.json
+                  printf 'const answer = { value: 42 }\n' > answer.ts
+                  while read -r line; do
+                      command=${line%%#*}
+                      [ -n "${command// /}" ] || continue
+                      echo "::group::$command"
+                      # listing exits with 1 while there are unformatted files
+                      status=0
+                      bash -c "$command" || status=$?
+                      case "$command" in
+                          *--write*|npm*) [ "$status" -eq 0 ] ;;
+                          *) [ "$status" -le 1 ] ;;
+                      esac
+                      echo "::endgroup::"
+                  done < "$RUNNER_TEMP/quickstart.sh"
+                  # after the quick start, every file is formatted
+                  npx formatero
+                  grep -q 'const answer = { value: 42 };' answer.ts
+
+    # a failing scheduled run opens an issue, or comments on the open one
+    report:
+        needs: [ci, coverage, quickstart]
+        if: failure() && github.event_name == 'schedule'
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Open an issue
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  GH_REPO: ${{ github.repository }}
+                  RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              run: |
+                  title="The scheduled CI run failed"
+                  body="The weekly run of CI failed: $RUN"
+                  number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+                  if [ -n "$number" ]; then
+                      gh issue comment "$number" --body "$body"
+                  else
+                      gh issue create --title "$title" --body "$body"
+                  fi

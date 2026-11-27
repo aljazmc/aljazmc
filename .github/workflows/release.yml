@@ -1,0 +1,128 @@
+name: Release
+run-name: Release by @${{ github.actor }}
+
+# Releases the packages changed since their last release, each on its own:
+# checks it, publishes it to npm, tags it @aljazmc/<name>@<version> and
+# makes a GitHub release of it, with notes from its commits. A release comes:
+#   - after a passing CI run of a push to main, for the commit CI checked
+#   - by hand, Actions → Release → Run workflow, for the head of main, to
+#     finish a release that failed midway
+#
+# Versions live in the tags only, nothing is committed: package.json keeps
+# 0.0.0-development, and .github/scripts/release.ts plans the versions from
+# the conventional commits since each package's last tag, then writes them
+# in for the checks and npm. Each step is skipped when it was done already,
+# so a run again finishes what a failed one left. A latest tag without a
+# GitHub release gets one too.
+#
+# Needs the NPM_TOKEN secret, an npm token that can publish @aljazmc packages.
+
+on:
+    workflow_run:
+        workflows: [CI]
+        types: [completed]
+        branches: [main]
+    workflow_dispatch:
+
+permissions:
+    # pushing the tags and making the releases
+    contents: write
+
+# one release at a time, a newer one waits for the older one
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
+jobs:
+    release:
+        if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+        runs-on: ubuntu-latest
+        env:
+            NODE_ENV: development
+            NODE_NO_WARNINGS: "1"
+
+        steps:
+            # the commit CI checked; the commits after it are released by
+            # their own runs
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+                  fetch-depth: 0
+
+            # checkout can leave the tags lightweight, fetch them annotated
+            - name: Fetch the tags
+              run: git fetch --force --tags
+
+            - name: Setup
+              uses: ./.github/actions/setup
+
+            - name: Plan the releases
+              id: plan
+              run: |
+                  node .github/scripts/release.ts plan > "$RUNNER_TEMP/plan.json"
+                  cat "$RUNNER_TEMP/plan.json"
+                  count=$(node -p "require('$RUNNER_TEMP/plan.json').length")
+                  echo "count=$count" >> "$GITHUB_OUTPUT"
+                  [ "$count" -gt 0 ] || echo "Nothing changed since the last releases."
+
+            # dependencies first, so `workspace:^` ranges point to versions on npm
+            - name: Check, publish and tag each package
+              if: steps.plan.outputs.count != '0'
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  if [ -z "$NODE_AUTH_TOKEN" ]; then
+                      echo "::error::The NPM_TOKEN secret is not set."
+                      exit 1
+                  fi
+                  node .github/scripts/release.ts versions "$RUNNER_TEMP/plan.json"
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  # the plan on its own descriptor, so the checks cannot read it
+                  while read -r name dir version tag <&3; do
+                      echo "::group::$tag"
+                      yarn "c:$(basename "$dir")"
+                      if [ -n "$(npm view "$name@$version" version 2>/dev/null)" ]; then
+                          echo "$name@$version is on npm already."
+                      else
+                          yarn workspace "$name" npm publish --access public --tolerate-republish
+                      fi
+                      git rev-parse -q --verify "refs/tags/$tag" > /dev/null ||
+                          git tag -a "$tag" -m "$name $version"
+                      git push origin "refs/tags/$tag"
+                      echo "$tag" >> "$RUNNER_TEMP/released"
+                      echo "::endgroup::"
+                  done 3< <(node -e '
+                      for (const { name, dir, to, tag } of require(process.argv[1]))
+                          console.log(name, dir, to, tag);
+                  ' "$RUNNER_TEMP/plan.json")
+
+            # the releases of this run, and any latest tag still without one
+            # also after a failure, for the packages released before it
+            - name: Make the GitHub releases
+              if: always() && steps.plan.outcome == 'success'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  touch "$RUNNER_TEMP/released"
+                  environment="Built with Node $(node -v), Yarn $(yarn -v) and esbuild $(yarn esbuild --version)."
+                  echo "## Releases" >> "$GITHUB_STEP_SUMMARY"
+                  for tag in $(node .github/scripts/release.ts latest); do
+                      if gh release view "$tag" > /dev/null 2>&1; then
+                          continue
+                      fi
+                      if grep -qxF "$tag" "$RUNNER_TEMP/released"; then
+                          export ENVIRONMENT=$environment
+                      else
+                          export ENVIRONMENT=""
+                      fi
+                      node .github/scripts/release.ts notes "$tag" > "$RUNNER_TEMP/notes.md"
+                      gh release create "$tag" --title "$tag" \
+                          --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
+                      {
+                          echo "### $tag"
+                          echo
+                          cat "$RUNNER_TEMP/notes.md"
+                      } >> "$GITHUB_STEP_SUMMARY"
+                  done

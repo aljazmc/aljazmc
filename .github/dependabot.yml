@@ -1,7 +1,7 @@
 version: 2
 
-# commit prefixes matter: monorepo versions the packages from conventional
-# commits, see monorepo.config.ts, "build" and "ci" bump nothing, "fix" does
+# commit prefixes matter: .github/scripts/release.ts versions the packages
+# from conventional commits, "build" and "ci" release nothing, "fix" does
 updates:
     - package-ecosystem: github-actions
       directories: ["/", "/.github/actions/*"]

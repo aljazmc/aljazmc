@@ -1,0 +1,32 @@
+version: 2
+
+# commit prefixes matter: monorepo versions the packages from conventional
+# commits, see monorepo.config.ts, "build" and "ci" bump nothing, "fix" does
+updates:
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: weekly
+      commit-message:
+          prefix: ci
+      groups:
+          actions:
+              patterns: ["*"]
+
+    - package-ecosystem: npm
+      directories: ["/", "/packages/*", "/shared/*"]
+      schedule:
+          interval: weekly
+      # esbuild is a runtime dependency of testero, a new version releases it;
+      # dev dependencies only change the tooling, they release nothing
+      commit-message:
+          prefix: fix
+          prefix-development: build
+          include: scope
+      groups:
+          development:
+              dependency-type: development
+              update-types: [minor, patch]
+      ignore:
+          # the workspace packages are versioned by monorepo, not by Dependabot
+          - dependency-name: "@aljazmc/*"

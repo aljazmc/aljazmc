@@ -3780,6 +3780,7 @@ const biome: {
         source: "class A {\n    constructor() {\n        super();\n    }\n}\n",
         expected: [
             "3:9 This class should not have a super() call. You should remove it.",
+            "3:9 super() is only valid in derived class constructors",
         ],
     },
     {
@@ -4537,6 +4538,7 @@ const biome: {
         expected: [
             "10:23 This constructor calls `super()` in a loop.",
             "11:23 This constructor has code paths where `super()` is called more than once.",
+            "16:29 super() is only valid in derived class constructors",
             "17:23 This constructor has code paths that return without calling `super()` first.",
             "19:23 This constructor has code paths that return without calling `super()`.",
             "1:21 This constructor has code paths where `super()` is called more than once.",

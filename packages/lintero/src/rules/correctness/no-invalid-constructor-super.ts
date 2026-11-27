@@ -1,21 +1,6 @@
 import type { Node } from "@aljazmc/syntax";
-import { Walker } from "@aljazmc/syntax";
 import Nodes from "../../analysis/nodes.js";
 import { rule } from "../../rules.js";
-
-/** `super` callees of calls in a constructor, outside nested non-arrow functions. */
-const superCalls = (node: Node): Node[] =>
-    Walker.children(node).flatMap((child) => {
-        if (
-            (Nodes.isFunction(child) &&
-                child.type !== "ArrowFunctionExpression") ||
-            child.type === "ClassBody"
-        )
-            return [];
-        if (child.type === "CallExpression" && child.callee.type === "Super")
-            return [child.callee, ...superCalls(child)];
-        return superCalls(child);
-    });
 
 /** Whether an extends clause can never be a constructor. */
 const nonConstructor = (superClass: Node): boolean => {
@@ -44,27 +29,45 @@ export default rule({
     languages: ["js"],
     create: (context) => ({
         MethodDefinition(node) {
-            if (node.kind !== "constructor" || !node.value.body) return;
-            const body = context.parent(node);
-            const owner = body && context.parent(body);
-            if (
-                owner?.type !== "ClassDeclaration" &&
-                owner?.type !== "ClassExpression"
-            )
+            const body = node.value.body;
+            if (node.kind !== "constructor" || body?.type !== "BlockStatement")
                 return;
+            // like Biome, the first statement of the body that calls super()
+            let callee: Node | undefined;
+            for (const statement of body.body)
+                if (
+                    statement.type === "ExpressionStatement" &&
+                    statement.expression.type === "CallExpression" &&
+                    statement.expression.callee.type === "Super"
+                ) {
+                    callee = statement.expression.callee;
+                    break;
+                }
+            if (!callee) return;
 
-            for (const callee of superCalls(node.value.body)) {
-                if (!owner.superClass)
-                    context.report(
-                        callee,
-                        "This class should not have a super() call. You should remove it.",
-                    );
-                else if (nonConstructor(owner.superClass))
-                    context.report(
-                        callee,
-                        "This class calls super(), but the class extends from a non-constructor.",
-                    );
-            }
+            // the class extends, or without it the closest class around it that does
+            let superClass: Node | null = null;
+            for (
+                let ancestor = context.parent(node);
+                ancestor && !superClass;
+                ancestor = context.parent(ancestor)
+            )
+                if (
+                    ancestor.type === "ClassDeclaration" ||
+                    ancestor.type === "ClassExpression"
+                )
+                    superClass = ancestor.superClass;
+
+            if (!superClass)
+                context.report(
+                    callee,
+                    "This class should not have a super() call. You should remove it.",
+                );
+            else if (nonConstructor(superClass))
+                context.report(
+                    callee,
+                    "This class calls super(), but the class extends from a non-constructor.",
+                );
         },
     }),
 });

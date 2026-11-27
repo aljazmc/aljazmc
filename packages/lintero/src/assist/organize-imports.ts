@@ -12,11 +12,15 @@ export interface Organized {
     start: number;
     end: number;
     text: string;
-    /** Where the first statement to change starts. */
+    /** Where the first issue is, like Biome. */
     report: number;
-    /** Whether that statement is an export. */
-    exports: boolean;
+    /** What is wrong, Biome's words for one issue, or for several. */
+    message: string;
 }
+
+/** Biome's message of an issue missing a blank line before a statement. */
+const blankLine =
+    "This statement must be preceded by a blank line. Add a newline before this statement.";
 
 /**
  * A statement of the module: its leading trivia, the line breaks and
@@ -669,7 +673,7 @@ export default function organizeImports(
     const ranges: { start: number; end: number }[] = [];
     const unorganized = new Map<
         number,
-        { rewrite: boolean; newline: boolean }
+        { rewrite: boolean; names: boolean; newline: boolean }
     >();
     const leadingNewline = new Set<number>();
     let chunk: { start: number; end: number; max: Entry } | undefined;
@@ -693,12 +697,12 @@ export default function organizeImports(
             )
                 endChunk();
             previousBare = bare;
-            const rewrite =
-                !specifiersSorted(entry) || !attributesSorted(entry);
+            const names = !specifiersSorted(entry);
+            const rewrite = names || !attributesSorted(entry);
             // a chunk after a statement of another kind starts with a blank line
             const missing = newlines(slot.trivia) === 1 && !chunk && distinct;
             if (rewrite || missing)
-                unorganized.set(index, { rewrite, newline: missing });
+                unorganized.set(index, { rewrite, names, newline: missing });
             if (!chunk) chunk = { start: index, end: index, max: entry };
             else if (
                 keyOrder(chunk.max, entry) > 0 ||
@@ -826,12 +830,36 @@ export default function organizeImports(
     output += text.slice(previousEnd);
     if (output === text) return;
 
-    const first = Math.min(
-        ...ranges.map((range) => range.start),
-        ...unorganized.keys(),
-        ...[...leadingNewline].map((index) => index - 1),
-    );
-    const reported = slots[Math.max(first, 0)] as Slot;
+    // the issues of Biome: a chunk out of order, which takes in those of its
+    // statements, or a statement with names, attributes or a blank line wrong
+    const inRange = (index: number) =>
+        ranges.some((range) => index >= range.start && index < range.end);
+    const issues: { index: number; message: string }[] = [
+        ...ranges.map(({ start }) => ({
+            index: start,
+            message:
+                slots[start]?.kind === "export"
+                    ? "Sort these exports."
+                    : "Sort these imports.",
+        })),
+        ...[...unorganized]
+            .filter(([index]) => !inRange(index))
+            .map(([index, issue]) => ({
+                index,
+                message: issue.names
+                    ? slots[index]?.kind === "export"
+                        ? "Sort the exported names."
+                        : "Sort the imported names."
+                    : issue.rewrite
+                      ? "Sort the attributes."
+                      : blankLine,
+            })),
+        ...[...leadingNewline].map((index) => ({
+            index,
+            message: blankLine,
+        })),
+    ].sort((a, b) => a.index - b.index);
+    const first = issues[0] as { index: number; message: string };
     let from = 0;
     while (from < text.length && text[from] === output[from]) from++;
     let back = 0;
@@ -845,8 +873,11 @@ export default function organizeImports(
         start: from,
         end: text.length - back,
         text: output.slice(from, output.length - back),
-        report: reported.node.start,
-        exports: reported.kind === "export",
+        report: (slots[first.index] as Slot).node.start,
+        message:
+            issues.length === 1
+                ? first.message
+                : "Some imports or exports are not organized.",
     };
 }
 

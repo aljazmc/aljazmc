@@ -27,6 +27,7 @@ import Settings, {
     type Manifest,
     type Project,
 } from "./analysis/settings.js";
+import superErrors from "./analysis/super.js";
 import Suppressions from "./analysis/suppressions.js";
 import organizeImports from "./assist/organize-imports.js";
 import all from "./rules/index.js";
@@ -229,6 +230,20 @@ export default class Lintero {
             ({ position, message }) =>
                 diagnostic(position, position, "parse", "error", message),
         );
+        // super where Biome's parser and syntax rules reject it, which stops nothing
+        if (!markdown && !html && !css && !language.json)
+            for (const { position, category, message } of superErrors(
+                parsed.program,
+            ))
+                diagnostics.push(
+                    diagnostic(
+                        position,
+                        position + "super".length,
+                        category,
+                        "error",
+                        message,
+                    ),
+                );
 
         for (const { active, context } of this.#run(source)) {
             const { rule, severity, fix } = active;
@@ -276,9 +291,7 @@ export default class Lintero {
                         organized.report,
                         category,
                         organize.severity,
-                        organized.exports
-                            ? "Sort these exports."
-                            : "Sort these imports.",
+                        organized.message,
                     ),
                     fix: {
                         message: "Organize imports and exports.",

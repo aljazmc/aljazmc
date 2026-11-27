@@ -5,6 +5,7 @@ Thanks for your interest in contributing to this project! Here is how you can he
 ## Reporting Bugs
 
 Before creating a new issue, please check the existing issues to make sure it hasn't already been reported. If it hasn't, open a new issue and include:
+
 - A clear, descriptive title
 - Steps to reproduce the bug
 - Expected behavior vs. what actually happened
@@ -25,4 +26,3 @@ If you have an idea for a new feature or improvement, open an issue to discuss i
 ## Code Style
 
 Please follow the existing code style and formatting used in the repository. Update comments and documentation if you change how things work.
-

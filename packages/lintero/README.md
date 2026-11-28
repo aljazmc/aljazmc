@@ -579,6 +579,67 @@ Code that is likely a mistake. 90 rules.
 | `useIterableCallbackReturn`         | Requires `map`, `filter` and similar callbacks to return, and `forEach` ones not to.    | error    | none   | yes             |
 | `useNamespaceKeyword`               | Prefers `namespace` to the outdated `module` keyword for TypeScript namespaces.         | error    | safe   | yes             |
 
+## Adding a rule
+
+lintero's rules are Biome's, so a new rule starts from the same rule in
+Biome 2.6.6: its name, group, severity, whether it is recommended, its fix
+and its domains, and the examples of its documentation.
+
+1. **Write the rule** in `src/rules/<group>/<name>.ts`, the name in kebab
+   case. `create` returns a visitor: a function per node type, like
+   `DebuggerStatement`, or `Program:exit` to run after the whole file.
+   `context.report` reports a range with Biome's message, and a fix as text
+   edits, if the rule has one. `noDebugger` is a whole rule:
+
+   ```ts
+   import { rule } from "../../rules.js";
+
+   export default rule({
+       name: "noDebugger",
+       group: "suspicious",
+       severity: "error",
+       recommended: true,
+       fix: "unsafe",
+       languages: ["js"],
+       create: (context) => ({
+           DebuggerStatement(node) {
+               context.report(
+                   node,
+                   "This is an unexpected use of the debugger statement.",
+                   {
+                       message: "Remove debugger statement",
+                       edits: [{ start: node.start, end: node.end, text: "" }],
+                   },
+               );
+           },
+       }),
+   });
+   ```
+
+   Beyond the node, `context` gives its `parent`, the `semantic` model of
+   scopes and references, and the rule's `options`, merged with the
+   defaults of `options` in the definition.
+
+2. **Register it** in `src/rules/index.ts`: import it and add it to the list
+   the file exports.
+3. **Add its cases** to `tests/biome.ts`, as `group/name`: Biome's examples,
+   valid ones with `expected: []`, and the edge cases you found. An
+   `expected` line is `line:column message`, as Biome prints it.
+4. **Record Biome** with `yarn record:lintero`. It installs Biome 2.6.6 into
+   `.cache/`, runs it on each case in a project of its own and writes what
+   it reported to `tests/e2e/biome-2.6.6.json`, so the expected lines are
+   checked against Biome itself, not only against what you wrote.
+5. **Test** with `yarn t:lintero`: the unit tests lint every case with
+   lintero, and the end-to-end tests run the built command line on it and
+   compare the output and the exit code with the recording.
+6. **Document it** with a row in the table of its group above, and count it:
+   in that group's heading and in the table of groups, in the Rules badge
+   and the features of this README, and in the two mentions of the root
+   README.
+7. **Commit** it as `feat(lintero): add <name>`. CI releases a minor version
+   of lintero from it, and a fix of the rule later is a `fix:` commit with a
+   case that fails without it.
+
 ## How it works
 
 ```

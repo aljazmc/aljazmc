@@ -130,7 +130,8 @@ prefixes also have `<prefix>:all`.
 push to main, ci.yml
 ├─> yarn c:<package>   checks each changed package, and the release script
 ├─> coverage           all tests, with the coverage in the job summary
-└─> quickstart         the quick start above, with the packages from npm
+├─> quickstart         the quick start above, with the packages from npm
+└─> fixes              each fix has a test that fails without it
 
 a passing ci.yml on main, release.yml
 ├─> release.ts plan    the versions due, from conventional commits since each tag
@@ -147,6 +148,10 @@ before 1.0.0 a minor one; `style`, `test`, `build` and `ci` nothing. A
 commit counts for each package whose folder, or bundled `shared/` code, it
 changes. Every Monday CI checks everything again and opens an issue when
 that fails.
+
+Every `fix` since 28 November 2026 comes with a test that fails without it:
+CI undoes the rest of the commit, keeps its tests and expects them to fail,
+see `.github/scripts/fixes.ts`.
 
 ### Layout
 

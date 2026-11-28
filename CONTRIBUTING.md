@@ -19,7 +19,7 @@ If you have an idea for a new feature or improvement, open an issue to discuss i
 
 1. **Fork** the repository and create a new branch from `main` (e.g., `git checkout -b fix/your-issue-name`).
 2. **Make your changes** and keep them focused on a single bug or feature.
-3. **Test your code** to make sure everything works and existing tests pass.
+3. **Test your code** to make sure everything works and existing tests pass. A `fix:` commit includes a test that fails without the fix; CI checks it by undoing the rest of the commit.
 4. **Commit your changes** with a clear, descriptive message.
 5. **Open a Pull Request** against the `main` branch and briefly explain what you changed and why.
 

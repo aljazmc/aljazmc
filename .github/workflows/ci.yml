@@ -194,9 +194,36 @@ jobs:
                   grep -q 'const answer = { value: 42 };' answer.ts ||
                       fail "answer.ts is not formatted"
 
+    # every fix since 28 November 2026 comes with a test that fails without
+    # it: the new commits of a push or pull request, every fix on Monday
+    fixes:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Setup
+              uses: ./.github/actions/setup
+
+            - name: Check a test per fix
+              env:
+                  EVENT: ${{ github.event_name }}
+                  BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+              run: |
+                  yarn b:testero
+                  range=HEAD
+                  if [ "$EVENT" = push ] || [ "$EVENT" = pull_request ]; then
+                      if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+                          range="$BASE..HEAD"
+                      fi
+                  fi
+                  node .github/scripts/fixes.ts "$range"
+
     # a failing scheduled run opens an issue, or comments on the open one
     report:
-        needs: [ci, coverage, quickstart]
+        needs: [ci, coverage, quickstart, fixes]
         if: failure() && github.event_name == 'schedule'
         runs-on: ubuntu-latest
         permissions:

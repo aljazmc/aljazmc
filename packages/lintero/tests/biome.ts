@@ -10885,6 +10885,48 @@ export const biome: {
         expected: [],
     },
     {
+        rule: "suspicious/noRedeclare",
+        file: "a.ts",
+        source: "declare global {\n    const a: number;\n    interface W {}\n}\nexport declare const a: number;\ninterface W {}\n",
+        expected: ["5:22 'a' is redeclared in the same scope."],
+    },
+    {
+        rule: "suspicious/noRedeclare",
+        file: "a.ts",
+        source: "declare global {\n    var b: number;\n}\nconst b = 1;\n",
+        expected: ["4:7 'b' is redeclared in the same scope."],
+    },
+    {
+        rule: "suspicious/noRedeclare",
+        file: "a.ts",
+        source: "const i = 1;\ndeclare global {\n    const i: number;\n}\n",
+        expected: ["3:11 'i' is redeclared in the same scope."],
+    },
+    {
+        rule: "suspicious/noRedeclare",
+        file: "a.ts",
+        source: 'declare module "y" {\n    global {\n        const j: number;\n    }\n    const j: number;\n}\n',
+        expected: ["5:11 'j' is redeclared in the same scope."],
+    },
+    {
+        rule: "suspicious/noRedeclare",
+        file: "a.ts",
+        source: "declare global {\n    const e: number;\n    const e: number;\n}\n",
+        expected: ["3:11 'e' is redeclared in the same scope."],
+    },
+    {
+        rule: "suspicious/noRedeclare",
+        file: "a.ts",
+        source: 'declare module "x" {\n    const c: number;\n}\nexport declare const c: number;\ndeclare namespace N {\n    const d: number;\n}\ndeclare const d: number;\n',
+        expected: [],
+    },
+    {
+        rule: "suspicious/noRedeclare",
+        file: "a.ts",
+        source: "export {};\ndeclare global {\n    function f(): void;\n}\nfunction f() {}\nfunction g() {\n    const h = 1;\n}\ndeclare global {\n    const h: number;\n}\n",
+        expected: [],
+    },
+    {
         rule: "suspicious/noRedundantUseStrict",
         file: "a.cjs",
         source: '"use strict";\nfunction foo() {\n \t"use strict";\n}\n',

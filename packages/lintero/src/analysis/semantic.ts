@@ -991,7 +991,11 @@ export default class Semantic {
             if (node.kind !== "global" && id.type === "Identifier")
                 this.#declare(scope, id, id.name, "namespace", node);
             if (!node.body) return;
-            const inner = this.#scope("module", node.body, scope);
+            // `declare global` adds to the scope it is in, as in Biome
+            const inner =
+                node.kind === "global"
+                    ? scope
+                    : this.#scope("module", node.body, scope);
             const ambient =
                 node.kind === "global" || id.type === "StringLiteral";
             this.#ambiently(ambient, () =>

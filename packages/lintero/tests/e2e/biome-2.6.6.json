@@ -4307,6 +4307,23 @@
         ],
         "0f4b295b264f31c3": [],
         "14c238ebb9a99ba9": [],
+        "25ceb271aa42e707": [
+            "error: a.ts:5:22 lint/suspicious/noRedeclare: 'a' is redeclared in the same scope."
+        ],
+        "26fbc4852a858051": [
+            "error: a.ts:4:7 lint/suspicious/noRedeclare: 'b' is redeclared in the same scope."
+        ],
+        "b39196410666a53b": [
+            "error: a.ts:3:11 lint/suspicious/noRedeclare: 'i' is redeclared in the same scope."
+        ],
+        "4bfbcccff2d66e23": [
+            "error: a.ts:5:11 lint/suspicious/noRedeclare: 'j' is redeclared in the same scope."
+        ],
+        "7c600490d61b9fa5": [
+            "error: a.ts:3:11 lint/suspicious/noRedeclare: 'e' is redeclared in the same scope."
+        ],
+        "8f7cb56f4685c0dd": [],
+        "cf4de62d4611c7c6": [],
         "38f571e4916ae468": [
             "warn: a.cjs:3:3 lint/suspicious/noRedundantUseStrict: Redundant use strict directive."
         ],

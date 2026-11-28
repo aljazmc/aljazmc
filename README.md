@@ -136,7 +136,7 @@ push to main, ci.yml
 a passing ci.yml on main, release.yml
 ├─> release.ts plan    the versions due, from conventional commits since each tag
 ├─> yarn c:<package>   checks each with its version written in
-├─> npm publish        publishes it, a dependency before what uses it
+├─> npm publish        publishes it with provenance, a dependency first
 ├─> git tag            tags it @aljazmc/<name>@<version> and pushes the tag
 └─> gh release         a GitHub release with notes from its commits
 ```
@@ -148,6 +148,10 @@ before 1.0.0 a minor one; `style`, `test`, `build` and `ci` nothing. A
 commit counts for each package whose folder, or bundled `shared/` code, it
 changes. Every Monday CI checks everything again and opens an issue when
 that fails.
+
+Publishing needs no token: npm trusts `release.yml` of this repository, and
+every version carries a provenance statement that links it to the run and
+the commit it was built from.
 
 Every `fix` since 28 November 2026 comes with a test that fails without it:
 CI undoes the rest of the commit, keeps its tests and expects them to fail,

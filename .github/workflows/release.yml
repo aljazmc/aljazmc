@@ -15,7 +15,10 @@ run-name: Release by @${{ github.actor }}
 # so a run again finishes what a failed one left. A latest tag without a
 # GitHub release gets one too.
 #
-# Needs the NPM_TOKEN secret, an npm token that can publish @aljazmc packages.
+# Publishes by npm trusted publishing, without a token: each @aljazmc
+# package on npmjs.com trusts this workflow (aljazmc/aljazmc, release.yml),
+# and yarn trades the OIDC token of the run for a short-lived npm token. Every
+# version gets a provenance statement, linking it to this run and commit.
 
 on:
     workflow_run:
@@ -27,6 +30,8 @@ on:
 permissions:
     # pushing the tags and making the releases
     contents: write
+    # the OIDC token for trusted publishing and provenance
+    id-token: write
 
 # one release at a time, a newer one waits for the older one
 concurrency:
@@ -69,13 +74,7 @@ jobs:
             # dependencies first, so `workspace:^` ranges point to versions on npm
             - name: Check, publish and tag each package
               if: steps.plan.outputs.count != '0'
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: |
-                  if [ -z "$NODE_AUTH_TOKEN" ]; then
-                      echo "::error::The NPM_TOKEN secret is not set."
-                      exit 1
-                  fi
                   node .github/scripts/release.ts versions "$RUNNER_TEMP/plan.json"
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -86,7 +85,7 @@ jobs:
                       if [ -n "$(npm view "$name@$version" version 2>/dev/null)" ]; then
                           echo "$name@$version is on npm already."
                       else
-                          yarn workspace "$name" npm publish --access public --tolerate-republish
+                          yarn workspace "$name" npm publish --access public --provenance --tolerate-republish
                       fi
                       git rev-parse -q --verify "refs/tags/$tag" > /dev/null ||
                           git tag -a "$tag" -m "$name $version"

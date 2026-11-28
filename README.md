@@ -80,8 +80,8 @@ scripts, and runs every tool on a temporary copy of the sources.
 
 <!-- benchmark:start -->
 
-Measured on 2026-11-28 with `yarn bench`, on the 420 TypeScript files of the
-packages' `src` folders, 60,457 lines, and the 4 test files of `shared/`, in
+Measured on 2026-11-28 with `yarn bench`, on the 421 TypeScript files of the
+packages' `src` folders, 60,468 lines, and the 4 test files of `shared/`, in
 Docker on 8 cores of an Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz, with Node.js
 v26.13.1. A time is the median of 5 runs after one to warm up. Packages and
 Installed are what `npm install` of a tool brings in; Biome is a native binary,
@@ -93,8 +93,8 @@ repository.
 
 | Tool          | Time   | Relative | Changes  | Packages | Installed |
 | ------------- | ------ | -------- | -------- | -------- | --------- |
-| **formatero** | 1.73 s | 1.0×     | 0 files  | 3        | 1.4 MB    |
-| Prettier      | 5.77 s | 3.3×     | 16 files | 1        | 11.1 MB   |
+| **formatero** | 1.62 s | 1.0×     | 0 files  | 3        | 1.4 MB    |
+| Prettier      | 5.46 s | 3.4×     | 16 files | 1        | 11.1 MB   |
 | Biome         | 210 ms | 0.1×     | 0 files  | 2        | 93.6 MB   |
 
 **Linting** with each tool's recommended rules: ESLint 10.16.0 with
@@ -103,18 +103,18 @@ problems they find.
 
 | Tool        | Time   | Relative | Problems    | Packages | Installed |
 | ----------- | ------ | -------- | ----------- | -------- | --------- |
-| **lintero** | 2.05 s | 1.0×     | 0 problems  | 3        | 3.1 MB    |
-| ESLint      | 5.74 s | 2.8×     | 24 problems | 97       | 46.9 MB   |
-| Biome       | 350 ms | 0.2×     | 15 problems | 2        | 93.6 MB   |
+| **lintero** | 1.91 s | 1.0×     | 0 problems  | 3        | 3.1 MB    |
+| ESLint      | 5.44 s | 2.8×     | 24 problems | 97       | 46.9 MB   |
+| Biome       | 323 ms | 0.2×     | 0 problems  | 2        | 93.6 MB   |
 
 **Testing**, the same tests unchanged: Jest 30.5.2, with esbuild for TypeScript,
 and Vitest 5.1.2.
 
 | Tool        | Time   | Relative | Passed   | Packages | Installed |
 | ----------- | ------ | -------- | -------- | -------- | --------- |
-| **testero** | 750 ms | 1.0×     | 59 tests | 4        | 11.4 MB   |
-| Jest        | 1.52 s | 2.0×     | 59 tests | 280      | 64.7 MB   |
-| Vitest      | 1.27 s | 1.7×     | 59 tests | 35       | 41.5 MB   |
+| **testero** | 687 ms | 1.0×     | 59 tests | 4        | 11.4 MB   |
+| Jest        | 1.39 s | 2.0×     | 59 tests | 280      | 64.7 MB   |
+| Vitest      | 1.23 s | 1.8×     | 59 tests | 35       | 41.5 MB   |
 
 <!-- benchmark:end -->
 

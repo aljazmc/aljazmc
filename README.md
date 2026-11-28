@@ -71,6 +71,53 @@ cd aljazmc
 [testero-badge]: https://img.shields.io/npm/v/@aljazmc/testero?label=&color=cb3837
 [testero-npm]: https://www.npmjs.com/package/@aljazmc/testero
 
+## Comparison
+
+How formatero, lintero and testero compare with Prettier, ESLint, Biome,
+Jest and Vitest on the code of this repository. `yarn bench` installs the
+other tools, pinned, into `.cache/` only, without running their install
+scripts, and runs every tool on a temporary copy of the sources.
+
+<!-- benchmark:start -->
+
+Measured on 2026-11-28 with `yarn bench`, on the 420 TypeScript files of the
+packages' `src` folders, 60,457 lines, and the 4 test files of `shared/`, in
+Docker on 8 cores of an Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz, with Node.js
+v26.13.1. A time is the median of 5 runs after one to warm up. Packages and
+Installed are what `npm install` of a tool brings in; Biome is a native binary,
+the others run on Node.js.
+
+**Formatting**, checking every file with the same settings: Prettier 3.10.1 and
+Biome 2.6.6. Changes are the files a write would change; formatero formats this
+repository.
+
+| Tool          | Time   | Relative | Changes  | Packages | Installed |
+| ------------- | ------ | -------- | -------- | -------- | --------- |
+| **formatero** | 1.73 s | 1.0×     | 0 files  | 3        | 1.4 MB    |
+| Prettier      | 5.77 s | 3.3×     | 16 files | 1        | 11.1 MB   |
+| Biome         | 210 ms | 0.1×     | 0 files  | 2        | 93.6 MB   |
+
+**Linting** with each tool's recommended rules: ESLint 10.16.0 with
+typescript-eslint 8.74.0, and Biome 2.6.6. The rules differ, and so do the
+problems they find.
+
+| Tool        | Time   | Relative | Problems    | Packages | Installed |
+| ----------- | ------ | -------- | ----------- | -------- | --------- |
+| **lintero** | 2.05 s | 1.0×     | 0 problems  | 3        | 3.1 MB    |
+| ESLint      | 5.74 s | 2.8×     | 24 problems | 97       | 46.9 MB   |
+| Biome       | 350 ms | 0.2×     | 15 problems | 2        | 93.6 MB   |
+
+**Testing**, the same tests unchanged: Jest 30.5.2, with esbuild for TypeScript,
+and Vitest 5.1.2.
+
+| Tool        | Time   | Relative | Passed   | Packages | Installed |
+| ----------- | ------ | -------- | -------- | -------- | --------- |
+| **testero** | 750 ms | 1.0×     | 59 tests | 4        | 11.4 MB   |
+| Jest        | 1.52 s | 2.0×     | 59 tests | 280      | 64.7 MB   |
+| Vitest      | 1.27 s | 1.7×     | 59 tests | 35       | 41.5 MB   |
+
+<!-- benchmark:end -->
+
 ## Shared code
 
 Bundled into the packages by esbuild, and published for their types.
@@ -117,6 +164,7 @@ prefixes also have `<prefix>:all`.
 
 | Script             | Description                                            |
 | ------------------ | ------------------------------------------------------ |
+| `bench`            | Compares the tools with others, `--readme` writes it.  |
 | `record:formatero` | Records what Biome 2.6.6 prints for formatero's cases. |
 | `record:lintero`   | Records what Biome 2.6.6 reports for lintero's cases.  |
 | `c:github`         | Lints and tests the scripts of CI and the picture.     |

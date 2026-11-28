@@ -21,6 +21,7 @@
         "shared/*"
     ],
     "scripts": {
+        "bench": "node .github/scripts/benchmark.ts",
         "b:all": "yarn b:config && yarn b:syntax && yarn b:formatero && yarn b:lintero && yarn b:monorepo && yarn b:testero",
         "b:config": "esbuild shared/config/src/index.ts --bundle --keep-names --platform=node --format=esm --target=esnext --outdir=shared/config/bin/",
         "b:formatero": "esbuild packages/formatero/src/main.ts --bundle --keep-names --platform=node --format=esm --target=esnext --outdir=packages/formatero/bin/",
